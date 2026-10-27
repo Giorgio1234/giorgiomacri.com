@@ -244,13 +244,14 @@ dialog::backdrop{background:rgba(8,12,18,.55)}
 
 <div class="bar">
   <a class="mark" href="/">giorgiomacri<span>/</span>calorías</a>
-  <button class="iconbtn" id="menuBtn" aria-label="Cuenta y datos" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></button>
+  <button class="iconbtn" id="menuBtn" aria-label="Mis datos: exportar e importar" title="Mis datos" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
   <button class="iconbtn" id="themeBtn" aria-label="Cambiar tema"></button>
+  <span id="gmAuth"></span>
 </div>
 <main class="login" id="loginView" hidden>
   <form id="loginForm" novalidate>
     <h1>Calorías</h1>
-    <p>Entrá con el usuario que te dieron.</p>
+    <p>Entrá con tu cuenta de giorgiomacri.com.</p>
     <div class="stack">
       <div><label class="f" for="lUser">Usuario</label><input id="lUser" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
       <div><label class="f" for="lPass">Contraseña</label><input id="lPass" type="password" autocomplete="current-password"></div>
@@ -423,7 +424,7 @@ dialog::backdrop{background:rgba(8,12,18,.55)}
 
 
 <dialog id="menuDlg" aria-labelledby="menuH">
-  <div class="dlg-h"><h2 id="menuH">Cuenta</h2><button class="del" data-close aria-label="Cerrar">×</button></div>
+  <div class="dlg-h"><h2 id="menuH">Mis datos</h2><button class="del" data-close aria-label="Cerrar">×</button></div>
   <p class="hint">Usuario: <b id="who"></b></p>
   <div class="menu-list">
     <button id="mExport">Exportar mis datos</button>
@@ -447,6 +448,9 @@ dialog::backdrop{background:rgba(8,12,18,.55)}
 
 <div id="toast" role="status"></div>
 
+<script>
+/*@shared/auth.js*/
+</script>
 <script>
 /*@shared/chat.js*/
 </script>
@@ -1076,17 +1080,13 @@ $('#loginForm').onsubmit=async e=>{
   if(!user||!password){$('#lErr').textContent='Completá usuario y contraseña.';return}
   $('#lBtn').disabled=true;
   try{
-    const r=await api('POST','/login',{user,password});
-    token=r.token; try{localStorage.setItem(TK,token)}catch(err){}
-    $('#lPass').value=''; $('#who').textContent=r.user;
-    $('#status').hidden=false; $('#status').textContent='Cargando…';
-    show('app'); state.date=today(); Store.range=[addDays(state.date,-27),state.date]; render();
-    await Store.load().catch(loadErr);
+    const r=await GMAuth.login(user,password);
+    if(r.kind!=='account') throw new Error('Para el contador necesitás una cuenta del sitio (no alcanza con el apodo del torneo).');
   }catch(err){$('#lErr').textContent=err.message}
   finally{$('#lBtn').disabled=false}
 };
 $('#menuBtn').onclick=()=>$('#menuDlg').showModal();
-$('#mLogout').onclick=()=>{api('POST','/logout').catch(()=>{});logoutLocal()};
+$('#mLogout').onclick=()=>GMAuth.logout();
 $('#mExport').onclick=async()=>{
   try{
     const r=await api('GET','/export');
@@ -1137,6 +1137,6 @@ if(token){
   try{const c=JSON.parse(localStorage.getItem(CACHE)||'null');if(c&&c.from&&c.to) applyState(c,c.from,c.to,true)}catch(e){}
   render();
   Store.load().catch(loadErr);
-}else{show('login');render()}
+}else{show('login');render();const m=window.GMAuth&&GMAuth.me();if(m&&m.kind!=='account')$('#lErr').textContent='Entraste con el apodo del torneo. Para el contador necesitás una cuenta del sitio.'}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&token) Store.load().catch(loadErr)});
 </script>

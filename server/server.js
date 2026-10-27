@@ -320,11 +320,19 @@ function sessionFrom(req) {
   const m = /^Bearer (.+)$/.exec(req.headers.authorization || '');
   if (!m) return null;
   const s = db.prepare('SELECT * FROM sessions WHERE token_hash = ?').get(sha(m[1]));
-  if (!s) return null;
+  if (!s) return accountSession(m[1]);
   // is_admin: 1 = panel del torneo (7 días), 2 = agenda privada (60 días)
   if (s.is_admin === 1 && Date.now() - s.created_at > 7 * DAY_MS) return null;
   if (s.is_admin === 2 && Date.now() - s.created_at > 60 * DAY_MS) return null;
   return s;
+}
+
+// Cuenta del sitio (lib/cuentas.js): vale como jugador (si tiene uno unido) y como admin (si es admin)
+function accountSession(token) {
+  let a;
+  try { a = db.prepare('SELECT u.*, s.created_at AS sc FROM cal_sessions s JOIN cal_users u ON u.id = s.user_id WHERE s.token_hash = ?').get(sha(token)); } catch (e) { return null; }
+  if (!a || a.disabled || Date.now() - a.sc > 90 * DAY_MS) return null;
+  return { player_id: a.player_id || null, is_admin: a.is_admin ? 1 : 0, account: a, created_at: Date.now() };
 }
 
 function clientIp(req) { return String(req.headers['x-real-ip'] || req.socket.remoteAddress || '').replace(/^::ffff:/, '').slice(0, 64); }
@@ -381,7 +389,7 @@ function requireAdmin(req) {
 }
 function requireAgenda(req) {
   const s = sessionFrom(req);
-  if (!s || s.is_admin !== 2) fail(401, 'Tenés que entrar a la agenda.');
+  if (!s || !(s.is_admin === 2 || (s.account && s.account.is_admin))) fail(401, 'Tenés que entrar a la agenda.');
 }
 function requireViewer(req) {
   const s = sessionFrom(req);
@@ -440,6 +448,14 @@ async function joinHandler(req) {
     const r = db.prepare('INSERT INTO players (name, pin_hash, created_at) VALUES (?, ?, ?)').run(name, hashPin(pin), now());
     p = db.prepare('SELECT * FROM players WHERE id = ?').get(r.lastInsertRowid);
     logAccess(req, p.id, 'alta');
+  }
+  // Si entra con la cuenta del sitio puesta y todavía no tiene jugador, se unen
+  const bt = /^Bearer (.+)$/.exec(req.headers.authorization || ''), acc = bt && accountSession(bt[1]);
+  if (acc && !acc.account.player_id) {
+    const other = db.prepare('SELECT username FROM cal_users WHERE player_id = ?').get(p.id);
+    if (other) fail(409, `Ese jugador ya está unido a la cuenta "${other.username}".`);
+    db.prepare('UPDATE cal_users SET player_id = ? WHERE id = ?').run(p.id, acc.account.id);
+    return { token: bt[1], player: { id: p.id, name: p.name }, linked: true };
   }
   return { token: newSession(p.id, false), player: { id: p.id, name: p.name } };
 }
@@ -532,7 +548,7 @@ route('PUT', '/agenda/settings', async (req) => {
 
 route('POST', '/logout', async (req) => {
   const m = /^Bearer (.+)$/.exec(req.headers.authorization || '');
-  if (m) db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(sha(m[1]));
+  if (m) { db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(sha(m[1])); db.prepare('DELETE FROM cal_sessions WHERE token_hash = ?').run(sha(m[1])); }
   return { ok: true };
 });
 
@@ -882,6 +898,9 @@ route('POST', '/admin/boards/regenerate', async (req) => {
 
 /* Contador de calorías */
 require('./lib/calorias')({ db, route, fail, readBody, rateLimited, hashPin, checkPin, sha, now, requireAdmin, validDate, DAY_MS, TZ_OFFSET_MIN, AGENDA_USER });
+/* Cuenta única */
+require('./lib/cuentas')({ db, route, fail, readBody, rateLimited, hashPin, checkPin, sha, now, logAccess,
+  OWNER: (process.env.CHAT_OWNER || AGENDA_USER || 'giorgio').trim().toLowerCase(), OWNER_PASSWORD: AGENDA_PASSWORD });
 /* Asistente con herramientas */
 require('./lib/asistente')({ db, route, fail, readBody, rateLimited, sha, now, sessionFrom, validDate, DAY_MS, TZ_OFFSET_MIN, AGENDA_USER });
 

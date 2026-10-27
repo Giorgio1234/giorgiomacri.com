@@ -194,6 +194,7 @@ section.sec { margin-bottom: 46px; }
       </label>
       <button class="btn" type="button" id="surprise"><span class="long">Sorprendeme</span><span aria-hidden="true"> ↗</span></button>
       <button class="icon-btn" type="button" id="themeBtn" aria-label="Cambiar tema"></button>
+      <span id="gmAuth"></span>
     </div>
   </div>
 </header>
@@ -511,4 +512,7 @@ section.sec { margin-bottom: 46px; }
   setInterval(function () { if (!document.hidden) tick(); }, 1000);
   window.addEventListener('storage', render);
 })();
+</script>
+<script>
+/*@shared/auth.js*/
 </script>

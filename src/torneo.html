@@ -70,7 +70,7 @@ table.board-table { border-collapse: collapse; width: 100%; min-width: 640px; fo
       <a href="/sudoku/torneo/" aria-current="page">Torneo</a>
       <a href="/sudoku/posiciones/">Posiciones</a>
     </nav>
-    <div class="nav-right"><span id="who"></span><button class="link" type="button" id="logout" hidden>Salir</button></div>
+    <div class="nav-right"><span id="gmAuth"></span><span id="who" hidden></span><button class="link" type="button" id="logout" hidden>Salir</button></div>
   </div>
 </header>
 
@@ -80,6 +80,7 @@ table.board-table { border-collapse: collapse; width: 100%; min-width: 640px; fo
     <form class="join" id="joinForm" novalidate>
       <h1>Torneo semanal</h1>
       <p>Un sudoku Experto por día. Gana el menor tiempo de la semana.</p>
+      <p id="jAcct" class="hint" style="margin:0"></p>
       <div class="field">
         <label for="jName">Apodo</label>
         <input id="jName" autocomplete="username" maxlength="20" required>
@@ -126,6 +127,9 @@ table.board-table { border-collapse: collapse; width: 100%; min-width: 640px; fo
 </main>
 
 <script>
+/*@shared/auth.js*/
+</script>
+<script>
 /*@shared/game.js*/
 </script>
 <script>
@@ -141,7 +145,9 @@ table.board-table { border-collapse: collapse; width: 100%; min-width: 640px; fo
   /* ---------- API ---------- */
   function call(method, path, body) {
     var h = { 'Content-Type': 'application/json', 'X-Device': deviceId() };
-    if (token) h.Authorization = 'Bearer ' + token;
+    var acc = window.GMAuth && GMAuth.me();
+    if (path === '/join' && acc && acc.kind === 'account') h.Authorization = 'Bearer ' + GMAuth.token(); // unir el jugador a la cuenta
+    else if (token) h.Authorization = 'Bearer ' + token;
     return fetch(API + path, { method: method, headers: h, body: body ? JSON.stringify(body) : undefined })
       .catch(function () { throw new Error('No hay conexión con el servidor.'); })
       .then(function (r) {
@@ -183,8 +189,14 @@ table.board-table { border-collapse: collapse; width: 100%; min-width: 640px; fo
   function show(v) {
     current = v;
     $('vJoin').hidden = v !== 'join'; $('vWeek').hidden = v !== 'week'; $('vPlay').hidden = v !== 'play';
-    $('who').textContent = me && v !== 'join' ? me.name : '';
-    $('logout').hidden = !me || v === 'join';
+    if (v === 'join') {
+      var acc = window.GMAuth && GMAuth.me();
+      $('jAcct').innerHTML = acc && acc.kind === 'account'
+        ? 'Entraste como <b></b>. Elegí apodo y PIN (y el código si es tu primera vez): el jugador queda unido a tu cuenta.'
+        : '¿Tenés cuenta del sitio? <a href="#">Entrá con tu usuario</a>.';
+      var b = $('jAcct').querySelector('b'); if (b) b.textContent = acc.name;
+      var a = $('jAcct').querySelector('a'); if (a) a.onclick = function (e) { e.preventDefault(); GMAuth.open(); };
+    }
     if (v !== 'play') stopTimer();
   }
 
@@ -195,9 +207,11 @@ table.board-table { border-collapse: collapse; width: 100%; min-width: 640px; fo
     call('POST', '/join', { name: $('jName').value, pin: $('jPin').value, code: $('jCode').value })
       .then(function (r) {
         token = r.token; me = r.player;
-        try { localStorage.setItem(TOKEN_KEY, token); localStorage.setItem(ME_KEY, JSON.stringify(me)); } catch (e) {}
-        $('jPin').value = '';
-        route();
+        try {
+          localStorage.setItem(TOKEN_KEY, token); localStorage.setItem(ME_KEY, JSON.stringify(me));
+          if (!r.linked) { localStorage.setItem('gm-token', token); localStorage.setItem('gm-me', JSON.stringify({ kind: 'player', name: me.name, admin: false, player: me })); }
+        } catch (e) {}
+        location.reload();
       })
       .catch(function (err) { $('jErr').textContent = err.message; })
       .then(function () { $('jBtn').disabled = false; });

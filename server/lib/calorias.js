@@ -143,7 +143,7 @@ module.exports = function install(d) {
     const foods = db.prepare('SELECT id, data FROM cal_foods WHERE user_id = ?').all(u.id).map(r => Object.assign({ id: r.id }, parse(r.data)));
     const entries = db.prepare('SELECT id, data FROM cal_entries WHERE user_id = ? AND date >= ? AND date <= ?').all(u.id, from, to).map(r => Object.assign({ id: r.id }, parse(r.data)));
     const weights = db.prepare('SELECT date, kg FROM cal_weights WHERE user_id = ? ORDER BY date').all(u.id).map(r => ({ id: r.date, date: r.date, kg: r.kg }));
-    return { user: u.username, chat: u.username === (process.env.CHAT_OWNER || AGENDA_USER || 'giorgio').trim().toLowerCase() && !!process.env.OPENROUTER_API_KEY, profile: (p && parse(p.data)) || { goals: {} }, foods, entries, weights, ai: aiInfo(u.id) };
+    return { user: u.username, chat: !!u.is_admin && !!process.env.OPENROUTER_API_KEY, profile: (p && parse(p.data)) || { goals: {} }, foods, entries, weights, ai: aiInfo(u.id) };
   });
 
   route('PUT', '/cal/profile', async (req) => {
@@ -343,12 +343,14 @@ Si la tabla tiene columna por 100 g o 100 ml, usá esa y basis "100"; si solo tr
   route('GET', '/admin/cal/users', async (req) => {
     requireAdmin(req);
     const day = localDay();
-    const users = db.prepare(`SELECT u.id, u.username, u.created_at, u.disabled, u.last_login,
+    const users = db.prepare(`SELECT u.id, u.username, u.created_at, u.disabled, u.last_login, u.is_admin, u.player_id,
+        (SELECT name FROM players p WHERE p.id = u.player_id) player_name,
         (SELECT COUNT(*) FROM cal_entries e WHERE e.user_id = u.id) entries,
         (SELECT MAX(date) FROM cal_entries e WHERE e.user_id = u.id) last_entry,
         (SELECT n FROM cal_ai_usage a WHERE a.user_id = u.id AND a.day = ?) ai_today
       FROM cal_users u ORDER BY u.username`).all(day);
-    return { users, ai: { enabled: !!AI_KEY(), provider: OR() ? 'OpenRouter' : 'Anthropic', model: AI_MODEL(), limit: AI_LIMIT() } };
+    const players = db.prepare('SELECT id, name FROM players ORDER BY name COLLATE NOCASE').all();
+    return { users, players, ai: { enabled: !!AI_KEY(), provider: OR() ? 'OpenRouter' : 'Anthropic', model: AI_MODEL(), limit: AI_LIMIT() } };
   });
   route('POST', '/admin/cal/users', async (req) => {
     requireAdmin(req);
@@ -371,7 +373,22 @@ Si la tabla tiene columna por 100 g o 100 ml, usá esa y basis "100"; si solo tr
       db.prepare('UPDATE cal_users SET pass_hash = ? WHERE id = ?').run(hashPin(pw), u.id);
       db.prepare('DELETE FROM cal_sessions WHERE user_id = ?').run(u.id);
     }
+    const admins = () => db.prepare('SELECT COUNT(*) c FROM cal_users WHERE is_admin = 1 AND disabled = 0').get().c;
+    if (b.is_admin !== undefined) {
+      if (!b.is_admin && u.is_admin && admins() <= 1) fail(400, 'Tiene que quedar al menos una cuenta de admin.');
+      db.prepare('UPDATE cal_users SET is_admin = ? WHERE id = ?').run(b.is_admin ? 1 : 0, u.id);
+    }
+    if (b.player_id !== undefined) {
+      const pid = b.player_id ? +b.player_id : null;
+      if (pid) {
+        if (!db.prepare('SELECT 1 FROM players WHERE id = ?').get(pid)) fail(404, 'Ese jugador no existe.');
+        const other = db.prepare('SELECT username FROM cal_users WHERE player_id = ? AND id != ?').get(pid, u.id);
+        if (other) fail(409, `Ese jugador ya está unido a la cuenta ${other.username}.`);
+      }
+      db.prepare('UPDATE cal_users SET player_id = ? WHERE id = ?').run(pid, u.id);
+    }
     if (b.disabled !== undefined) {
+      if (b.disabled && u.is_admin && admins() <= 1) fail(400, 'No podés deshabilitar la única cuenta de admin.');
       db.prepare('UPDATE cal_users SET disabled = ? WHERE id = ?').run(b.disabled ? 1 : 0, u.id);
       if (b.disabled) db.prepare('DELETE FROM cal_sessions WHERE user_id = ?').run(u.id);
     }
@@ -380,6 +397,8 @@ Si la tabla tiene columna por 100 g o 100 ml, usá esa y basis "100"; si solo tr
   route('DELETE', '/admin/cal/users/(\\d+)', async (req, url, m) => {
     requireAdmin(req);
     const id = +m[1];
+    const target = db.prepare('SELECT is_admin FROM cal_users WHERE id = ?').get(id);
+    if (target && target.is_admin && db.prepare('SELECT COUNT(*) c FROM cal_users WHERE is_admin = 1').get().c <= 1) fail(400, 'No podés borrar la única cuenta de admin.');
     ['cal_sessions', 'cal_profile', 'cal_foods', 'cal_entries', 'cal_weights', 'cal_ai_usage'].forEach(t => db.prepare(`DELETE FROM ${t} WHERE user_id = ?`).run(id));
     db.prepare('DELETE FROM cal_users WHERE id = ?').run(id);
     return { ok: true };

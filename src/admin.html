@@ -1,4 +1,4 @@
-<title>Admin del Torneo</title>
+<title>Admin</title>
 <meta name="robots" content="noindex">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -99,17 +99,19 @@ dialog { width: min(560px, calc(100vw - 32px)); }
 .ev.rechazado { background: var(--bad-bg); color: var(--red); }
 .check { display: flex; align-items: center; gap: 10px; font-size: 15px; cursor: pointer; }
 .check input { width: 18px; height: 18px; }
+.area { font-size: 22px; margin: 34px 0 14px; padding-top: 18px; border-top: 1px solid var(--border); }
+.cal-sel { border: 1px solid var(--line); border-radius: 6px; padding: 5px 6px; background: var(--surface); font-size: 13px; max-width: 150px; }
 .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--inverse-bg); color: var(--inverse-fg); padding: 10px 16px; border-radius: 8px; font-size: 14px; z-index: 10; }
 </style>
 
 <header class="nav">
   <div class="nav-in">
-    <a class="brand" href="/sudoku/">Sudoku</a>
+    <a class="brand" href="/">giorgiomacri<span style="color:#fd9b65">/</span>admin</a>
     <nav class="tabs" aria-label="Secciones">
-      <a href="/sudoku/torneo/">Torneo</a>
-      <a href="/sudoku/admin/" aria-current="page">Admin</a>
+      <a href="#cuentas">Cuentas</a>
+      <a href="#sudoku">Sudoku</a>
     </nav>
-    <div class="nav-right"><button class="link" type="button" id="logout" hidden>Salir</button></div>
+    <div class="nav-right"><span id="gmAuth"></span><button class="link" type="button" id="logout" hidden>Salir</button></div>
   </div>
 </header>
 
@@ -117,6 +119,8 @@ dialog { width: min(560px, calc(100vw - 32px)); }
   <section id="vLogin" hidden>
     <form class="login" id="loginForm" novalidate>
       <h1>Administración</h1>
+      <p class="hint" style="margin:0">Entrá con tu cuenta de admin.</p>
+      <div class="field"><label for="au">Usuario</label><input id="au" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
       <div class="field"><label for="pw">Contraseña</label><input id="pw" type="password" autocomplete="current-password"></div>
       <p class="err" id="loginErr" role="alert"></p>
       <button class="btn" type="submit" id="loginBtn">Entrar</button>
@@ -124,6 +128,16 @@ dialog { width: min(560px, calc(100vw - 32px)); }
   </section>
 
   <section id="vDash" hidden>
+    <section class="block" id="cuentas">
+      <div class="sec-head">
+        <h2>Cuentas</h2>
+        <button class="btn small" type="button" id="calAdd">Crear cuenta</button>
+      </div>
+      <p class="hint" id="calInfo">Una cuenta para todo el sitio: calorías, el torneo (si tiene un jugador unido) y, si es admin, este panel, la agenda y el asistente.</p>
+      <div class="table-wrap"><table id="calUsers"></table></div>
+    </section>
+
+    <h2 class="area" id="sudoku">Sudoku</h2>
     <div class="top">
       <div>
         <h1 id="title">Torneo</h1>
@@ -189,20 +203,15 @@ dialog { width: min(560px, calc(100vw - 32px)); }
       <div class="table-wrap"><table id="bans"></table></div>
     </section>
 
-    <section class="block">
-      <div class="sec-head">
-        <h2>Calorías: cuentas</h2>
-        <button class="btn small" type="button" id="calAdd">Crear cuenta</button>
-      </div>
-      <p class="hint" id="calInfo">Cuentas del contador de calorías (separadas del torneo). Entran en <a href="/calorias/">/calorias/</a>.</p>
-      <div class="table-wrap"><table id="calUsers"></table></div>
-    </section>
   </section>
 </main>
 
 <dialog id="dlg"><form class="dlg" id="dlgForm" method="dialog"></form></dialog>
 <div class="toast" id="toast" hidden></div>
 
+<script>
+/*@shared/auth.js*/
+</script>
 <script>
 (function () {
   'use strict';
@@ -211,7 +220,8 @@ dialog { width: min(560px, calc(100vw - 32px)); }
   var KEY = 'gm-torneo-admin';
   var $ = function (id) { return document.getElementById(id); };
   var token = null, data = null, week = null;
-  try { token = sessionStorage.getItem(KEY); } catch (e) {}
+  var gm = window.GMAuth && GMAuth.me();
+  if (gm && gm.admin) token = GMAuth.token();
 
   function call(method, path, body) {
     var h = { 'Content-Type': 'application/json' };
@@ -221,7 +231,7 @@ dialog { width: min(560px, calc(100vw - 32px)); }
       .then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (j) {
           if (!r.ok) {
-            if (r.status === 401 && path !== '/admin/login') { token = null; try { sessionStorage.removeItem(KEY); } catch (e) {} show('login'); }
+            if (r.status === 401) { token = null; show('login'); }
             var e = new Error(j.error || 'Algo falló (' + r.status + ').'); e.status = r.status; throw e;
           }
           return j;
@@ -241,7 +251,7 @@ dialog { width: min(560px, calc(100vw - 32px)); }
   function shortDev(d) { return d ? d.slice(0, 8) : 'sin id'; }
   var EVENT = { alta: 'Se registró', ingreso: 'Entró', partida: 'Empezó tablero', visita: 'Visita', rechazado: 'Rechazado' };
   function toast(msg) { var t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { t.hidden = true; }, 2600); }
-  function show(v) { $('vLogin').hidden = v !== 'login'; $('vDash').hidden = v !== 'dash'; $('logout').hidden = v !== 'dash'; }
+  function show(v) { $('vLogin').hidden = v !== 'login'; $('vDash').hidden = v !== 'dash'; }
 
   /* ---------- Diálogo ---------- */
   // fields: [{id, label, type, value, inputmode}] ; resolve con valores o null
@@ -285,12 +295,11 @@ dialog { width: min(560px, calc(100vw - 32px)); }
   /* ---------- Login ---------- */
   $('loginForm').addEventListener('submit', function (e) {
     e.preventDefault(); $('loginErr').textContent = ''; $('loginBtn').disabled = true;
-    call('POST', '/admin/login', { password: $('pw').value }).then(function (r) {
-      token = r.token; try { sessionStorage.setItem(KEY, token); } catch (e) {}
-      $('pw').value = ''; load();
+    GMAuth.login($('au').value, $('pw').value).then(function (r) {
+      if (!r.admin) throw new Error('Esa cuenta no es admin.');
     }).catch(function (err) { $('loginErr').textContent = err.message; }).then(function () { $('loginBtn').disabled = false; });
   });
-  $('logout').addEventListener('click', function () { call('POST', '/logout').catch(function () {}); token = null; try { sessionStorage.removeItem(KEY); } catch (e) {} show('login'); });
+  $('logout').addEventListener('click', function () { GMAuth.logout(); });
 
   /* ---------- Datos ---------- */
   function load(w) {
@@ -630,22 +639,33 @@ dialog { width: min(560px, calc(100vw - 32px)); }
   }
   function renderCal() {
     var a = cal.ai;
-    $('calInfo').innerHTML = 'Cuentas del contador de calorías (separadas del torneo). Entran en <a href="/calorias/">/calorias/</a>. ' +
-      (a.enabled ? 'IA: ' + esc(a.provider) + ' · <span class="mono">' + esc(a.model) + '</span>, ' + a.limit + ' consultas por persona por día.' : '<span class="tag bad">IA sin configurar</span> falta OPENROUTER_API_KEY en el servidor.');
-    $('calUsers').innerHTML = '<thead><tr><th>Usuario</th><th>Creada</th><th>Último ingreso</th><th>Registros</th><th>Último día cargado</th><th>IA hoy</th><th>Estado</th><th></th></tr></thead><tbody>' +
+    $('calInfo').innerHTML = 'Una cuenta para todo el sitio: calorías, el torneo (si tiene un jugador unido) y, si es admin, este panel, la agenda y el asistente. ' +
+      (a.enabled ? 'IA de calorías: ' + esc(a.provider) + ' · <span class="mono">' + esc(a.model) + '</span>, ' + a.limit + ' por persona por día.' : '<span class="tag bad">IA sin configurar</span> falta OPENROUTER_API_KEY en el servidor.');
+    var used = {}; cal.users.forEach(function (u) { if (u.player_id) used[u.player_id] = u.username; });
+    $('calUsers').innerHTML = '<thead><tr><th>Usuario</th><th>Rol</th><th>Jugador de sudoku</th><th>Calorías</th><th>IA hoy</th><th>Último ingreso</th><th>Estado</th><th></th></tr></thead><tbody>' +
       (cal.users.map(function (u) {
-        return '<tr><td><b>' + esc(u.username) + '</b></td><td>' + dfmt(u.created_at, { day: 'numeric', month: 'short', year: 'numeric' }) + '</td><td>' + dfmt(u.last_login) + '</td>' +
-          '<td>' + u.entries + '</td><td>' + (u.last_entry ? u.last_entry.split('-').reverse().join('/') : '–') + '</td><td>' + (u.ai_today || 0) + ' / ' + a.limit + '</td>' +
+        var sel = '<select class="cal-sel" data-cpl="' + u.id + '" aria-label="Jugador de sudoku de ' + esc(u.username) + '"><option value="">— sin jugador —</option>' +
+          cal.players.map(function (p) { var mine = p.id === u.player_id, taken = used[p.id] && !mine; return '<option value="' + p.id + '"' + (mine ? ' selected' : '') + (taken ? ' disabled' : '') + '>' + esc(p.name) + (taken ? ' (' + esc(used[p.id]) + ')' : '') + '</option>'; }).join('') + '</select>';
+        return '<tr><td><b>' + esc(u.username) + '</b></td><td>' + (u.is_admin ? '<span class="pill ok">admin</span>' : '<span class="dim">cuenta</span>') + '</td><td>' + sel + '</td>' +
+          '<td>' + u.entries + ' reg.' + (u.last_entry ? ' · ' + u.last_entry.split('-').reverse().slice(0, 2).join('/') : '') + '</td><td>' + (u.ai_today || 0) + ' / ' + a.limit + '</td><td>' + dfmt(u.last_login) + '</td>' +
           '<td>' + (u.disabled ? '<span class="pill bad">deshabilitada</span>' : '<span class="pill ok">activa</span>') + '</td>' +
           '<td><div class="actions"><button class="btn small ghost" type="button" data-cpw="' + u.id + '">Contraseña</button>' +
+          '<button class="btn small ghost" type="button" data-cadm="' + u.id + '">' + (u.is_admin ? 'Quitar admin' : 'Hacer admin') + '</button>' +
           '<button class="btn small ghost" type="button" data-cdis="' + u.id + '">' + (u.disabled ? 'Habilitar' : 'Deshabilitar') + '</button>' +
           '<button class="btn small danger" type="button" data-cdel="' + u.id + '">Borrar</button></div></td></tr>';
-      }).join('') || '<tr><td colspan="8" class="dim">Todavía no hay cuentas. Creá la tuya con "Crear cuenta".</td></tr>') + '</tbody>';
+      }).join('') || '<tr><td colspan="8" class="dim">Todavía no hay cuentas.</td></tr>') + '</tbody>';
   }
+  $('calUsers').addEventListener('change', function (e) {
+    var s2 = e.target.closest('select[data-cpl]'); if (!s2) return;
+    var u = calUser(+s2.dataset.cpl);
+    call('POST', '/admin/cal/users/' + u.id, { player_id: s2.value ? +s2.value : null })
+      .then(function () { toast(s2.value ? 'Jugador unido a ' + u.username : 'Jugador separado de ' + u.username); loadCal(); })
+      .catch(function (err) { toast(err.message); loadCal(); });
+  });
   function calUser(id) { return cal.users.filter(function (u) { return u.id === id; })[0]; }
   $('calAdd').addEventListener('click', function () {
     dialog({
-      title: 'Nueva cuenta de calorías', text: 'Pasale el usuario y la contraseña a la persona. Después la puede cambiar desde su menú.',
+      title: 'Nueva cuenta', text: 'Pasale el usuario y la contraseña a la persona. Después la puede cambiar desde el menú de su cuenta, arriba a la derecha.',
       fields: [{ id: 'u', label: 'Usuario (minúsculas, sin espacios)' }, { id: 'p', label: 'Contraseña (mínimo 8 caracteres)', type: 'text' }],
       ok: 'Crear', run: function (v) { return call('POST', '/admin/cal/users', { username: v.u.trim().toLowerCase(), password: v.p }); }
     }).then(function (v) { if (v) { toast('Cuenta creada'); loadCal(); } });
@@ -657,6 +677,9 @@ dialog { width: min(560px, calc(100vw - 32px)); }
       dialog({ title: 'Nueva contraseña para ' + u.username, text: 'Cierra sus sesiones abiertas.', fields: [{ id: 'p', label: 'Contraseña (mínimo 8 caracteres)', type: 'text' }],
         ok: 'Guardar', run: function (v) { return call('POST', '/admin/cal/users/' + u.id, { password: v.p }); } })
         .then(function (v) { if (v) toast('Contraseña cambiada'); });
+    } else if (b.dataset.cadm) {
+      var ua = calUser(+b.dataset.cadm);
+      call('POST', '/admin/cal/users/' + ua.id, { is_admin: !ua.is_admin }).then(function () { toast(ua.is_admin ? 'Ya no es admin' : 'Ahora es admin'); loadCal(); }).catch(function (err) { toast(err.message); });
     } else if (b.dataset.cdis) {
       var u2 = calUser(+b.dataset.cdis);
       call('POST', '/admin/cal/users/' + u2.id, { disabled: !u2.disabled }).then(function () { toast(u2.disabled ? 'Cuenta habilitada' : 'Cuenta deshabilitada'); loadCal(); }).catch(function (err) { toast(err.message); });
@@ -671,7 +694,7 @@ dialog { width: min(560px, calc(100vw - 32px)); }
   setInterval(pollLive, 3000);
 
   setInterval(function () { if (token && data && !document.hidden && !$('dlg').open) load(week); }, 30000);
-  if (token) load(); else show('login');
+  if (token) load(); else { show('login'); if (gm && !gm.admin) $('loginErr').textContent = 'Tu cuenta no es admin.'; }
 })();
 </script>
 <script>

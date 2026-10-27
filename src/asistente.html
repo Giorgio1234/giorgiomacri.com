@@ -47,12 +47,13 @@ main { flex: 1; min-height: 0; width: 100%; max-width: 760px; margin: 0 auto; di
 <header class="top">
   <a class="mark" href="/">giorgiomacri<span>/</span><em>asistente</em></a>
   <button class="icon-btn" type="button" id="themeBtn" aria-label="Cambiar tema"></button>
+  <span id="gmAuth"></span>
   <button class="link" type="button" id="logout" hidden>Salir</button>
 </header>
 <main>
   <form class="login" id="loginView" hidden novalidate>
     <h1>Asistente</h1>
-    <p>Entrá con el usuario de tu agenda.</p>
+    <p>Solo para la cuenta de admin.</p>
     <label class="field">Usuario<input class="f" id="lUser" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
     <label class="field">Contraseña<input class="f" id="lPass" type="password" autocomplete="current-password"></label>
     <p class="err" id="lErr" role="alert"></p>
@@ -61,6 +62,9 @@ main { flex: 1; min-height: 0; width: 100%; max-width: 760px; margin: 0 auto; di
   <div id="chatBox" hidden></div>
 </main>
 
+<script>
+/*@shared/auth.js*/
+</script>
 <script>
 /*@shared/chat.js*/
 </script>
@@ -73,7 +77,7 @@ main { flex: 1; min-height: 0; width: 100%; max-width: 760px; margin: 0 auto; di
   try { token = localStorage.getItem(KEY); } catch (e) {}
   function today() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
   function show(app) {
-    $('loginView').hidden = app; $('chatBox').hidden = !app; $('logout').hidden = !app;
+    $('loginView').hidden = app; $('chatBox').hidden = !app;
     if (app && !chat) chat = GMChat.mount({ mode: 'page', el: $('chatBox'), page: 'asistente', token: function () { return token; }, date: today, onAuth: function () { logout(true); } });
     if (app && chat) chat.refresh();
     if (!app) setTimeout(function () { $('lUser').focus(); }, 30);
@@ -87,9 +91,8 @@ main { flex: 1; min-height: 0; width: 100%; max-width: 760px; margin: 0 auto; di
   $('logout').addEventListener('click', function () { logout(false); });
   $('loginView').addEventListener('submit', function (e) {
     e.preventDefault(); $('lErr').textContent = ''; $('lBtn').disabled = true;
-    fetch('/api/sudoku/agenda/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: $('lUser').value, password: $('lPass').value }) })
-      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.error || 'No se pudo entrar.'); return j; }); })
-      .then(function (j) { token = j.token; try { localStorage.setItem(KEY, token); } catch (er) {} $('lPass').value = ''; show(true); })
+    GMAuth.login($('lUser').value, $('lPass').value)
+      .then(function (r) { if (!r.admin) throw new Error('El asistente es solo para la cuenta de admin.'); })
       .catch(function (err) { $('lErr').textContent = err.message === 'Failed to fetch' ? 'Sin conexión.' : err.message; })
       .then(function () { $('lBtn').disabled = false; });
   });
@@ -104,5 +107,6 @@ main { flex: 1; min-height: 0; width: 100%; max-width: 760px; margin: 0 auto; di
   paint();
 
   show(!!token);
+  var gm = window.GMAuth && GMAuth.me(); if (!token && gm && !gm.admin) $('lErr').textContent = 'El asistente es solo para la cuenta de admin.';
 })();
 </script>

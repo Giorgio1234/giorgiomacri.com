@@ -18,7 +18,7 @@
       <a href="/sudoku/torneo/">Torneo</a>
       <a href="/sudoku/posiciones/">Posiciones</a>
     </nav>
-    <div class="nav-right" id="acct"></div>
+    <div class="nav-right"><span id="gmAuth"></span></div>
   </div>
 </header>
 
@@ -34,7 +34,7 @@
 </main>
 
 <script>
-/*@shared/account.js*/
+/*@shared/auth.js*/
 </script>
 <script>
 /*@shared/generator.js*/
@@ -89,7 +89,7 @@
     var a = window.gmAccount && gmAccount.get(), w = $('who');
     w.hidden = false;
     if (a) w.textContent = 'Tus partidas se guardan en tu cuenta.';
-    else w.innerHTML = '<a href="/sudoku/torneo/">Entrá</a> para guardar tus partidas.';
+    else { w.innerHTML = '<a href="#">Entrá</a> para guardar tus partidas.'; w.querySelector('a').onclick = function (e) { e.preventDefault(); if (window.GMAuth) GMAuth.open(); }; }
   }
   showWho();
   document.addEventListener('gm-account', showWho);

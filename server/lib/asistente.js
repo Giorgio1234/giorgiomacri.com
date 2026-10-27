@@ -42,13 +42,8 @@ module.exports = function install(d) {
   /* ---------- Acceso: solo el dueño ---------- */
   function owner(req) {
     const s = sessionFrom(req);
-    if (s && s.is_admin === 2) return true; // sesión de la agenda
-    const m = /^Bearer (.+)$/.exec(req.headers.authorization || '');
-    if (m) {
-      const r = db.prepare('SELECT u.username, u.disabled, s.created_at FROM cal_sessions s JOIN cal_users u ON u.id = s.user_id WHERE s.token_hash = ?').get(sha(m[1]));
-      if (r && !r.disabled && Date.now() - r.created_at < 90 * DAY_MS && r.username === OWNER()) return true;
-    }
-    fail(401, 'El asistente es solo para el dueño. Entrá con tu cuenta.');
+    if (s && (s.is_admin === 2 || (s.account && s.account.is_admin))) return true; // sesión vieja de la agenda o cuenta admin
+    fail(401, 'El asistente es solo para el admin. Entrá con tu cuenta.');
   }
   function calUid() {
     const u = db.prepare('SELECT id FROM cal_users WHERE username = ?').get(OWNER());

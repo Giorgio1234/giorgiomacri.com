@@ -157,7 +157,7 @@ input.f.bad { border-color: var(--lose); }
 <header class="top">
   <div class="wrap top-in">
     <a class="mark" href="/">giorgiomacri<span>/</span></a>
-    <button class="icon-btn" type="button" id="themeBtn" aria-label="Cambiar tema"></button>
+    <div style="display:flex;align-items:center;gap:8px"><span id="gmAuth"></span><button class="icon-btn" type="button" id="themeBtn" aria-label="Cambiar tema"></button></div>
   </div>
 </header>
 
@@ -525,4 +525,7 @@ input.f.bad { border-color: var(--lose); }
   window.__poker = { parseAmount: parseAmount, compute: function (rows, mode) { var keep = S; S = { rows: rows, buyin: '', cur: '$', mode: mode || 'winners' }; var r = compute(); S = keep; return r; } };
   buildRows(); update();
 })();
+</script>
+<script>
+/*@shared/auth.js*/
 </script>
