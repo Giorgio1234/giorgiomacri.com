@@ -1,0 +1,624 @@
+<title>Admin del Torneo</title>
+<meta name="robots" content="noindex">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap">
+<script>try{var t=localStorage.getItem('gm-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<style>
+/*@shared/ui.css*/
+.page { max-width: 1080px; }
+.nav-in { max-width: 1080px; }
+.login { max-width: 340px; margin: 40px auto 0; display: flex; flex-direction: column; gap: 12px; }
+.login h1 { margin: 0; font-size: 26px; font-weight: 600; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 14px; font-weight: 500; }
+.field input, .field select { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; font-size: 16px; background: var(--surface); }
+.err { color: var(--red); font-size: 14px; margin: 0; min-height: 1.2em; }
+
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 20px; margin-bottom: 18px; }
+.top h1 { margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
+.top .sub { color: var(--text-2); font-size: 15px; }
+.top-actions { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 26px; }
+.kpi { background: var(--panel); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kpi small { color: var(--muted); font-size: 13px; }
+.kpi b { font-size: 24px; font-weight: 600; overflow-wrap: anywhere; }
+.kpi .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+section.block { margin-bottom: 30px; }
+h2 { font-size: 18px; font-weight: 600; margin: 0 0 10px; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { text-align: left; font-weight: 500; color: var(--muted); padding: 10px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 9px 10px; border-bottom: 1px solid var(--border-soft); white-space: nowrap; vertical-align: middle; }
+tr:last-child td { border-bottom: 0; }
+.st th:not(.pl), .st td:not(.pl) { text-align: center; }
+.st { min-width: 760px; }
+.st td.day { padding: 4px; }
+.st td.day button {
+  width: 100%; border: 0; background: transparent; border-radius: 6px; padding: 6px 4px; line-height: 1.15;
+}
+.st td.day button:hover { background: var(--tile); }
+.st td.day button:disabled { cursor: default; }
+.st td.day button:disabled:hover { background: transparent; }
+.st .tot { font-weight: 600; }
+.st tr.banned td { color: var(--muted); text-decoration: line-through; }
+.x { color: var(--red); }
+.dim { color: var(--muted); }
+.dots { display: block; font-size: 9px; letter-spacing: 1px; color: var(--red); margin-top: 2px; }
+.pill { display: inline-block; font-size: 12px; padding: 3px 8px; border-radius: 999px; background: var(--tile); }
+.pill.ok { background: var(--ok-bg); color: var(--green); }
+.pill.bad { background: var(--bad-bg); color: var(--red); }
+.actions { display: flex; gap: 6px; flex-wrap: nowrap; }
+
+dialog { border: 0; border-radius: 10px; padding: 0; width: min(440px, calc(100vw - 32px)); box-shadow: 0 20px 60px var(--shadow); color: var(--navy); background: var(--surface); }
+dialog::backdrop { background: var(--overlay); }
+.dlg { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.dlg h3 { margin: 0; font-size: 19px; font-weight: 600; }
+.dlg p { margin: 0; color: var(--text-2); }
+.dlg dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; font-size: 14px; }
+.dlg dt { color: var(--muted); }
+.dlg dd { margin: 0; }
+.dlg ol { margin: 0; padding-left: 20px; font-size: 14px; }
+.dlg .btns { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+.sec-head h2 { margin: 0; }
+.hint { margin: 0 0 10px; font-size: 13px; color: var(--muted); }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+.ua { display: block; font-size: 12px; color: var(--muted); }
+.tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--warn-bg); color: var(--warn-fg); margin: 1px 0; }
+.tag.bad { background: var(--bad-bg); color: var(--red); }
+td.chk { width: 36px; }
+td.chk input, th.chk input { width: 18px; height: 18px; }
+.dlg .list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; max-height: 40vh; overflow: auto; }
+.dlg .list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; }
+.dlg .list label { display: flex; align-items: center; gap: 8px; }
+.dlg h4 { margin: 6px 0 0; font-size: 14px; font-weight: 600; }
+.dlg table { font-size: 13px; }
+.dlg td, .dlg th { padding: 6px 6px; }
+dialog { width: min(560px, calc(100vw - 32px)); }
+.live-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--muted); margin-right: 8px; vertical-align: middle; }
+.live-dot.on { background: var(--green); animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .live-dot.on { animation: none; } }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.filters button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 13px; }
+.filters button[aria-pressed="true"] { background: var(--inverse-bg); border-color: var(--inverse-bg); color: var(--inverse-fg); }
+.live-box { max-height: 420px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
+.live-box table { font-size: 13px; }
+.live-box thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.live-box td { padding: 7px 10px; }
+.live-box tr.new td { animation: newrow 2.5s ease; }
+@keyframes newrow { 0% { background: var(--flash-row); } 100% { background: transparent; } }
+.ev { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--tile); color: var(--text-2); }
+.ev.alta { background: var(--info-bg); color: var(--blue); }
+.ev.ingreso { background: var(--ok-bg); color: var(--green); }
+.ev.partida { background: var(--purple-bg); color: var(--purple-fg); }
+.ev.rechazado { background: var(--bad-bg); color: var(--red); }
+.check { display: flex; align-items: center; gap: 10px; font-size: 15px; cursor: pointer; }
+.check input { width: 18px; height: 18px; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--inverse-bg); color: var(--inverse-fg); padding: 10px 16px; border-radius: 8px; font-size: 14px; z-index: 10; }
+</style>
+
+<header class="nav">
+  <div class="nav-in">
+    <a class="brand" href="/sudoku/">Sudoku</a>
+    <nav class="tabs" aria-label="Secciones">
+      <a href="/sudoku/torneo/">Torneo</a>
+      <a href="/sudoku/admin/" aria-current="page">Admin</a>
+    </nav>
+    <div class="nav-right"><button class="link" type="button" id="logout" hidden>Salir</button></div>
+  </div>
+</header>
+
+<main class="page">
+  <section id="vLogin" hidden>
+    <form class="login" id="loginForm" novalidate>
+      <h1>Administración</h1>
+      <div class="field"><label for="pw">Contraseña</label><input id="pw" type="password" autocomplete="current-password"></div>
+      <p class="err" id="loginErr" role="alert"></p>
+      <button class="btn" type="submit" id="loginBtn">Entrar</button>
+    </form>
+  </section>
+
+  <section id="vDash" hidden>
+    <div class="top">
+      <div>
+        <h1 id="title">Torneo</h1>
+        <div class="sub" id="sub"></div>
+      </div>
+      <div class="top-actions">
+        <div class="field"><label for="weekSel">Semana</label><select id="weekSel"></select></div>
+        <button class="btn ghost" type="button" id="refresh">Actualizar</button>
+      </div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><small>Código de invitación</small><div class="row"><b id="kCode">–</b><button class="link" type="button" id="editCode">Cambiar</button></div></div>
+      <div class="kpi"><small>Jugadores activos</small><b id="kPlayers">–</b></div>
+      <div class="kpi"><small>Tableros resueltos</small><b id="kSolved">–</b></div>
+      <div class="kpi"><small>Jugando ahora</small><b id="kPlaying">–</b></div>
+    </div>
+
+    <section class="block">
+      <div class="sec-head">
+        <h2><span class="live-dot" id="liveDot"></span>En vivo</h2>
+        <div class="filters" id="liveFilters" role="group" aria-label="Filtrar">
+          <button type="button" data-f="all" aria-pressed="true">Todo</button>
+          <button type="button" data-f="cuentas" aria-pressed="false">Cuentas</button>
+          <button type="button" data-f="rechazado" aria-pressed="false">Rechazos</button>
+          <button type="button" data-f="visita" aria-pressed="false">Visitas</button>
+        </div>
+      </div>
+      <p class="hint" id="liveInfo">Conectando…</p>
+      <div class="live-box"><table id="live"></table></div>
+    </section>
+
+    <section class="block">
+      <h2>Posiciones</h2>
+      <div class="table-wrap"><table class="st" id="standings"></table></div>
+    </section>
+
+    <section class="block">
+      <h2>Tableros de la semana</h2>
+      <div class="table-wrap"><table id="boards"></table></div>
+    </section>
+
+    <section class="block">
+      <div class="sec-head">
+        <h2>Jugadores</h2>
+        <button class="btn small danger" type="button" id="bulkDel" disabled>Eliminar seleccionados</button>
+      </div>
+      <p class="hint">Las cuentas más nuevas aparecen primero. "Comparte" avisa cuando otra cuenta se conectó desde la misma IP o el mismo dispositivo.</p>
+      <div class="table-wrap"><table id="players"></table></div>
+    </section>
+
+    <section class="block">
+      <div class="sec-head">
+        <h2>Carteles</h2>
+        <button class="btn small" type="button" id="addNotice">Agregar cartel</button>
+      </div>
+      <p class="hint" id="myIp"></p>
+      <div class="table-wrap"><table id="notices"></table></div>
+    </section>
+
+    <section class="block">
+      <h2>Bloqueos</h2>
+      <div class="table-wrap"><table id="bans"></table></div>
+    </section>
+  </section>
+</main>
+
+<dialog id="dlg"><form class="dlg" id="dlgForm" method="dialog"></form></dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  'use strict';
+  var API = '/api/sudoku';
+  var TZ = 'America/Argentina/Buenos_Aires';
+  var KEY = 'gm-torneo-admin';
+  var $ = function (id) { return document.getElementById(id); };
+  var token = null, data = null, week = null;
+  try { token = sessionStorage.getItem(KEY); } catch (e) {}
+
+  function call(method, path, body) {
+    var h = { 'Content-Type': 'application/json' };
+    if (token) h.Authorization = 'Bearer ' + token;
+    return fetch(API + path, { method: method, headers: h, body: body ? JSON.stringify(body) : undefined })
+      .catch(function () { throw new Error('No hay conexión con el servidor.'); })
+      .then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (!r.ok) {
+            if (r.status === 401 && path !== '/admin/login') { token = null; try { sessionStorage.removeItem(KEY); } catch (e) {} show('login'); }
+            var e = new Error(j.error || 'Algo falló (' + r.status + ').'); e.status = r.status; throw e;
+          }
+          return j;
+        });
+      });
+  }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function fmt(s) { s = Math.max(0, s | 0); var m = (s / 60) | 0, x = s % 60; return (m < 10 ? '0' : '') + m + ':' + (x < 10 ? '0' : '') + x; }
+  function fmtTotal(s) { var h = (s / 3600) | 0; if (!h) return fmt(s); var m = ((s % 3600) / 60) | 0, x = s % 60; return h + ':' + (m < 10 ? '0' : '') + m + ':' + (x < 10 ? '0' : '') + x; }
+  function dfmt(ms, o) { return ms ? new Intl.DateTimeFormat('es-AR', Object.assign({ timeZone: TZ }, o || { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })).format(new Date(ms)) : '–'; }
+  function shortUa(ua) {
+    if (!ua) return '–';
+    var os = /iPhone|iPad/.test(ua) ? (/iPad/.test(ua) ? 'iPad' : 'iPhone') : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac OS X|Macintosh/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'Otro';
+    var br = /Edg\//.test(ua) ? 'Edge' : /OPR\/|Opera/.test(ua) ? 'Opera' : /Firefox\//.test(ua) ? 'Firefox' : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : /curl|python|node|axios|Go-http/i.test(ua) ? 'Script' : 'Otro';
+    return br + ' · ' + os;
+  }
+  function shortDev(d) { return d ? d.slice(0, 8) : 'sin id'; }
+  var EVENT = { alta: 'Se registró', ingreso: 'Entró', partida: 'Empezó tablero', visita: 'Visita', rechazado: 'Rechazado' };
+  function toast(msg) { var t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { t.hidden = true; }, 2600); }
+  function show(v) { $('vLogin').hidden = v !== 'login'; $('vDash').hidden = v !== 'dash'; $('logout').hidden = v !== 'dash'; }
+
+  /* ---------- Diálogo ---------- */
+  // fields: [{id, label, type, value, inputmode}] ; resolve con valores o null
+  function dialog(o) {
+    return new Promise(function (resolve) {
+      var f = $('dlgForm'), d = $('dlg');
+      var html = '<h3>' + esc(o.title) + '</h3>' + (o.html || (o.text ? '<p>' + esc(o.text) + '</p>' : ''));
+      (o.fields || []).forEach(function (x) {
+        if (x.type === 'select') {
+          html += '<div class="field"><label for="f_' + x.id + '">' + esc(x.label) + '</label><select id="f_' + x.id + '">' +
+            x.options.map(function (o2) { return '<option value="' + esc(o2[0]) + '"' + (o2[0] === x.value ? ' selected' : '') + '>' + esc(o2[1]) + '</option>'; }).join('') + '</select></div>';
+          return;
+        }
+        if (x.type === 'checkbox') {
+          html += '<label class="check"><input id="f_' + x.id + '" type="checkbox"' + (x.value ? ' checked' : '') + '> ' + esc(x.label) + '</label>';
+          return;
+        }
+        html += '<div class="field"><label for="f_' + x.id + '">' + esc(x.label) + '</label><input id="f_' + x.id + '" type="' + (x.type || 'text') + '"' + (x.inputmode ? ' inputmode="' + x.inputmode + '"' : '') + ' value="' + esc(x.value || '') + '"></div>';
+      });
+      html += '<p class="err" id="dlgErr"></p><div class="btns">' +
+        (o.extra ? '<button class="btn ' + (o.extra.danger ? 'danger' : 'ghost') + '" type="button" id="dlgExtra">' + esc(o.extra.label) + '</button>' : '') +
+        '<button class="btn ghost" type="button" id="dlgCancel">' + esc(o.cancel || 'Cancelar') + '</button>' +
+        (o.ok ? '<button class="btn' + (o.danger ? ' danger' : '') + '" type="submit" id="dlgOk">' + esc(o.ok) + '</button>' : '') + '</div>';
+      f.innerHTML = html;
+      function done(v) { d.close(); resolve(v); }
+      $('dlgCancel').onclick = function () { done(null); };
+      if (o.extra) $('dlgExtra').onclick = function () { d.close(); o.extra.onClick(); resolve(null); };
+      f.onsubmit = function (e) {
+        e.preventDefault();
+        var vals = {}; (o.fields || []).forEach(function (x) { var el = $('f_' + x.id); vals[x.id] = x.type === 'checkbox' ? el.checked : el.value; });
+        if (!o.run) return done(vals);
+        $('dlgOk').disabled = true;
+        Promise.resolve(o.run(vals)).then(function () { done(vals); }, function (err) { $('dlgErr').textContent = err.message; $('dlgOk').disabled = false; });
+      };
+      d.onclose = function () { resolve(null); };
+      d.showModal();
+      var first = f.querySelector('input'); if (first) first.focus();
+    });
+  }
+
+  /* ---------- Login ---------- */
+  $('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault(); $('loginErr').textContent = ''; $('loginBtn').disabled = true;
+    call('POST', '/admin/login', { password: $('pw').value }).then(function (r) {
+      token = r.token; try { sessionStorage.setItem(KEY, token); } catch (e) {}
+      $('pw').value = ''; load();
+    }).catch(function (err) { $('loginErr').textContent = err.message; }).then(function () { $('loginBtn').disabled = false; });
+  });
+  $('logout').addEventListener('click', function () { call('POST', '/logout').catch(function () {}); token = null; try { sessionStorage.removeItem(KEY); } catch (e) {} show('login'); });
+
+  /* ---------- Datos ---------- */
+  function load(w) {
+    return call('GET', '/admin/overview' + (w ? '?week=' + w : '')).then(function (r) { data = r; week = r.week; show('dash'); render(); if (!liveLast) pollLive(); })
+      .catch(function (e) { if (e.status !== 401) toast(e.message); });
+  }
+  $('refresh').addEventListener('click', function () { load(week).then(function () { toast('Actualizado'); }); });
+  $('weekSel').addEventListener('change', function () { load(this.value); });
+
+  function render() {
+    var r = data;
+    $('title').textContent = 'Semana del ' + dfmt(r.start, { day: 'numeric', month: 'short' }) + ' al ' + dfmt(r.end - 1, { day: 'numeric', month: 'short' });
+    $('sub').textContent = r.closed ? 'Semana cerrada' : 'En curso · cierra el domingo 23:59';
+    $('weekSel').innerHTML = r.weeks.map(function (w) { return '<option value="' + w + '"' + (w === r.week ? ' selected' : '') + '>' + w + (w === r.current ? ' (actual)' : '') + '</option>'; }).join('');
+
+    var active = r.standings.filter(function (s) { return !s.banned; });
+    var solved = 0, playing = 0;
+    r.standings.forEach(function (s) { s.days.forEach(function (c) { if (c.status === 'solved') solved++; if (c.status === 'playing') playing++; }); });
+    $('kCode').textContent = r.inviteCode;
+    $('kPlayers').textContent = active.length;
+    $('kSolved').textContent = solved + ' / ' + active.length * 7;
+    $('kPlaying').textContent = playing;
+
+    // Posiciones
+    var head = '<thead><tr><th>#</th><th class="pl">Jugador</th>' + r.days.map(function (d) { return '<th>' + d.name.slice(0, 3) + '</th>'; }).join('') + '<th>Total</th><th>Err.</th></tr></thead>';
+    var rows = r.standings.map(function (s) {
+      return '<tr class="' + (s.banned ? 'banned' : '') + '"><td>' + (s.position || '–') + '</td><td class="pl">' + esc(s.name) + '</td>' +
+        s.days.map(function (c, d) {
+          var dots = c.errors ? '<span class="dots">' + '●'.repeat(c.errors) + '</span>' : '';
+          var t = { solved: fmt(c.score), eliminated: '<span class="x">✕</span>', timeout: '<span class="x">30:00</span>', playing: '<span class="dim">' + fmt(c.live) + (c.paused ? ' ⏸' : '…') + '</span>', missed: '<span class="dim">30:00</span>', open: '<span class="dim">–</span>', locked: '' }[c.status];
+          var clickable = ['solved', 'eliminated', 'timeout', 'playing'].indexOf(c.status) >= 0;
+          return '<td class="day"><button type="button" data-p="' + s.id + '" data-d="' + d + '"' + (clickable ? '' : ' disabled') + '>' + t + dots + '</button></td>';
+        }).join('') + '<td class="tot">' + fmtTotal(s.total) + '</td><td>' + s.errors + '</td></tr>';
+    }).join('');
+    $('standings').innerHTML = head + '<tbody>' + (rows || '<tr><td colspan="11" class="dim">Sin jugadores.</td></tr>') + '</tbody>';
+
+    // Tableros
+    $('boards').innerHTML = '<thead><tr><th>Día</th><th>Se abre</th><th>Intentos</th><th>Generado</th><th></th></tr></thead><tbody>' +
+      r.days.map(function (d) {
+        var b = r.boards.filter(function (x) { return x.day === d.day; })[0];
+        return '<tr><td>' + d.name + '</td><td>' + dfmt(d.unlockAt, { weekday: 'short', day: 'numeric', month: 'numeric' }) + ' 00:00 ' + (d.unlocked ? '<span class="pill ok">abierto</span>' : '<span class="pill">bloqueado</span>') + '</td>' +
+          '<td>' + (b ? b.attempts : 0) + '</td><td class="dim">' + (b ? dfmt(b.createdAt) : '–') + '</td>' +
+          '<td>' + (r.closed || !b ? '' : '<button class="btn small ghost" type="button" data-regen="' + d.day + '">Regenerar</button>') + '</td></tr>';
+      }).join('') + '</tbody>';
+
+    // Jugadores
+    var players = r.players.slice().sort(function (a, b) { return b.createdAt - a.createdAt; });
+    $('players').innerHTML = '<thead><tr><th class="chk"><input type="checkbox" id="chkAll" aria-label="Seleccionar todos"></th><th>Apodo</th><th>Se unió</th><th>IP</th><th>Dispositivo</th><th>Comparte</th><th>Intentos</th><th>Libres</th><th>Estado</th><th></th></tr></thead><tbody>' +
+      (players.map(function (p) {
+        var share = (p.sharedIp ? '<span class="tag">IP con ' + p.sharedIp + '</span> ' : '') + (p.sharedDevice ? '<span class="tag bad">disp. con ' + p.sharedDevice + '</span>' : '');
+        return '<tr><td class="chk"><input type="checkbox" data-sel="' + p.id + '" aria-label="Seleccionar ' + esc(p.name) + '"></td>' +
+          '<td>' + esc(p.name) + '</td><td class="dim">' + dfmt(p.createdAt, { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }) + '</td>' +
+          '<td class="mono">' + esc(p.signupIp || p.lastIp || '–') + '</td>' +
+          '<td>' + esc(shortUa(p.ua)) + '<span class="ua mono">' + esc(shortDev(p.device)) + '</span></td>' +
+          '<td>' + (share || '<span class="dim">–</span>') + '</td>' +
+          '<td>' + p.attempts + '</td>' +
+          '<td>' + (p.freePlayed ? p.freeSolved + ' / ' + p.freePlayed : '<span class="dim">–</span>') + '</td>' +
+          '<td>' + (p.banned ? '<span class="pill bad">suspendido</span>' : p.originBanned ? '<span class="pill bad">origen bloqueado</span>' : '<span class="pill ok">activo</span>') + '</td>' +
+          '<td><div class="actions">' +
+            '<button class="btn small" type="button" data-act="log" data-id="' + p.id + '">Accesos</button>' +
+            '<button class="btn small ghost" type="button" data-act="free" data-id="' + p.id + '">Libres</button>' +
+            '<button class="btn small ghost" type="button" data-act="rename" data-id="' + p.id + '">Renombrar</button>' +
+            '<button class="btn small ghost" type="button" data-act="pin" data-id="' + p.id + '">Nuevo PIN</button>' +
+            '<button class="btn small ghost" type="button" data-act="ban" data-id="' + p.id + '">' + (p.banned ? 'Reactivar' : 'Suspender') + '</button>' +
+            '<button class="btn small danger" type="button" data-act="delete" data-id="' + p.id + '">Eliminar</button>' +
+          '</div></td></tr>';
+      }).join('') || '<tr><td colspan="10" class="dim">Todavía no se unió nadie. Pasales el link y el código.</td></tr>') + '</tbody>';
+    updateBulk();
+
+    // Carteles
+    $('myIp').textContent = 'Quien entre desde una de estas IPs o dispositivos ve el mensaje al abrir Libre, Torneo o Posiciones. Si hay cartel para su dispositivo y para su IP, ve el del dispositivo. Tu IP ahora: ' + (r.myIp || '–') + '.';
+    $('notices').innerHTML = '<thead><tr><th>Para</th><th>Mensaje</th><th>Se muestra</th><th>Crear cuentas</th><th>Desde</th><th></th></tr></thead><tbody>' +
+      ((r.notices || []).map(function (n) {
+        return '<tr><td><span class="dim">' + (n.kind === 'device' ? 'Dispositivo' : 'IP') + '</span><br><span class="mono">' + esc(n.kind === 'device' ? shortDev(n.value) + '…' : n.value) + '</span></td><td style="white-space:normal;min-width:16rem">' + esc(n.message) + '</td><td>' + (n.showAlways ? 'Siempre' : 'Una vez') + '</td><td>' + (n.allowSignup ? '<span class="pill ok">permitido</span>' : '<span class="pill bad">bloqueado</span>') + '</td><td class="dim">' + dfmt(n.createdAt, { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }) + '</td>' +
+          '<td><div class="actions"><button class="btn small ghost" type="button" data-nedit="' + n.id + '">Editar</button><button class="btn small ghost" type="button" data-ndel="' + n.id + '">Quitar</button></div></td></tr>';
+      }).join('') || '<tr><td colspan="6" class="dim">No hay carteles.</td></tr>') + '</tbody>';
+
+    // Bloqueos
+    $('bans').innerHTML = '<thead><tr><th>Tipo</th><th>Valor</th><th>Nota</th><th>Desde</th><th></th></tr></thead><tbody>' +
+      (r.bans.map(function (b) {
+        return '<tr><td>' + (b.kind === 'ip' ? 'IP' : 'Dispositivo') + '</td><td class="mono">' + esc(b.value) + '</td><td>' + esc(b.note || '') + '</td><td class="dim">' + dfmt(b.createdAt, { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }) + '</td>' +
+          '<td><button class="btn small ghost" type="button" data-unban="' + b.id + '">Quitar</button></td></tr>';
+      }).join('') || '<tr><td colspan="5" class="dim">No hay bloqueos.</td></tr>') + '</tbody>';
+  }
+
+  /* ---------- Selección y borrado masivo ---------- */
+  function selected() { return Array.prototype.map.call(document.querySelectorAll('#players input[data-sel]:checked'), function (c) { return +c.dataset.sel; }); }
+  function updateBulk() {
+    var n = selected().length;
+    $('bulkDel').disabled = !n;
+    $('bulkDel').textContent = n ? 'Eliminar seleccionados (' + n + ')' : 'Eliminar seleccionados';
+  }
+  $('players').addEventListener('change', function (e) {
+    if (e.target.id === 'chkAll') document.querySelectorAll('#players input[data-sel]').forEach(function (c) { c.checked = e.target.checked; });
+    updateBulk();
+  });
+  $('bulkDel').addEventListener('click', function () {
+    var ids = selected(); if (!ids.length) return;
+    var names = ids.map(function (id) { return player(id).name; });
+    dialog({ title: 'Eliminar ' + ids.length + (ids.length === 1 ? ' jugador' : ' jugadores'), html: '<p>Se borran con todos sus intentos. No se puede deshacer.</p><p>' + names.map(esc).join(', ') + '</p>', ok: 'Eliminar', danger: true,
+      run: function () { return call('POST', '/admin/players/delete', { ids: ids }); } })
+      .then(function (v) { if (v) { toast('Eliminados'); load(week); } });
+  });
+
+  /* ---------- Accesos y bloqueos ---------- */
+  function isBanned(bans, kind, value) { return bans.some(function (b) { return b.kind === kind && b.value === value; }); }
+  function showLog(p) {
+    call('GET', '/admin/players/' + p.id + '/log').then(function (r) {
+      var row = function (kind, v) {
+        var banned = isBanned(r.bans, kind, v);
+        return '<li><span class="mono">' + esc(kind === 'device' ? shortDev(v) + '…' : v) + '</span>' +
+          '<span class="actions"><button class="btn small ghost" type="button" data-nk="' + kind + '" data-nv="' + esc(v) + '">Cartel</button>' +
+          (banned ? '<span class="pill bad">bloqueado</span>' : '<button class="btn small danger" type="button" data-bk="' + kind + '" data-bv="' + esc(v) + '">Bloquear</button>') + '</span></li>';
+      };
+      var html =
+        '<h4>IPs</h4><ul class="list">' + (r.ips.map(function (v) { return row('ip', v); }).join('') || '<li class="dim">Sin registros todavía</li>') + '</ul>' +
+        '<h4>Dispositivos</h4><ul class="list">' + (r.devices.map(function (v) { return row('device', v); }).join('') || '<li class="dim">Sin identificador</li>') + '</ul>' +
+        (r.related.length ? '<h4>Otras cuentas desde el mismo origen</h4><p>' + r.related.map(function (x) { return esc(x.name); }).join(', ') + '</p>' : '') +
+        '<h4>Últimos accesos</h4><div class="table-wrap"><table><thead><tr><th>Cuándo</th><th>Qué</th><th>IP</th><th>Navegador</th></tr></thead><tbody>' +
+        (r.log.slice(0, 30).map(function (l) {
+          return '<tr><td>' + dfmt(l.at, { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }) + '</td><td>' + (EVENT[l.event] || l.event) + '</td><td class="mono">' + esc(l.ip) + '</td><td>' + esc(shortUa(l.ua)) + '</td></tr>';
+        }).join('') || '<tr><td colspan="4" class="dim">Se registró antes de que existiera este registro.</td></tr>') + '</tbody></table></div>';
+      dialog({ title: 'Accesos de ' + p.name, html: html, cancel: 'Cerrar' });
+      $('dlgForm').querySelectorAll('button[data-bk]').forEach(function (b) {
+        b.addEventListener('click', function () { $('dlg').close(); confirmBan(b.dataset.bk, b.dataset.bv); });
+      });
+      $('dlgForm').querySelectorAll('button[data-nk]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          $('dlg').close();
+          var existing = (data.notices || []).filter(function (x) { return x.kind === b.dataset.nk && x.value === b.dataset.nv; })[0];
+          editNotice(existing || { kind: b.dataset.nk, value: b.dataset.nv });
+        });
+      });
+    }).catch(function (e) { toast(e.message); });
+  }
+  var LEVELS = ['Muy fácil', 'Fácil', 'Media', 'Difícil', 'Experto'];
+  function showFree(p) {
+    call('GET', '/admin/players/' + p.id + '/free').then(function (r) {
+      var total = r.summary.reduce(function (a, x) { return a + x.played; }, 0);
+      var sum = '<div class="table-wrap"><table><thead><tr><th>Dificultad</th><th>Resueltas</th><th>Mejor</th><th>Promedio</th></tr></thead><tbody>' +
+        r.summary.map(function (x) {
+          return '<tr><td>' + x.name + '</td><td>' + x.solved + ' / ' + x.played + '</td><td>' + (x.best != null ? fmt(x.best) : '–') + '</td><td>' + (x.avg != null ? fmt(x.avg) : '–') + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+      var st = { solved: '<span class="pill ok">resuelta</span>', abandoned: '<span class="pill">abandonada</span>', playing: '<span class="pill">en curso</span>' };
+      var list = '<div class="table-wrap"><table><thead><tr><th>Cuándo</th><th>Dificultad</th><th>Estado</th><th>Tiempo</th><th>Errores</th><th>Pistas</th></tr></thead><tbody>' +
+        (r.games.map(function (g) {
+          var done = g.status === 'solved';
+          return '<tr><td>' + dfmt(g.startedAt, { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }) + '</td><td>' + LEVELS[g.difficulty] + '</td><td>' + (st[g.status] || g.status) + '</td>' +
+            '<td>' + (done ? fmt(g.seconds) : '–') + '</td><td>' + (done ? g.mistakes : '–') + '</td><td>' + (done ? g.hints : '–') + '</td></tr>';
+        }).join('') || '<tr><td colspan="6" class="dim">Sin partidas.</td></tr>') + '</tbody></table></div>';
+      dialog({ title: 'Juegos libres de ' + p.name, html: total ? '<h4>Resumen</h4>' + sum + '<h4>Últimas partidas</h4>' + list : '<p>Todavía no jugó en modo libre con su cuenta. Se registran las partidas que juega en un navegador donde entró al torneo.</p>', cancel: 'Cerrar' });
+    }).catch(function (e) { toast(e.message); });
+  }
+  function confirmBan(kind, value) {
+    call('GET', '/admin/origin?kind=' + kind + '&value=' + encodeURIComponent(value)).then(function (r) {
+      var label = kind === 'ip' ? 'la IP ' + value : 'el dispositivo ' + shortDev(value) + '…';
+      var list = r.players.map(function (x) {
+        return '<li><label><input type="checkbox" data-del="' + x.id + '"' + (x.attempts ? '' : ' checked') + '> ' + esc(x.name) + '</label><span class="dim">' + x.attempts + ' intento(s)</span></li>';
+      }).join('');
+      var html = '<p>Desde ' + esc(label) + ' no se va a poder registrar, entrar ni jugar.' + (kind === 'ip' ? ' Ojo: si un amigo usa la misma red o la misma operadora móvil, también queda bloqueado.' : '') + '</p>' +
+        (list ? '<h4>Cuentas que usaron este origen. Marcá las que querés borrar:</h4><ul class="list">' + list + '</ul>' : '');
+      dialog({ title: 'Bloquear ' + label, html: html, fields: [{ id: 'note', label: 'Nota (opcional)', value: 'Cuentas basura' }], ok: 'Bloquear', danger: true,
+        run: function (v) {
+          var ids = Array.prototype.map.call(document.querySelectorAll('#dlgForm input[data-del]:checked'), function (c) { return +c.dataset.del; });
+          return call('POST', '/admin/bans', { kind: kind, value: value, note: v.note }).then(function () {
+            if (ids.length) return call('POST', '/admin/players/delete', { ids: ids });
+          });
+        } })
+        .then(function (v) { if (v) { toast('Bloqueado'); load(week); } });
+    }).catch(function (e) { toast(e.message); });
+  }
+  // n: cartel existente, o { kind, value } para uno nuevo con destino ya elegido
+  function editNotice(n) {
+    var isNew = !n || !n.id;
+    dialog({ title: isNew ? 'Nuevo cartel' : 'Editar cartel', text: 'El mensaje aparece en una ventana al entrar al sudoku. Si lo editás, vuelve a aparecer aunque ya lo hayan visto. Si destildás "Puede crear cuentas", desde ahí no se pueden crear cuentas nuevas; las que ya existen siguen entrando.',
+      fields: [
+        { id: 'kind', label: 'Para', type: 'select', value: (n && n.kind) || 'ip', options: [['ip', 'Una IP'], ['device', 'Un dispositivo']] },
+        { id: 'value', label: 'IP o identificador del dispositivo', value: (n && n.value) || '' },
+        { id: 'message', label: 'Mensaje', value: (n && n.message) || '' },
+        { id: 'always', label: 'Mostrarlo cada vez que abre una página (si no, una sola vez por navegador)', type: 'checkbox', value: n && n.id ? n.showAlways : true },
+        { id: 'allow', label: 'Puede crear cuentas nuevas', type: 'checkbox', value: n && n.id ? n.allowSignup : true }
+      ], ok: 'Guardar',
+      run: function (v) { return call('POST', '/admin/notices', { kind: v.kind, value: v.value, message: v.message, allowSignup: v.allow, showAlways: v.always }); } })
+      .then(function (v) { if (v) { toast('Cartel guardado'); load(week); } });
+  }
+  $('addNotice').addEventListener('click', function () { editNotice(null); });
+  $('notices').addEventListener('click', function (e) {
+    var ed = e.target.closest('button[data-nedit]'), del = e.target.closest('button[data-ndel]');
+    var find = function (id) { return data.notices.filter(function (x) { return x.id === id; })[0]; };
+    if (ed) editNotice(find(+ed.dataset.nedit));
+    if (del) {
+      var n = find(+del.dataset.ndel);
+      dialog({ title: 'Quitar cartel', text: (n.kind === 'device' ? 'Ese dispositivo' : 'La IP ' + n.value) + ' ya no va a ver el mensaje.', ok: 'Quitar',
+        run: function () { return call('DELETE', '/admin/notices/' + n.id); } })
+        .then(function (v) { if (v) { toast('Cartel quitado'); load(week); } });
+    }
+  });
+
+  $('bans').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-unban]'); if (!b) return;
+    var ban = data.bans.filter(function (x) { return x.id === +b.dataset.unban; })[0];
+    dialog({ title: 'Quitar bloqueo', text: 'Se vuelve a permitir el acceso desde ' + (ban.kind === 'ip' ? 'la IP ' + ban.value : 'ese dispositivo') + '.', ok: 'Quitar',
+      run: function () { return call('DELETE', '/admin/bans/' + ban.id); } })
+      .then(function (v) { if (v) { toast('Bloqueo quitado'); load(week); } });
+  });
+
+  /* ---------- Acciones ---------- */
+  function player(id) { return data.players.filter(function (p) { return p.id === id; })[0]; }
+
+  $('editCode').addEventListener('click', function () {
+    dialog({ title: 'Código de invitación', text: 'Lo necesita quien entra por primera vez. Cambiarlo no afecta a los que ya se unieron.', fields: [{ id: 'code', label: 'Código', value: data.inviteCode }], ok: 'Guardar',
+      run: function (v) { return call('POST', '/admin/settings', { inviteCode: v.code }); } })
+      .then(function (v) { if (v) { toast('Código actualizado'); load(week); } });
+  });
+
+  $('standings').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-p]'); if (!b) return;
+    var s = data.standings.filter(function (x) { return x.id === +b.dataset.p; })[0], d = +b.dataset.d, c = s.days[d];
+    var label = { solved: 'Resuelto', eliminated: 'Eliminado (3 errores)', timeout: 'Sin tiempo', playing: 'En curso' }[c.status];
+    var log = (c.errorLog || []).map(function (x) {
+      return '<li>' + dfmt(x.at, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' · fila ' + ((x.cell / 9 | 0) + 1) + ', columna ' + (x.cell % 9 + 1) + ': puso ' + x.value + '</li>';
+    }).join('');
+    var html = '<dl><dt>Estado</dt><dd>' + label + '</dd><dt>Empezó</dt><dd>' + dfmt(c.startedAt) + '</dd><dt>Terminó</dt><dd>' + dfmt(c.finishedAt) + '</dd>' +
+      '<dt>Puntaje</dt><dd>' + (c.score != null ? fmt(c.score) : fmt(c.live) + (c.paused ? ' (en pausa)' : ' (en vivo)')) + '</dd><dt>Errores</dt><dd>' + c.errors + '</dd>' +
+      '<dt>Pausas</dt><dd>' + (c.pauses ? c.pauses + ' · ' + fmt(c.pausedS) + ' en pausa' : 'ninguna') + '</dd></dl>' +
+      (log ? '<ol>' + log + '</ol>' : '');
+    dialog({ title: s.name + ' · ' + data.days[d].name, html: html, cancel: 'Cerrar',
+      extra: data.closed ? null : { label: 'Reiniciar intento', danger: true, onClick: function () { confirmReset(s, d); } } });
+  });
+  function confirmReset(s, d) {
+    dialog({ title: 'Reiniciar intento', text: 'Se borra el intento de ' + s.name + ' en el tablero del ' + data.days[d].name.toLowerCase() + '. Va a poder jugarlo de nuevo desde cero, con el mismo tablero.', ok: 'Reiniciar', danger: true,
+      run: function () { return call('POST', '/admin/attempts/reset', { playerId: s.id, week: week, day: d }); } })
+      .then(function (v) { if (v) { toast('Intento reiniciado'); load(week); } });
+  }
+
+  $('boards').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-regen]'); if (!b) return;
+    var d = +b.dataset.regen, info = data.boards.filter(function (x) { return x.day === d; })[0];
+    var n = info ? info.attempts : 0;
+    dialog({ title: 'Regenerar el tablero del ' + data.days[d].name.toLowerCase(), text: n ? 'Hay ' + n + ' intento(s) en este tablero. Se borran y todos lo juegan de nuevo con un tablero nuevo.' : 'Se crea un tablero Experto nuevo para ese día.', ok: 'Regenerar', danger: n > 0,
+      run: function () { return call('POST', '/admin/boards/regenerate', { week: week, day: d, force: n > 0 }); } })
+      .then(function (v) { if (v) { toast('Tablero regenerado'); load(week); } });
+  });
+
+  $('players').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-act]'); if (!b) return;
+    var p = player(+b.dataset.id), act = b.dataset.act, path = '/admin/players/' + p.id, p2;
+    if (act === 'log') return showLog(p);
+    if (act === 'free') return showFree(p);
+    if (act === 'rename') p2 = dialog({ title: 'Renombrar a ' + p.name, fields: [{ id: 'name', label: 'Apodo nuevo', value: p.name }], ok: 'Guardar', run: function (v) { return call('POST', path, { name: v.name }); } });
+    if (act === 'pin') p2 = dialog({ title: 'Nuevo PIN para ' + p.name, text: 'Se cierran sus sesiones abiertas. Pasale el PIN nuevo.', fields: [{ id: 'pin', label: 'PIN (4 a 8 números)', inputmode: 'numeric' }], ok: 'Guardar', run: function (v) { return call('POST', path, { pin: v.pin }); } });
+    if (act === 'ban') p2 = dialog({ title: (p.banned ? 'Reactivar a ' : 'Suspender a ') + p.name, text: p.banned ? 'Vuelve a aparecer en las posiciones y puede jugar.' : 'No puede jugar y sale de las posiciones. Sus intentos se conservan.', ok: p.banned ? 'Reactivar' : 'Suspender', danger: !p.banned, run: function () { return call('POST', path, { banned: !p.banned }); } });
+    if (act === 'delete') p2 = dialog({ title: 'Eliminar a ' + p.name, text: 'Se borran el jugador y todos sus intentos, de todas las semanas. No se puede deshacer.', ok: 'Eliminar', danger: true, run: function () { return call('DELETE', path); } });
+    p2.then(function (v) { if (v) { toast('Listo'); load(week); } });
+  });
+
+  /* ---------- En vivo ---------- */
+  var liveRows = [], liveLast = 0, liveFilter = 'all', liveMeta = null, liveBusy = false;
+  function liveMatch(r) {
+    if (liveFilter === 'all') return true;
+    if (liveFilter === 'cuentas') return r.event === 'alta' || r.event === 'ingreso' || r.event === 'partida';
+    return r.event === liveFilter;
+  }
+  function renderLive(newIds) {
+    var rows = liveRows.filter(liveMatch).slice(0, 300);
+    $('live').innerHTML = '<thead><tr><th>Hora</th><th>Qué</th><th>Jugador</th><th>Detalle</th><th>IP</th><th>Dispositivo</th><th></th></tr></thead><tbody>' +
+      (rows.map(function (r) {
+        var flagged = liveMeta && (liveMeta.bans.some(function (b) { return (b.kind === 'ip' && b.value === r.ip) || (b.kind === 'device' && b.value === r.device); }));
+        return '<tr' + (newIds && newIds[r.id] ? ' class="new"' : '') + '>' +
+          '<td class="mono">' + dfmt(r.at, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + '</td>' +
+          '<td><span class="ev ' + r.event + '">' + (EVENT[r.event] || r.event) + '</span></td>' +
+          '<td>' + (r.name ? esc(r.name) : '<span class="dim">–</span>') + '</td>' +
+          '<td style="white-space:normal;min-width:12rem">' + esc(r.detail || r.page || '') + '</td>' +
+          '<td class="mono">' + esc(r.ip) + (flagged ? ' <span class="pill bad">bloqueado</span>' : '') + '</td>' +
+          '<td>' + esc(shortUa(r.ua)) + '<span class="ua mono">' + esc(shortDev(r.device)) + '</span></td>' +
+          '<td><button class="btn small ghost" type="button" data-live="' + r.id + '">Opciones</button></td></tr>';
+      }).join('') || '<tr><td colspan="7" class="dim">Todavía no hay conexiones para mostrar.</td></tr>') + '</tbody>';
+  }
+  function pollLive() {
+    if (!token || liveBusy || document.hidden || $('vDash').hidden) return;
+    liveBusy = true;
+    call('GET', '/admin/live?after=' + liveLast).then(function (r) {
+      liveMeta = r;
+      var newIds = {};
+      if (r.rows.length) {
+        if (liveLast) r.rows.forEach(function (x) { newIds[x.id] = true; });
+        liveRows = r.rows.concat(liveRows).slice(0, 1000);
+        liveLast = r.rows[0].id;
+      }
+      $('liveDot').classList.add('on');
+      $('liveInfo').textContent = r.active + (r.active === 1 ? ' origen activo' : ' orígenes activos') + ' en los últimos 5 minutos · se actualiza cada 3 segundos';
+      if (r.rows.length || !$('live').innerHTML) renderLive(newIds);
+    }).catch(function () {
+      $('liveDot').classList.remove('on');
+      $('liveInfo').textContent = 'Sin conexión con el servidor. Reintentando…';
+    }).then(function () { liveBusy = false; });
+  }
+  $('liveFilters').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-f]'); if (!b) return;
+    liveFilter = b.dataset.f;
+    $('liveFilters').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    renderLive();
+  });
+  $('live').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-live]'); if (!b) return;
+    var r = liveRows.filter(function (x) { return x.id === +b.dataset.live; })[0];
+    originOptions(r);
+  });
+  // Cartel o bloqueo para la IP o el dispositivo de una conexión
+  function originOptions(r) {
+    var item = function (kind, v, label) {
+      var banned = liveMeta.bans.some(function (x) { return x.kind === kind && x.value === v; });
+      return '<li><span><span class="dim">' + label + '</span> <span class="mono">' + esc(kind === 'device' ? shortDev(v) + '…' : v) + '</span></span>' +
+        '<span class="actions"><button class="btn small ghost" type="button" data-nk="' + kind + '" data-nv="' + esc(v) + '">Cartel</button>' +
+        (banned ? '<span class="pill bad">bloqueado</span>' : '<button class="btn small danger" type="button" data-bk="' + kind + '" data-bv="' + esc(v) + '">Bloquear</button>') + '</span></li>';
+    };
+    var html = '<dl><dt>Hora</dt><dd>' + dfmt(r.at) + '</dd><dt>Qué</dt><dd>' + (EVENT[r.event] || r.event) + (r.detail ? ' · ' + esc(r.detail) : '') + (r.page ? ' · ' + esc(r.page) : '') + '</dd>' +
+      '<dt>Jugador</dt><dd>' + (r.name ? esc(r.name) : '–') + '</dd><dt>Navegador</dt><dd>' + esc(shortUa(r.ua)) + '</dd></dl>' +
+      '<ul class="list">' + item('ip', r.ip, 'IP') + (r.device ? item('device', r.device, 'Dispositivo') : '') + '</ul>';
+    dialog({ title: 'Conexión', html: html, cancel: 'Cerrar' });
+    $('dlgForm').querySelectorAll('button[data-bk]').forEach(function (x) {
+      x.addEventListener('click', function () { $('dlg').close(); confirmBan(x.dataset.bk, x.dataset.bv); });
+    });
+    $('dlgForm').querySelectorAll('button[data-nk]').forEach(function (x) {
+      x.addEventListener('click', function () {
+        $('dlg').close();
+        var existing = (data.notices || []).filter(function (n) { return n.kind === x.dataset.nk && n.value === x.dataset.nv; })[0];
+        editNotice(existing || { kind: x.dataset.nk, value: x.dataset.nv });
+      });
+    });
+  }
+  setInterval(pollLive, 3000);
+
+  setInterval(function () { if (token && data && !document.hidden && !$('dlg').open) load(week); }, 30000);
+  if (token) load(); else show('login');
+})();
+</script>
+<script>
+/*@shared/theme.js*/
+</script>

@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deudas de Poker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#0f0f14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap">
+<script>try{var t=localStorage.getItem('gm-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<style>
+/* Layout: herramienta de una columna. Barra mínima, titular, mesa de jugadores (filas en PC, tarjetas en celular),
+   totales en una franja y el resultado como lista de pagos lista para copiar al grupo. Paño verde como acento. */
+:root {
+  --bg: #0f0f14;
+  --card: #1b1b23;
+  --card-2: #23232d;
+  --line: #2a2a35;
+  --fg: #f1efe9;
+  --fg-2: #a3a1ad;
+  --fg-3: #6d6b78;
+  --felt: #2f8f5b;
+  --felt-soft: #173226;
+  --on-felt: #ffffff;
+  --win: #6fd59a;
+  --lose: #ff8a8a;
+  --warn-bg: #3a2e14;
+  --warn-fg: #f0c46a;
+  --field: #14141a;
+  --font: 'Inter Tight', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f6f5f1; --card: #ffffff; --card-2: #f3f1ec; --line: #e2dfd7; --fg: #15141a; --fg-2: #5d5b66; --fg-3: #8d8a95;
+    --felt: #1f7a4b; --felt-soft: #e3f3ea; --on-felt: #ffffff; --win: #1f8a52; --lose: #c0392b; --warn-bg: #fdf0d5; --warn-fg: #8a5a00; --field: #ffffff;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f6f5f1; --card: #ffffff; --card-2: #f3f1ec; --line: #e2dfd7; --fg: #15141a; --fg-2: #5d5b66; --fg-3: #8d8a95;
+  --felt: #1f7a4b; --felt-soft: #e3f3ea; --on-felt: #ffffff; --win: #1f8a52; --lose: #c0392b; --warn-bg: #fdf0d5; --warn-fg: #8a5a00; --field: #ffffff;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font); font-size: 16px; line-height: 1.4; font-feature-settings: "tnum" on; -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--felt); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.wrap {
+  max-width: 820px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+.top { border-bottom: 1px solid var(--line); }
+.top-in { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px; }
+.mark { font-weight: 700; font-size: 18px; letter-spacing: -0.02em; text-decoration: none; color: var(--fg); }
+.mark span { color: #fd9b65; }
+.icon-btn { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); display: grid; place-items: center; padding: 0; color: var(--fg-2); }
+.icon-btn:hover { color: var(--fg); }
+
+.hero { padding-block: 32px 20px; }
+.hero h1 { margin: 0; font-size: clamp(34px, 6vw, 56px); line-height: 1; letter-spacing: -0.035em; font-weight: 700; }
+.hero p { margin: 12px 0 0; color: var(--fg-2); max-width: 56ch; }
+
+/* Ajustes rápidos */
+.settings { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-end; margin-bottom: 14px; }
+.setting { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--fg-2); }
+.setting input { width: 140px; }
+
+input.f {
+  height: 42px; border: 1px solid var(--line); border-radius: 10px; background: var(--field); padding: 0 12px; font-size: 16px; min-width: 0; width: 100%;
+}
+input.f:focus { outline: none; border-color: var(--felt); box-shadow: 0 0 0 3px color-mix(in srgb, var(--felt) 25%, transparent); }
+input.f::placeholder { color: var(--fg-3); }
+input.f.bad { border-color: var(--lose); }
+
+/* Mesa */
+.table { background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.thead, .prow { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) minmax(0, 1fr) 110px 40px; gap: 10px; align-items: center; padding: 10px 14px; }
+.thead { color: var(--fg-3); font-size: 13px; border-bottom: 1px solid var(--line); padding-block: 10px; }
+.thead span:nth-child(4) { text-align: right; }
+.prow + .prow { border-top: 1px solid var(--line); }
+.entry { display: flex; gap: 6px; min-width: 0; }
+.rebuy { flex: none; height: 42px; border: 1px solid var(--line); border-radius: 10px; background: var(--card-2); padding: 0 10px; font-size: 14px; color: var(--fg-2); white-space: nowrap; }
+.rebuy:hover { color: var(--fg); }
+.net { text-align: right; font-weight: 600; white-space: nowrap; }
+.net.win { color: var(--win); }
+.net.lose { color: var(--lose); }
+.net.zero { color: var(--fg-3); }
+.net .adj { color: var(--warn-fg); font-weight: 500; font-size: 12px; }
+.del { width: 40px; height: 40px; border: 0; border-radius: 10px; background: none; color: var(--fg-3); display: grid; place-items: center; padding: 0; }
+.del:hover { color: var(--lose); background: var(--card-2); }
+.lbl { display: none; }
+.add { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.btn { height: 42px; border: 0; border-radius: 10px; padding: 0 16px; background: var(--felt); color: var(--on-felt); font-weight: 600; }
+.btn:hover { filter: brightness(1.08); }
+.btn.ghost { background: var(--card-2); color: var(--fg); border: 1px solid var(--line); }
+.hint { margin: 8px 2px 0; font-size: 13px; color: var(--fg-3); }
+
+@media (max-width: 640px) {
+  .thead { display: none; }
+  .prow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px; grid-template-areas: "name name del" "entry exit exit" "net net net"; gap: 8px; padding: 14px; }
+  .prow .c-name { grid-area: name; } .prow .c-entry { grid-area: entry; } .prow .c-exit { grid-area: exit; } .prow .net { grid-area: net; text-align: left; }
+  .prow .del { grid-area: del; }
+  .lbl { display: block; font-size: 12px; color: var(--fg-3); margin-bottom: 4px; }
+  .entry .rebuy { padding: 0 8px; }
+  .settings { flex-wrap: nowrap; }
+  .setting:first-child { flex: 1 1 auto; min-width: 0; }
+  .setting:first-child input { width: 100%; }
+}
+
+/* Totales */
+.totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.tot { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; min-width: 0; }
+.tot small { display: block; color: var(--fg-3); font-size: 13px; }
+.tot b { display: block; font-size: 20px; font-weight: 700; margin-top: 2px; overflow-wrap: anywhere; }
+.tot.ok b { color: var(--win); }
+.tot.off b { color: var(--warn-fg); }
+
+/* Discrepancia */
+.warn { background: var(--warn-bg); color: var(--warn-fg); border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; }
+.warn p { margin: 0 0 10px; }
+.warn p strong { font-weight: 700; }
+.opts { display: flex; flex-direction: column; gap: 8px; color: var(--fg); }
+.opts label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.opts input { margin-top: 3px; accent-color: var(--felt); width: 18px; height: 18px; flex: none; }
+.opts small { display: block; color: var(--fg-2); }
+
+/* Resultado */
+.result { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin-bottom: 18px; }
+.result-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.result h2 { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
+.result .sub { color: var(--fg-2); font-size: 14px; }
+.pays { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.pays li { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto; align-items: center; gap: 10px; background: var(--card-2); border-radius: 12px; padding: 12px 14px; }
+.pays .who { font-weight: 600; overflow-wrap: anywhere; }
+.pays .arrow { color: var(--fg-3); }
+.pays .amt { font-weight: 700; font-size: 18px; white-space: nowrap; }
+.empty-res { color: var(--fg-2); margin: 0; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.issues { margin: 0 0 12px; padding: 0; list-style: none; color: var(--warn-fg); font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
+
+.foot { color: var(--fg-3); font-size: 13px; padding-block: 10px calc(28px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.foot button { background: none; border: 0; padding: 0; color: var(--fg-2); text-decoration: underline; text-underline-offset: 3px; }
+.toast { position: fixed; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 14px; z-index: 20; max-width: calc(100vw - 32px); }
+.confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: var(--card-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.confirm span { flex: 1 1 14rem; font-size: 14px; }
+@media (max-width: 640px) {
+  .totals { grid-template-columns: 1fr; gap: 6px; }
+  .tot { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 10px 14px; }
+  .tot b { font-size: 18px; margin: 0; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="mark" href="/">giorgiomacri<span>/</span></a>
+    <button class="icon-btn" type="button" id="themeBtn" aria-label="Cambiar tema"></button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <h1>Deudas de poker</h1>
+    <p>Anotá cuánto puso y con cuánto se fue cada uno. Te dice quién le paga a quién, con la menor cantidad de transferencias.</p>
+  </div>
+
+  <div class="settings">
+    <label class="setting">Buy-in
+      <input class="f" id="buyin" inputmode="decimal" autocomplete="off" placeholder="Ej. 5000">
+    </label>
+    <label class="setting">Moneda
+      <input class="f" id="cur" autocomplete="off" maxlength="4" style="width:80px">
+    </label>
+  </div>
+
+  <div class="table" role="table" aria-label="Jugadores">
+    <div class="thead" role="row"><span>Nombre</span><span>Entró</span><span>Salió</span><span>Resultado</span><span></span></div>
+    <div id="rows"></div>
+    <div class="add">
+      <button class="btn" type="button" id="addRow">Agregar jugador</button>
+    </div>
+  </div>
+  <p class="hint">"Entró" suma todo lo que puso: con <b>+</b> agregás una recompra del buy-in, y podés escribir sumas como <b>5000+2500</b>.</p>
+
+  <div class="totals">
+    <div class="tot"><small>Entró</small><b id="tIn">–</b></div>
+    <div class="tot"><small>Salió</small><b id="tOut">–</b></div>
+    <div class="tot" id="tDiffBox"><small>Diferencia</small><b id="tDiff">–</b></div>
+  </div>
+
+  <div class="warn" id="warn" hidden>
+    <p id="warnText"></p>
+    <div class="opts" role="radiogroup" aria-label="Cómo repartir la diferencia">
+      <label><input type="radio" name="mode" value="winners"><span>Entre los que ganaron, según cuánto ganó cada uno<small>Lo más común cuando faltan o sobran fichas al contar.</small></span></label>
+      <label><input type="radio" name="mode" value="all"><span>Entre todos por igual</span></label>
+    </div>
+  </div>
+
+  <section class="result" aria-live="polite">
+    <div class="result-head">
+      <h2>Quién le paga a quién</h2>
+      <span class="sub" id="resSub"></span>
+    </div>
+    <ul class="issues" id="issues" hidden></ul>
+    <ul class="pays" id="pays"></ul>
+    <p class="empty-res" id="emptyRes">Cargá al menos dos jugadores con lo que entró y salió.</p>
+    <div class="actions" id="actions" hidden>
+      <button class="btn" type="button" id="copy">Copiar para el grupo</button>
+    </div>
+  </section>
+
+  <div class="confirm" id="confirm" hidden>
+    <span id="confirmText"></span>
+    <button class="btn" type="button" id="confirmYes">Sí</button>
+    <button class="btn ghost" type="button" id="confirmNo">Cancelar</button>
+  </div>
+</main>
+
+<footer class="wrap foot">
+  <div>
+    <button type="button" id="newGame">Nueva partida (mismos jugadores)</button>
+    &nbsp;·&nbsp;
+    <button type="button" id="clearAll">Borrar todo</button>
+  </div>
+  <span>Se guarda en este navegador.</span>
+</footer>
+
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var KEY = 'gm-poker-v1';
+  var ICON_X = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+  /* ---------- Estado ---------- */
+  var nextId = 1;
+  var S = load();
+  function load() {
+    var s = null;
+    try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+    if (!s || !Array.isArray(s.rows)) s = { rows: [], buyin: '', cur: '$', mode: 'winners' };
+    if (!s.rows.length) s.rows = [blankRow(), blankRow()];
+    // ids únicos (repara datos guardados con ids repetidos)
+    var used = {};
+    s.rows.forEach(function (r) {
+      r.name = r.name || ''; r.entry = r.entry || ''; r.exit = r.exit || '';
+      if (!r.id || used[r.id]) r.id = newId();
+      used[r.id] = true;
+    });
+    s.cur = s.cur == null ? '$' : s.cur;
+    s.mode = s.mode === 'all' ? 'all' : 'winners';
+    return s;
+  }
+  function newId() { return 'r' + Date.now().toString(36) + '-' + (nextId++) + '-' + Math.random().toString(36).slice(2, 6); }
+  function blankRow() { return { id: newId(), name: '', entry: '', exit: '' }; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+  /* ---------- Números (acepta 1.500 · 1500,50 · 5000+2500) ---------- */
+  function parseTerm(t) {
+    t = t.replace(/\s|\$/g, '');
+    if (!t) return 0;
+    if (t.indexOf(',') >= 0) t = t.replace(/\./g, '').replace(',', '.');
+    else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, '');
+    if (!/^\d*\.?\d+$/.test(t)) return NaN;
+    return parseFloat(t);
+  }
+  function parseAmount(str) {
+    str = String(str || '').trim();
+    if (!str) return { ok: true, cents: 0, empty: true };
+    var parts = str.split('+'), total = 0;
+    for (var i = 0; i < parts.length; i++) {
+      var v = parseTerm(parts[i]);
+      if (isNaN(v)) return { ok: false, cents: 0 };
+      total += v;
+    }
+    return { ok: true, cents: Math.round(total * 100), empty: false };
+  }
+  function money(cents, sign) {
+    var neg = cents < 0, v = Math.abs(cents) / 100;
+    var txt = v.toLocaleString('es-AR', { minimumFractionDigits: cents % 100 ? 2 : 0, maximumFractionDigits: 2 });
+    var cur = S.cur ? S.cur + (S.cur.length > 1 ? ' ' : '') : '';
+    return (neg ? '−' : sign && cents > 0 ? '+' : '') + cur + txt;
+  }
+
+  /* ---------- Cálculo ---------- */
+  function compute() {
+    var players = [], issues = [], seen = {};
+    S.rows.forEach(function (r) {
+      var name = r.name.trim(), e = parseAmount(r.entry), x = parseAmount(r.exit);
+      r._badE = !e.ok; r._badX = !x.ok;
+      if (!name && e.empty && x.empty) return;
+      if (!e.ok || !x.ok) { issues.push((name || 'Una fila') + ': hay un monto que no se entiende.'); return; }
+      if (!name) { issues.push('Hay una fila con montos pero sin nombre.'); return; }
+      var key = name.toLowerCase();
+      if (seen[key]) {
+        // mismo nombre: se suma como el mismo jugador
+        seen[key].inC += e.cents; seen[key].outC += x.cents; seen[key].dup = true;
+        return;
+      }
+      seen[key] = { name: name, inC: e.cents, outC: x.cents, rows: [r.id] };
+      players.push(seen[key]);
+    });
+    players.forEach(function (p) { if (p.dup) issues.push('"' + p.name + '" aparece más de una vez: sumé sus montos.'); });
+
+    var inC = 0, outC = 0;
+    players.forEach(function (p) { inC += p.inC; outC += p.outC; p.net = p.outC - p.inC; });
+    var diff = inC - outC; // > 0: falta plata en lo que salió; < 0: sobra
+
+    // Ajuste para que todo cierre: se suma "diff" a los netos según el modo
+    var adj = {};
+    if (diff !== 0 && players.length) {
+      var targets, weights;
+      var winners = players.filter(function (p) { return p.net > 0; });
+      if (S.mode === 'winners' && winners.length) { targets = winners; weights = winners.map(function (p) { return p.net; }); }
+      else { targets = players; weights = players.map(function () { return 1; }); }
+      var wsum = weights.reduce(function (a, b) { return a + b; }, 0), given = 0;
+      var shares = targets.map(function (p, i) {
+        var exact = diff * weights[i] / wsum, base = diff > 0 ? Math.floor(exact) : Math.ceil(exact);
+        given += base; return { p: p, base: base, frac: Math.abs(exact - base) };
+      });
+      var rest = diff - given, step = rest > 0 ? 1 : -1;
+      shares.sort(function (a, b) { return b.frac - a.frac; });
+      for (var k = 0; rest !== 0; k = (k + 1) % shares.length) { shares[k].base += step; rest -= step; }
+      shares.forEach(function (sh) { adj[sh.p.name] = sh.base; sh.p.net += sh.base; });
+    }
+
+    // Pagos: el que más debe le paga al que más tiene que cobrar
+    var debt = [], cred = [];
+    players.forEach(function (p) {
+      if (p.net < 0) debt.push({ name: p.name, c: -p.net });
+      else if (p.net > 0) cred.push({ name: p.name, c: p.net });
+    });
+    debt.sort(function (a, b) { return b.c - a.c; }); cred.sort(function (a, b) { return b.c - a.c; });
+    var pays = [], i = 0, j = 0;
+    while (i < debt.length && j < cred.length) {
+      var amt = Math.min(debt[i].c, cred[j].c);
+      if (amt > 0) pays.push({ from: debt[i].name, to: cred[j].name, c: amt });
+      debt[i].c -= amt; cred[j].c -= amt;
+      if (debt[i].c === 0) i++;
+      if (cred[j].c === 0) j++;
+    }
+    return { players: players, issues: issues, inC: inC, outC: outC, diff: diff, adj: adj, pays: pays };
+  }
+
+  /* ---------- Pintar ---------- */
+  function rowHtml(r) {
+    return '<div class="prow" role="row" data-id="' + r.id + '">' +
+      '<div class="c-name"><span class="lbl">Nombre</span><input class="f" data-k="name" placeholder="Nombre" autocomplete="off" maxlength="30" aria-label="Nombre"></div>' +
+      '<div class="c-entry"><span class="lbl">Entró</span><div class="entry"><input class="f" data-k="entry" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Entró"><button class="rebuy" type="button" data-rebuy title="Sumar un buy-in">+</button></div></div>' +
+      '<div class="c-exit"><span class="lbl">Salió</span><input class="f" data-k="exit" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Salió"></div>' +
+      '<div class="net zero" data-net>–</div>' +
+      '<button class="del" type="button" data-del aria-label="Quitar jugador">' + ICON_X + '</button>' +
+    '</div>';
+  }
+  function buildRows() {
+    $('rows').innerHTML = S.rows.map(rowHtml).join('');
+    S.rows.forEach(function (r) {
+      var el = rowEl(r.id);
+      el.querySelector('[data-k="name"]').value = r.name;
+      el.querySelector('[data-k="entry"]').value = r.entry;
+      el.querySelector('[data-k="exit"]').value = r.exit;
+    });
+  }
+  function rowEl(id) { return $('rows').querySelector('.prow[data-id="' + id + '"]'); }
+
+  var last = null;
+  function update() {
+    var R = last = compute();
+    // netos por fila
+    var byName = {};
+    R.players.forEach(function (p) { byName[p.name.toLowerCase()] = p; });
+    S.rows.forEach(function (r) {
+      var el = rowEl(r.id); if (!el) return;
+      el.querySelector('[data-k="entry"]').classList.toggle('bad', !!r._badE);
+      el.querySelector('[data-k="exit"]').classList.toggle('bad', !!r._badX);
+      var p = byName[r.name.trim().toLowerCase()], n = el.querySelector('[data-net]');
+      if (!p || (!r.entry && !r.exit)) { n.textContent = '–'; n.className = 'net zero'; return; }
+      var raw = p.outC - p.inC, adj = R.adj[p.name] || 0;
+      n.textContent = raw === 0 ? 'Empata' : money(raw, true);
+      if (adj) { var sm = document.createElement('small'); sm.className = 'adj'; sm.textContent = money(adj, true) + ' dif.'; n.appendChild(document.createElement('br')); n.appendChild(sm); }
+      n.className = 'net ' + (raw > 0 ? 'win' : raw < 0 ? 'lose' : 'zero');
+    });
+    // totales
+    $('tIn').textContent = money(R.inC); $('tOut').textContent = money(R.outC);
+    $('tDiff').textContent = R.diff === 0 ? 'Cierra' : money(-R.diff, true);
+    $('tDiffBox').className = 'tot ' + (R.players.length && R.diff === 0 ? 'ok' : R.diff ? 'off' : '');
+    // discrepancia
+    $('warn').hidden = !R.diff;
+    if (R.diff) {
+      var a = money(Math.abs(R.diff));
+      $('warnText').innerHTML = R.diff > 0
+        ? '<strong>Salió ' + esc(a) + ' menos de lo que entró.</strong> Puede que falte contar fichas. Para que las cuentas cierren, esa diferencia se suma a quienes cobran:'
+        : '<strong>Salió ' + esc(a) + ' más de lo que entró.</strong> Puede que se haya contado de más o falte anotar una recompra. Para que cierre, se descuenta:';
+      document.querySelectorAll('input[name="mode"]').forEach(function (x) { x.checked = x.value === S.mode; });
+    }
+    // problemas
+    $('issues').hidden = !R.issues.length;
+    $('issues').innerHTML = R.issues.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('');
+    // pagos
+    var enough = R.players.length >= 2 && R.inC + R.outC > 0;
+    $('pays').innerHTML = enough ? R.pays.map(function (p) {
+      return '<li><span class="who">' + esc(p.from) + '</span><span class="arrow" aria-label="le paga a">→</span><span class="who">' + esc(p.to) + '</span><span class="amt">' + esc(money(p.c)) + '</span></li>';
+    }).join('') : '';
+    var nothing = enough && !R.pays.length;
+    $('emptyRes').hidden = enough && !nothing;
+    $('emptyRes').textContent = nothing ? 'Nadie le debe nada a nadie.' : 'Cargá al menos dos jugadores con lo que entró y salió.';
+    $('resSub').textContent = enough && R.pays.length ? plural(R.pays.length, 'transferencia', 'transferencias') : '';
+    $('actions').hidden = !(enough && R.pays.length);
+  }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function plural(n, a, b) { return n + ' ' + (n === 1 ? a : b); }
+
+  /* ---------- Eventos ---------- */
+  $('rows').addEventListener('input', function (e) {
+    var inp = e.target.closest('input[data-k]'); if (!inp) return;
+    var r = findRow(inp.closest('.prow').dataset.id); r[inp.dataset.k] = inp.value;
+    save(); update();
+  });
+  $('rows').addEventListener('click', function (e) {
+    var row = e.target.closest('.prow'); if (!row) return;
+    var r = findRow(row.dataset.id);
+    if (e.target.closest('[data-del]')) {
+      S.rows = S.rows.filter(function (x) { return x !== r; });
+      if (!S.rows.length) S.rows.push(blankRow());
+      save(); buildRows(); update(); return;
+    }
+    if (e.target.closest('[data-rebuy]')) {
+      var b = parseAmount(S.buyin);
+      if (!b.ok || !b.cents) { toast('Poné el buy-in arriba para sumar recompras.'); $('buyin').focus(); return; }
+      var cur = String(r.entry || '').trim();
+      r.entry = cur ? cur + '+' + S.buyin.trim() : S.buyin.trim();
+      row.querySelector('[data-k="entry"]').value = r.entry;
+      save(); update();
+    }
+  });
+  // Enter en "Salió" de la última fila agrega otro jugador
+  $('rows').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    var inp = e.target.closest('input[data-k]'); if (!inp) return;
+    var rows = $('rows').querySelectorAll('.prow');
+    if (inp.dataset.k === 'exit' && inp.closest('.prow') === rows[rows.length - 1]) { e.preventDefault(); addRow(); }
+    else {
+      var all = Array.prototype.slice.call($('rows').querySelectorAll('input[data-k]'));
+      var nx = all[all.indexOf(inp) + 1]; if (nx) { e.preventDefault(); nx.focus(); }
+    }
+  });
+  function findRow(id) { return S.rows.filter(function (x) { return x.id === id; })[0]; }
+  function addRow() {
+    var r = blankRow(); if (S.buyin.trim()) r.entry = S.buyin.trim();
+    S.rows.push(r); save(); buildRows(); update();
+    rowEl(r.id).querySelector('[data-k="name"]').focus();
+  }
+  $('addRow').addEventListener('click', addRow);
+  $('buyin').value = S.buyin; $('cur').value = S.cur;
+  $('buyin').addEventListener('input', function () {
+    var prev = S.buyin.trim(); S.buyin = this.value;
+    // las filas que tenían el buy-in anterior, sin tocar, toman el nuevo
+    S.rows.forEach(function (r) { if (prev && r.entry.trim() === prev && !r.name.trim()) r.entry = S.buyin.trim(); });
+    save(); buildRows(); update();
+  });
+  $('cur').addEventListener('input', function () { S.cur = this.value.trim(); save(); update(); });
+  document.querySelectorAll('input[name="mode"]').forEach(function (x) {
+    x.addEventListener('change', function () { S.mode = this.value; save(); update(); });
+  });
+
+  // Copiar resumen para WhatsApp
+  $('copy').addEventListener('click', function () {
+    var R = last; if (!R) return;
+    var d = new Date().toLocaleDateString('es-AR', { day: 'numeric', month: 'numeric' });
+    var lines = ['Poker ' + d, ''];
+    R.pays.forEach(function (p) { lines.push(p.from + ' → ' + p.to + ': ' + money(p.c)); });
+    lines.push('', 'Resultados:');
+    R.players.slice().sort(function (a, b) { return b.net - a.net; }).forEach(function (p) {
+      var raw = p.outC - p.inC, adj = R.adj[p.name] || 0;
+      var line = '• ' + p.name + ': ' + (p.net === 0 ? 'empata' : money(p.net, true));
+      if (adj) line += ' (' + money(raw, true) + ' en la mesa, ' + money(adj, true) + ' por la diferencia)';
+      lines.push(line);
+    });
+    if (R.diff) lines.push('', 'Diferencia de ' + money(Math.abs(R.diff)) + ' repartida ' + (S.mode === 'winners' && R.players.some(function (p) { return p.outC > p.inC; }) ? 'entre los que ganaron' : 'entre todos') + '.');
+    var text = lines.join('\n');
+    var done = function () { toast('Copiado. Pegalo en el grupo.'); };
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+    function fallback() {
+      var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) { toast('No se pudo copiar.'); }
+      ta.remove();
+    }
+  });
+
+  // Confirmaciones dentro de la página
+  var pending = null;
+  function ask(text, fn) { pending = fn; $('confirmText').textContent = text; $('confirm').hidden = false; $('confirm').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  $('confirmYes').addEventListener('click', function () { $('confirm').hidden = true; if (pending) pending(); pending = null; });
+  $('confirmNo').addEventListener('click', function () { $('confirm').hidden = true; pending = null; });
+  $('newGame').addEventListener('click', function () {
+    ask('¿Empezar otra partida con los mismos jugadores? Se borran los montos.', function () {
+      S.rows = S.rows.filter(function (r) { return r.name.trim(); }).map(function (r) { return { id: r.id, name: r.name, entry: S.buyin.trim(), exit: '' }; });
+      if (!S.rows.length) S.rows = [blankRow(), blankRow()];
+      save(); buildRows(); update();
+    });
+  });
+  $('clearAll').addEventListener('click', function () {
+    ask('¿Borrar jugadores y montos?', function () { S.rows = [blankRow(), blankRow()]; save(); buildRows(); update(); });
+  });
+
+  var tt = null;
+  function toast(m) { var t = $('toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(function () { t.hidden = true; }, 2600); }
+
+  /* ---------- Tema ---------- */
+  var root = document.documentElement, mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+  var MOON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
+  var SUN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg>';
+  function theme() { var t = root.getAttribute('data-theme'); return t === 'dark' || t === 'light' ? t : (mq && mq.matches ? 'light' : 'dark'); }
+  function paintTheme() { var d = theme() === 'dark'; $('themeBtn').innerHTML = d ? SUN : MOON; $('themeBtn').setAttribute('aria-label', d ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'); }
+  $('themeBtn').addEventListener('click', function () { var n = theme() === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', n); try { localStorage.setItem('gm-theme', n); } catch (e) {} paintTheme(); });
+  if (mq && mq.addEventListener) mq.addEventListener('change', paintTheme);
+  paintTheme();
+
+  window.__poker = { parseAmount: parseAmount, compute: function (rows, mode) { var keep = S; S = { rows: rows, buyin: '', cur: '$', mode: mode || 'winners' }; var r = compute(); S = keep; return r; } };
+  buildRows(); update();
+})();
+</script>
+</body>
+</html>

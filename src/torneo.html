@@ -1,0 +1,449 @@
+<title>Torneo de Sudoku</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap">
+<script>try{var t=localStorage.getItem('gm-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<style>
+/*@shared/ui.css*/
+
+/* Ingreso */
+.join { max-width: 380px; margin: 32px auto 0; display: flex; flex-direction: column; gap: 14px; }
+.join h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
+.join p { margin: 0; color: var(--text-2); }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 14px; font-weight: 500; }
+.field small { color: var(--muted); font-size: 13px; }
+.field input { border: 1px solid var(--line); border-radius: 6px; padding: 12px; font-size: 17px; background: var(--surface); }
+.field input:focus { outline: 2px solid var(--blue); outline-offset: -1px; border-color: transparent; }
+.err { color: var(--red); font-size: 14px; margin: 0; min-height: 1.2em; }
+
+/* Semana */
+.wk-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 20px; margin-bottom: 16px; }
+.wk-head h1 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.01em; }
+.wk-sub { color: var(--text-2); font-size: 15px; margin-top: 2px; }
+.wk-nav { display: flex; gap: 6px; align-items: center; }
+.wk-nav button { width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--tile); color: var(--blue); font-size: 18px; }
+.wk-nav button:disabled { opacity: .35; cursor: default; }
+.days { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; margin-bottom: 28px; }
+.day {
+  border: 0; border-radius: 8px; background: var(--panel); text-align: left; padding: 12px;
+  display: flex; flex-direction: column; gap: 4px; min-height: 108px; color: var(--navy);
+}
+.day:disabled { cursor: default; }
+.day .dn { font-weight: 600; }
+.day .dd { font-size: 13px; color: var(--muted); }
+.day .ds { margin-top: auto; font-size: 15px; }
+.day.open { background: var(--blue-btn); color: var(--on-accent); }
+.day.open .dd { color: rgba(255,255,255,.75); }
+.day.playing { background: var(--sel); }
+.day.solved .ds b { font-weight: 600; }
+.day.eliminated .ds, .day.timeout .ds { color: var(--red); }
+.day.locked { background: var(--locked-tile); color: var(--muted); }
+.day.today { box-shadow: inset 0 0 0 2px var(--blue); }
+.day:not(:disabled):hover { filter: brightness(0.97); }
+
+h2.sec { font-size: 18px; font-weight: 600; margin: 0 0 10px; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+table.board-table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 14px; }
+.board-table th { text-align: center; font-weight: 500; color: var(--muted); padding: 10px 6px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.board-table td { text-align: center; padding: 10px 6px; border-bottom: 1px solid var(--border-soft); white-space: nowrap; }
+.board-table tr:last-child td { border-bottom: 0; }
+.board-table .pl { text-align: left; font-weight: 500; }
+.board-table th.pl { font-weight: 500; }
+.board-table .pos { width: 40px; color: var(--muted); }
+.board-table .tot { font-weight: 600; }
+.board-table tr.me { background: var(--me-row); }
+.board-table .x { color: var(--red); }
+.board-table .dim { color: var(--muted); }
+.dots { display: block; font-size: 9px; letter-spacing: 1px; color: var(--red); line-height: 1; margin-top: 3px; }
+.legend { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+
+.back { display: inline-flex; margin-bottom: 12px; }
+</style>
+
+<header class="nav">
+  <div class="nav-in">
+    <a class="brand" href="/sudoku/">Sudoku</a>
+    <nav class="tabs" aria-label="Modo">
+      <a href="/sudoku/">Libre</a>
+      <a href="/sudoku/torneo/" aria-current="page">Torneo</a>
+      <a href="/sudoku/posiciones/">Posiciones</a>
+    </nav>
+    <div class="nav-right"><span id="who"></span><button class="link" type="button" id="logout" hidden>Salir</button></div>
+  </div>
+</header>
+
+<main class="page">
+  <!-- Ingreso -->
+  <section id="vJoin" hidden>
+    <form class="join" id="joinForm" novalidate>
+      <h1>Torneo semanal</h1>
+      <p>Un sudoku Experto por día. Gana el menor tiempo de la semana.</p>
+      <div class="field">
+        <label for="jName">Apodo</label>
+        <input id="jName" autocomplete="username" maxlength="20" required>
+      </div>
+      <div class="field">
+        <label for="jPin">PIN</label>
+        <input id="jPin" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="current-password" type="password" required>
+        <small>De 4 a 8 números. Lo usás para entrar desde otro dispositivo.</small>
+      </div>
+      <div class="field">
+        <label for="jCode">Código del torneo</label>
+        <input id="jCode" autocomplete="off" maxlength="32">
+        <small>Solo la primera vez. Si ya jugaste, alcanza con apodo y PIN.</small>
+      </div>
+      <p class="err" id="jErr" role="alert"></p>
+      <button class="btn" type="submit" id="jBtn">Entrar</button>
+    </form>
+  </section>
+
+  <!-- Semana -->
+  <section id="vWeek" hidden>
+    <div class="wk-head">
+      <div>
+        <h1 id="wkTitle">Semana</h1>
+        <div class="wk-sub" id="wkSub"></div>
+      </div>
+      <div class="wk-nav">
+        <button type="button" id="wkPrev" aria-label="Semana anterior">←</button>
+        <button type="button" id="wkNext" aria-label="Semana siguiente">→</button>
+      </div>
+    </div>
+    <div class="days" id="days"></div>
+    <h2 class="sec" style="display:flex;justify-content:space-between;align-items:baseline;gap:12px">Posiciones <a class="link" href="/sudoku/posiciones/">Abrir en pantalla aparte →</a></h2>
+    <div class="table-wrap"><table class="board-table" id="table"></table></div>
+    <p class="legend">El límite es de 30 minutos de juego: el tiempo en pausa no cuenta. Cada error suma 1 minuto. Con 3 errores, el tablero cuenta 30:00, igual que si no se juega o se pasa del límite. Si hay empate, gana quien tenga menos errores.</p>
+  </section>
+
+  <!-- Juego -->
+  <section id="vPlay" hidden>
+    <button class="link back" type="button" id="backBtn">← Volver a la semana</button>
+    <div class="banner bad" id="playErr" hidden style="margin-bottom:12px"><p></p></div>
+    <div id="game"></div>
+  </section>
+</main>
+
+<script>
+/*@shared/game.js*/
+</script>
+<script>
+(function () {
+  'use strict';
+  var API = '/api/sudoku';
+  var TZ = 'America/Argentina/Buenos_Aires';
+  var TOKEN_KEY = 'gm-torneo-token', ME_KEY = 'gm-torneo-me';
+  var $ = function (id) { return document.getElementById(id); };
+  var token = null, me = null, info = null, viewWeek = null, skew = 0;
+  try { token = localStorage.getItem(TOKEN_KEY); me = JSON.parse(localStorage.getItem(ME_KEY) || 'null'); } catch (e) {}
+
+  /* ---------- API ---------- */
+  function call(method, path, body) {
+    var h = { 'Content-Type': 'application/json', 'X-Device': deviceId() };
+    if (token) h.Authorization = 'Bearer ' + token;
+    return fetch(API + path, { method: method, headers: h, body: body ? JSON.stringify(body) : undefined })
+      .catch(function () { throw new Error('No hay conexión con el servidor.'); })
+      .then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (!r.ok) {
+            if (r.status === 401 && path !== '/join') { forget(); show('join'); }
+            var e = new Error(j.error || 'Algo falló (' + r.status + ').'); e.status = r.status; throw e;
+          }
+          if (j.now) skew = j.now - Date.now();
+          return j;
+        });
+      });
+  }
+  // Identificador al azar de este navegador (el panel de admin lo usa para detectar cuentas duplicadas)
+  function deviceId() {
+    var k = 'gm-device', d = null;
+    try { d = localStorage.getItem(k); } catch (e) {}
+    if (!d) {
+      d = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+      try { localStorage.setItem(k, d); } catch (e) {}
+    }
+    return d;
+  }
+  function forget() { token = null; me = null; try { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(ME_KEY); } catch (e) {} }
+
+  /* ---------- Formatos ---------- */
+  function fmt(s) { s = Math.max(0, s | 0); var m = (s / 60) | 0, x = s % 60; return (m < 10 ? '0' : '') + m + ':' + (x < 10 ? '0' : '') + x; }
+  function fmtTotal(s) { var h = (s / 3600) | 0; if (!h) return fmt(s); var m = ((s % 3600) / 60) | 0, x = s % 60; return h + ':' + (m < 10 ? '0' : '') + m + ':' + (x < 10 ? '0' : '') + x; }
+  function dfmt(ms, o) { return new Intl.DateTimeFormat('es-AR', Object.assign({ timeZone: TZ }, o)).format(new Date(ms)); }
+  function serverNow() { return Date.now() + skew; }
+  function until(ms) {
+    var s = Math.max(0, (ms - serverNow()) / 1000 | 0), d = s / 86400 | 0, h = (s % 86400) / 3600 | 0, m = (s % 3600) / 60 | 0;
+    return d ? d + 'd ' + h + 'h' : h ? h + 'h ' + m + 'm' : m + 'm';
+  }
+  function shiftWeek(w, n) { var d = new Date(w + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + 7 * n); return d.toISOString().slice(0, 10); }
+
+  /* ---------- Vistas ---------- */
+  var current = null;
+  function show(v) {
+    current = v;
+    $('vJoin').hidden = v !== 'join'; $('vWeek').hidden = v !== 'week'; $('vPlay').hidden = v !== 'play';
+    $('who').textContent = me && v !== 'join' ? me.name : '';
+    $('logout').hidden = !me || v === 'join';
+    if (v !== 'play') stopTimer();
+  }
+
+  /* ---------- Ingreso ---------- */
+  $('joinForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    $('jErr').textContent = ''; $('jBtn').disabled = true;
+    call('POST', '/join', { name: $('jName').value, pin: $('jPin').value, code: $('jCode').value })
+      .then(function (r) {
+        token = r.token; me = r.player;
+        try { localStorage.setItem(TOKEN_KEY, token); localStorage.setItem(ME_KEY, JSON.stringify(me)); } catch (e) {}
+        $('jPin').value = '';
+        route();
+      })
+      .catch(function (err) { $('jErr').textContent = err.message; })
+      .then(function () { $('jBtn').disabled = false; });
+  });
+  $('logout').addEventListener('click', function () { call('POST', '/logout').catch(function () {}); forget(); location.hash = ''; show('join'); });
+
+  /* ---------- Semana ---------- */
+  function loadWeek(w) {
+    return call('GET', '/week' + (w ? '?week=' + w : '')).then(function (r) { info = r; viewWeek = r.week; renderWeek(); return r; });
+  }
+  function renderWeek() {
+    var r = info, isCurrent = r.week === r.current;
+    $('wkTitle').textContent = 'Semana del ' + dfmt(r.start, { day: 'numeric', month: 'short' }) + ' al ' + dfmt(r.end - 1, { day: 'numeric', month: 'short' });
+    $('wkSub').textContent = r.closed ? 'Semana cerrada' : 'Cierra el domingo a las 23:59 · faltan ' + until(r.end);
+    var idx = r.weeks.indexOf(r.week);
+    $('wkPrev').disabled = idx < 0 || idx >= r.weeks.length - 1;
+    $('wkNext').disabled = isCurrent;
+
+    var mine = null;
+    r.standings.forEach(function (s) { if (s.id === r.me) mine = s; });
+    var todayIdx = isCurrent ? r.days.filter(function (d) { return d.unlocked; }).length - 1 : -1;
+    var days = $('days'); days.innerHTML = '';
+    r.days.forEach(function (d, i) {
+      var cell = mine ? mine.days[i] : { status: d.unlocked ? (r.closed ? 'missed' : 'open') : 'locked' };
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'day ' + cell.status + (i === todayIdx ? ' today' : '');
+      var line;
+      switch (cell.status) {
+        case 'locked': line = 'Se abre ' + dfmt(d.unlockAt, { weekday: 'short' }) + ' 00:00'; break;
+        case 'open': line = '<b>Jugar</b>'; break;
+        case 'playing': line = (cell.paused ? 'En pausa · ' : 'En curso · ') + fmt(cell.live); break;
+        case 'solved': line = '<b>' + fmt(cell.score) + '</b>' + (cell.errors ? '<br><small>' + cell.errors + (cell.errors === 1 ? ' error' : ' errores') + '</small>' : ''); break;
+        case 'eliminated': line = 'Eliminado'; break;
+        case 'timeout': line = 'Sin tiempo'; break;
+        default: line = 'No jugado';
+      }
+      b.innerHTML = '<span class="dn"></span><span class="dd"></span><span class="ds">' + line + '</span>';
+      b.querySelector('.dn').textContent = d.name;
+      b.querySelector('.dd').textContent = dfmt(d.unlockAt, { day: 'numeric', month: 'numeric' });
+      var playable = isCurrent && (cell.status === 'open' || cell.status === 'playing');
+      var viewable = ['solved', 'eliminated', 'timeout', 'playing'].indexOf(cell.status) >= 0;
+      b.disabled = !(playable || viewable);
+      b.addEventListener('click', function () { openDay(i); });
+      days.appendChild(b);
+    });
+
+    var t = $('table');
+    var head = '<thead><tr><th class="pos">#</th><th class="pl">Jugador</th>' + r.days.map(function (d) { return '<th>' + d.name.slice(0, 3) + '</th>'; }).join('') + '<th>Total</th><th>Err.</th></tr></thead>';
+    var body = r.standings.map(function (s) {
+      var tds = s.days.map(function (c) {
+        var dots = c.errors ? '<span class="dots">' + '●'.repeat(c.errors) + '</span>' : '';
+        if (c.status === 'solved') return '<td>' + fmt(c.score) + dots + '</td>';
+        if (c.status === 'eliminated') return '<td class="x">✕' + dots + '</td>';
+        if (c.status === 'timeout') return '<td class="x">30:00' + dots + '</td>';
+        if (c.status === 'playing') return '<td class="dim">' + (c.paused ? 'en pausa' : 'en curso') + dots + '</td>';
+        if (c.status === 'missed') return '<td class="dim">30:00</td>';
+        if (c.status === 'open') return '<td class="dim">–</td>';
+        return '<td></td>';
+      }).join('');
+      return '<tr' + (s.id === r.me ? ' class="me"' : '') + '><td class="pos">' + (s.position || '') + '</td><td class="pl"></td>' + tds + '<td class="tot">' + fmtTotal(s.total) + '</td><td>' + s.errors + '</td></tr>';
+    }).join('');
+    t.innerHTML = head + '<tbody>' + (body || '<tr><td colspan="11" class="dim">Todavía no hay jugadores.</td></tr>') + '</tbody>';
+    var names = t.querySelectorAll('td.pl');
+    r.standings.forEach(function (s, k) { names[k].textContent = s.name; });
+  }
+  $('wkPrev').addEventListener('click', function () { var i = info.weeks.indexOf(viewWeek); if (info.weeks[i + 1]) loadWeek(info.weeks[i + 1]); });
+  $('wkNext').addEventListener('click', function () { var i = info.weeks.indexOf(viewWeek); loadWeek(i > 0 ? info.weeks[i - 1] : info.current); });
+
+  /* ---------- Juego ---------- */
+  var att = null, playDay = -1, playWeek = null, timer = null;
+  var game = SudokuGame($('game'), {
+    tools: ['undo', 'erase', 'pencil'],
+    pausable: true,
+    onPause: onPause,
+    validate: function (cell, d) {
+      return call('POST', '/boards/' + playDay + '/move', { week: playWeek, cell: cell, value: d }).then(function (r) {
+        att = r;
+        if (r.result === 'closed' || r.result === 'filled') { applyAttempt(); return null; }
+        return { correct: r.result === 'correct', after: function () { stats(); if (r.status !== 'playing') applyAttempt(); } };
+      }).catch(function (e) { playError(e.message); return null; });
+    },
+    onChange: saveLocal
+  });
+  function notesKey() { return 'gm-torneo-notes:' + (me && me.id) + ':' + playWeek + ':' + playDay; }
+  function saveLocal() {
+    var s = game.state();
+    try { localStorage.setItem(notesKey(), JSON.stringify({ notes: s.notes, wrong: s.wrong })); } catch (e) {}
+  }
+  function loadLocal() { try { return JSON.parse(localStorage.getItem(notesKey()) || 'null'); } catch (e) { return null; } }
+  function playError(msg) { var b = $('playErr'); b.hidden = !msg; b.querySelector('p').textContent = msg || ''; }
+
+  // Tiempo según el servidor: lo jugado (sin pausas) + lo que pasó desde la última respuesta, si no está en pausa
+  function live() {
+    if (!att || !att.startedAt) return 0;
+    if (att.status !== 'playing') return att.score;
+    var extra = att.paused ? 0 : Math.max(0, Math.floor((serverNow() - att.now) / 1000));
+    return att.elapsed + extra + att.errors * att.penalty;
+  }
+
+  /* ---------- Pausa ---------- */
+  var pauseSync = false;   // true mientras el tablero se pausa por estado del servidor (no por el botón)
+  function showPaused() {
+    pauseSync = true; game.setPaused(true); pauseSync = false;
+    game.setLocked(true);
+  }
+  function onPause(paused) {
+    if (pauseSync || !att || att.status !== 'playing') return;
+    if (paused) {
+      saveLocal();
+      // tapar el tablero ya; el servidor confirma y deja de entregarlo
+      call('POST', '/boards/' + playDay + '/pause', { week: playWeek }).then(function (r) {
+        att = r;
+        if (r.status !== 'playing') return applyAttempt();
+        game.load({ puzzle: emptyBoard(), values: emptyBoard() });
+        game.setLocked(true);
+        stats();
+      }).catch(function (e) { playError(e.message); });
+    } else {
+      game.setLocked(true);
+      call('POST', '/boards/' + playDay + '/resume', { week: playWeek }).then(function (r) { att = r; applyAttempt(); })
+        .catch(function (e) { playError(e.message); showPaused(); });
+    }
+  }
+  function stats() {
+    var d = info ? info.days[playDay] : null;
+    var errs = att && att.errors != null ? att.errors : 0;
+    game.stats(
+      { label: 'Experto', value: d ? d.name : '' },
+      { label: 'Errores', value: errs + '/3', bad: errs > 0 },
+      { label: (att && att.paused ? 'En pausa' : 'Tiempo') + (errs ? ' (+' + errs + ':00)' : ''), value: fmt(live()) + ' / 30:00' }
+    );
+  }
+  function stopTimer() { if (timer) clearInterval(timer); timer = null; }
+  function startTimer() {
+    stopTimer();
+    timer = setInterval(function () {
+      stats();
+      if (att && att.status === 'playing' && !att.paused && live() >= 1800) {
+        stopTimer();
+        call('GET', '/boards/' + playDay + '?week=' + playWeek).then(function (r) { att = r; applyAttempt(); });
+      }
+    }, 500);
+  }
+
+  function emptyBoard() { var z = []; for (var i = 0; i < 81; i++) z.push(0); return z; }
+  function digits(s) { return s.split('').map(Number); }
+
+  function openDay(day) {
+    playDay = day; playWeek = viewWeek; att = null;
+    if (location.hash !== '#d' + day) history.pushState(null, '', '#d' + day);
+    playError(null);
+    show('play');
+    game.load({ puzzle: emptyBoard(), values: emptyBoard() });
+    game.setLocked(true);
+    game.footer([{ label: 'Volver a la semana', ghost: true, onClick: goWeek }]);
+    stats();
+    call('GET', '/boards/' + day + '?week=' + playWeek).then(function (r) {
+      att = r;
+      if (r.status === 'open') return showStart();
+      if (r.status === 'locked') { playError('Este tablero todavía no se desbloqueó.'); return; }
+      if (r.status === 'missed') { playError('Este tablero no se jugó.'); return; }
+      applyAttempt();
+    }).catch(function (e) { playError(e.message); });
+  }
+  function showStart() {
+    var d = info.days[playDay];
+    var box = document.createElement('div'); box.style.display = 'contents';
+    box.innerHTML =
+      '<p style="font-size:22px;font-weight:600"></p>' +
+      '<p>Al empezar corre el reloj, también si cerrás la página. Podés pausarlo con el botón junto al tiempo: en pausa el tablero se oculta.</p>' +
+      '<p>Tenés 30 minutos de juego y 3 errores. Cada error suma 1 minuto.</p>';
+    box.firstChild.textContent = d.name + ' · Experto';
+    var b = document.createElement('button'); b.className = 'btn'; b.type = 'button'; b.textContent = 'Empezar';
+    b.addEventListener('click', function () {
+      b.disabled = true;
+      call('POST', '/boards/' + playDay + '/start').then(function (r) { att = r; applyAttempt(); })
+        .catch(function (e) { b.disabled = false; playError(e.message); });
+    });
+    box.appendChild(b);
+    game.veil(box);
+  }
+  function applyAttempt() {
+    if (att.status === 'playing' && att.paused) {
+      game.load({ puzzle: emptyBoard(), values: emptyBoard() });
+      stats();
+      showPaused();
+      game.footer([{ label: 'Volver a la semana', ghost: true, onClick: goWeek }]);
+      startTimer();
+      return;
+    }
+    var local = att.status === 'playing' ? loadLocal() : null;
+    game.load({ puzzle: digits(att.puzzle), values: digits(att.grid), notes: local ? local.notes : [], wrong: local ? local.wrong : {} });
+    stats();
+    if (att.status === 'playing') {
+      game.veil(null); game.setLocked(false);
+      game.footer([
+        { label: 'Volver a la semana', ghost: true, onClick: goWeek },
+        { text: 'Teclado: números, flechas, Borrar, N para notas, Shift + número anota sin cambiar de modo.' }
+      ]);
+      startTimer();
+      return;
+    }
+    stopTimer();
+    game.setLocked(true);
+    try { localStorage.removeItem(notesKey()); } catch (e) {}
+    var title = { solved: 'Resuelto', eliminated: 'Eliminado', timeout: 'Se terminó el tiempo' }[att.status] || 'Terminado';
+    var detail = att.status === 'solved'
+      ? 'Tiempo final ' + fmt(att.score) + (att.errors ? ' (' + fmt(att.score - att.errors * 60) + ' + ' + att.errors + ':00 por errores)' : ', sin errores') + '.'
+      : att.status === 'eliminated' ? 'Llegaste a 3 errores. Este tablero cuenta 30:00.' : 'Pasaron los 30 minutos. Este tablero cuenta 30:00.';
+    var box = document.createElement('div'); box.style.display = 'contents';
+    box.innerHTML = '<p style="font-size:24px;font-weight:600"></p><p></p>';
+    box.firstChild.textContent = title; box.lastChild.textContent = detail;
+    var see = document.createElement('button'); see.className = 'btn ghost'; see.type = 'button'; see.textContent = 'Ver tablero';
+    see.addEventListener('click', function () { game.veil(null); });
+    var back = document.createElement('button'); back.className = 'btn'; back.type = 'button'; back.textContent = 'Ver posiciones';
+    back.addEventListener('click', goWeek);
+    box.appendChild(back); box.appendChild(see);
+    game.veil(box);
+    game.footer([{ label: 'Volver a la semana', ghost: true, onClick: goWeek }]);
+  }
+  function goWeek() {
+    if (location.hash) history.pushState(null, '', location.pathname + location.search);
+    show('week');
+    loadWeek(viewWeek).catch(function (e) { alertWeek(e.message); });
+  }
+  function alertWeek(msg) { $('wkSub').textContent = msg; }
+  $('backBtn').addEventListener('click', goWeek);
+  window.addEventListener('popstate', route);
+
+  /* ---------- Arranque ---------- */
+  function route() {
+    if (!token) { show('join'); return; }
+    var m = /^#d([0-6])$/.exec(location.hash);
+    var ready = info ? Promise.resolve(info) : loadWeek();
+    ready.then(function () {
+      if (m) { viewWeek = viewWeek || info.current; openDay(+m[1]); }
+      else { show('week'); renderWeek(); }
+    }).catch(function (e) { if (e.status !== 401) { show('week'); alertWeek(e.message); } });
+  }
+  setInterval(function () { if (current === 'week' && info && !document.hidden) loadWeek(viewWeek).catch(function () {}); }, 30000);
+  route();
+})();
+</script>
+<script>
+/*@shared/notice.js*/
+</script>
+<script>
+/*@shared/theme.js*/
+</script>

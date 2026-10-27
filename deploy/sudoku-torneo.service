@@ -1,0 +1,24 @@
+[Unit]
+Description=Torneo de sudoku (giorgiomacri.com)
+After=network.target
+
+[Service]
+Type=simple
+User=sudoku
+Group=sudoku
+WorkingDirectory=/opt/sudoku-torneo
+EnvironmentFile=/etc/sudoku-torneo.env
+Environment=DB_PATH=/var/lib/sudoku-torneo/torneo.db
+ExecStart=/usr/bin/node --no-warnings server.js
+Restart=on-failure
+RestartSec=3
+
+# La base de datos vive en /var/lib/sudoku-torneo (systemd crea la carpeta con el dueño correcto)
+StateDirectory=sudoku-torneo
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

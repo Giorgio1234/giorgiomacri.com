@@ -1,0 +1,189 @@
+<title>Sudoku</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap">
+<script>try{var t=localStorage.getItem('gm-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<style>
+/*@shared/ui.css*/
+.acct { margin: 0 0 10px; font-size: 13px; color: var(--muted); }
+.acct a { color: var(--blue); }
+</style>
+
+<header class="nav">
+  <div class="nav-in">
+    <a class="brand" href="/sudoku/">Sudoku</a>
+    <nav class="tabs" aria-label="Modo">
+      <a href="/sudoku/" aria-current="page">Libre</a>
+      <a href="/sudoku/torneo/">Torneo</a>
+      <a href="/sudoku/posiciones/">Posiciones</a>
+    </nav>
+    <div class="nav-right" id="acct"></div>
+  </div>
+</header>
+
+<main class="page">
+  <p class="acct" id="who" hidden></p>
+  <div class="diffbar" id="diffs" role="group" aria-label="Dificultad"><span>Dificultad:</span></div>
+  <div class="banner" id="confirm" hidden style="margin-bottom:14px">
+    <p id="confirmText">¿Empezar un juego nuevo? Se pierde el actual.</p>
+    <button class="btn small" type="button" id="yes">Sí, nuevo juego</button>
+    <button class="btn small ghost" type="button" id="no">Seguir jugando</button>
+  </div>
+  <div id="game"></div>
+</main>
+
+<script>
+/*@shared/account.js*/
+</script>
+<script>
+/*@shared/generator.js*/
+</script>
+<script>
+/*@shared/game.js*/
+</script>
+<script>
+(function () {
+  'use strict';
+  var DIFFS = [
+    { name: 'Muy fácil', clues: 46 },
+    { name: 'Fácil', clues: 39 },
+    { name: 'Media', clues: 33 },
+    { name: 'Difícil', clues: 28 },
+    { name: 'Experto', clues: 24 }
+  ];
+  var KEY = 'gm-sudoku-libre-v2';
+  var S = null, chosen = 2, pending = null, tick = null;
+  var $ = function (id) { return document.getElementById(id); };
+
+  var game = SudokuGame($('game'), {
+    tools: ['undo', 'erase', 'pencil', 'hint'],
+    hints: 3,
+    hideCompleted: true,
+    pausable: true,
+    validate: function (cell, d) {
+      var ok = S.solution[cell] === d;
+      if (!ok) S.mistakes++;
+      return { correct: ok, after: function () { stats(); checkWin(); } };
+    },
+    hint: function (cell) { return S.solution[cell]; },
+    afterHint: function () { checkWin(); },
+    onChange: save,
+    onPause: function () { stats(); },
+    footer: [
+      { label: 'Nuevo juego', onClick: function () { requestNew(chosen); } },
+      { text: 'Teclado: números, flechas, Borrar, N para notas, Shift + número anota sin cambiar de modo.' }
+    ]
+  });
+
+  DIFFS.forEach(function (df, k) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.textContent = df.name; b.dataset.k = k;
+    b.addEventListener('click', function () { requestNew(k); });
+    $('diffs').appendChild(b);
+  });
+
+  /* Registro opcional en la cuenta del torneo (si entró en este navegador) */
+  // Aviso discreto: con sesión se guardan las partidas; sin sesión, invitación a entrar
+  function showWho() {
+    var a = window.gmAccount && gmAccount.get(), w = $('who');
+    w.hidden = false;
+    if (a) w.textContent = 'Tus partidas se guardan en tu cuenta.';
+    else w.innerHTML = '<a href="/sudoku/torneo/">Entrá</a> para guardar tus partidas.';
+  }
+  showWho();
+  document.addEventListener('gm-account', showWho);
+  function track(path, body) {
+    var acct = window.gmAccount && gmAccount.get();
+    if (!acct) return Promise.resolve(null);
+    var dev = null; try { dev = localStorage.getItem('gm-device'); } catch (e) {}
+    var h = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + acct.token };
+    if (dev) h['X-Device'] = dev;
+    return fetch('/api/sudoku' + path, { method: 'POST', headers: h, body: JSON.stringify(body) })
+      .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+  }
+  function fmt(s) { var m = (s / 60) | 0, x = s % 60; return (m < 10 ? '0' : '') + m + ':' + (x < 10 ? '0' : '') + x; }
+  function stats() {
+    if (!S) return;
+    game.stats(
+      { label: 'Dificultad', value: DIFFS[S.diff].name },
+      { label: 'Errores', value: String(S.mistakes) },
+      { label: 'Tiempo', value: fmt(S.elapsed) }
+    );
+    document.querySelectorAll('#diffs button').forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.k === chosen)); });
+  }
+  function save() {
+    if (!S) return;
+    var g = game.state();
+    S.values = g.values; S.wrong = g.wrong; S.notes = g.notes; S.hintsLeft = g.hintsLeft;
+    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+  }
+  function load() {
+    try { var s = JSON.parse(localStorage.getItem(KEY)); if (s && s.puzzle && s.puzzle.length === 81) return s; } catch (e) {}
+    return null;
+  }
+
+  function startNew(k) {
+    chosen = k;
+    $('confirm').hidden = true;
+    var g = SudokuGen.generate(DIFFS[k].clues);
+    S = { diff: k, puzzle: g.puzzle, solution: g.solution, values: g.puzzle.slice(), wrong: {}, notes: [], hintsLeft: 3, mistakes: 0, elapsed: 0, won: false };
+    track('/free/start', { difficulty: k }).then(function (r) { if (r && r.id && S && S.puzzle === g.puzzle) { S.freeId = r.id; save(); } });
+    game.load(S); game.veil(null);
+    stats(); save();
+  }
+  function inProgress() {
+    if (!S || S.won) return false;
+    var g = game.state();
+    return S.mistakes > 0 || g.notes.some(Boolean) || g.values.some(function (v, i) { return v && !S.puzzle[i]; });
+  }
+  function requestNew(k) {
+    if (inProgress()) {
+      pending = k; chosen = k; stats();
+      $('confirmText').textContent = '¿Empezar un juego nuevo en ' + DIFFS[k].name + '? Se pierde el actual.';
+      $('confirm').hidden = false;
+    } else startNew(k);
+  }
+  $('yes').addEventListener('click', function () { startNew(pending == null ? chosen : pending); });
+  $('no').addEventListener('click', function () { $('confirm').hidden = true; chosen = S.diff; stats(); });
+
+  function checkWin() {
+    var v = game.state().values;
+    for (var i = 0; i < 81; i++) if (v[i] !== S.solution[i]) return;
+    S.won = true; save();
+    if (S.freeId) track('/free/finish', { id: S.freeId, seconds: S.elapsed, mistakes: S.mistakes, hints: 3 - (game.state().hintsLeft || 0) });
+    showWin();
+  }
+  function showWin() {
+    game.setLocked(true);
+    var box = document.createElement('div');
+    box.style.display = 'contents';
+    box.innerHTML = '<p style="font-size:26px;font-weight:600">¡Resuelto!</p><p></p>';
+    box.lastChild.textContent = DIFFS[S.diff].name + ' · ' + fmt(S.elapsed) + ' · ' + S.mistakes + (S.mistakes === 1 ? ' error' : ' errores');
+    var b = document.createElement('button');
+    b.className = 'btn'; b.type = 'button'; b.textContent = 'Nuevo juego';
+    b.addEventListener('click', function () { startNew(chosen); });
+    box.appendChild(b);
+    game.veil(box);
+  }
+
+  setInterval(function () {
+    if (!S || S.won || game.isPaused() || document.hidden) return;
+    S.elapsed++; stats();
+    if (S.elapsed % 5 === 0) save();
+  }, 1000);
+
+  var saved = load();
+  if (saved) {
+    S = saved; chosen = S.diff;
+    game.load(S); stats();
+    if (S.won) showWin();
+  } else startNew(2);
+})();
+</script>
+<script>
+/*@shared/notice.js*/
+</script>
+<script>
+/*@shared/theme.js*/
+</script>

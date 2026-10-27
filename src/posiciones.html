@@ -1,0 +1,171 @@
+<title>Posiciones del Torneo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap">
+<script>try{var t=localStorage.getItem('gm-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<style>
+/*@shared/ui.css*/
+.head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 20px; margin-bottom: 18px; }
+.head h1 { margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
+.sub { color: var(--text-2); font-size: 15px; margin-top: 2px; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; }
+.live { display: inline-flex; align-items: center; gap: 6px; color: var(--green); font-size: 14px; }
+.live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .live::before { animation: none; } }
+.wk-nav { display: flex; gap: 6px; }
+.wk-nav button { width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--tile); color: var(--blue); font-size: 18px; }
+.wk-nav button:disabled { opacity: .35; cursor: default; }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th { font-weight: 500; color: var(--muted); padding: 12px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; text-align: center; font-size: 14px; }
+td { padding: 12px 8px; border-bottom: 1px solid var(--border-soft); white-space: nowrap; text-align: center; }
+tr:last-child td { border-bottom: 0; }
+.pos { width: 52px; }
+.pos span { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; font-weight: 600; color: var(--text-2); }
+tr.me td { background: var(--me-row); }
+tr.me .pl::after { content: " (vos)"; color: var(--muted); font-weight: 400; }
+tr.p1 .pos span { background: #f6d77a; color: #5c4400; }
+tr.p2 .pos span { background: #d9dee6; color: #3f4a59; }
+tr.p3 .pos span { background: #e8c3a0; color: #5b3516; }
+.pl { text-align: left; font-weight: 500; max-width: 12rem; overflow: hidden; text-overflow: ellipsis; }
+.tot { font-weight: 600; font-size: 16px; }
+.x { color: var(--red); }
+.dim { color: var(--muted); }
+.dots { display: block; font-size: 9px; letter-spacing: 1px; color: var(--red); line-height: 1; margin-top: 3px; }
+.played { color: var(--text-2); }
+.legend { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+.empty { padding: 28px 16px; color: var(--text-2); }
+
+.champs { margin-top: 32px; }
+.champs h2 { font-size: 18px; font-weight: 600; margin: 0 0 10px; }
+.champs ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.champs li { background: var(--panel); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.champs li small { color: var(--muted); font-size: 13px; }
+.champs li b { font-weight: 600; overflow-wrap: anywhere; }
+.champs li span { color: var(--text-2); font-size: 14px; }
+
+/* En celular: sin columnas por día */
+@media (max-width: 680px) {
+  .day-col { display: none; }
+  table { min-width: 0; }
+}
+@media (min-width: 681px) { .played-col { display: none; } }
+</style>
+
+<header class="nav">
+  <div class="nav-in">
+    <a class="brand" href="/sudoku/">Sudoku</a>
+    <nav class="tabs" aria-label="Modo">
+      <a href="/sudoku/">Libre</a>
+      <a href="/sudoku/torneo/">Torneo</a>
+      <a href="/sudoku/posiciones/" aria-current="page">Posiciones</a>
+    </nav>
+    <div class="nav-right" id="acct"></div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="head">
+    <div>
+      <h1 id="title">Posiciones</h1>
+      <div class="sub"><span id="sub"></span><span class="live" id="live" hidden>En vivo</span></div>
+    </div>
+    <div class="wk-nav">
+      <button type="button" id="prev" aria-label="Semana anterior">←</button>
+      <button type="button" id="next" aria-label="Semana siguiente">→</button>
+    </div>
+  </div>
+
+  <div class="table-wrap"><table id="table"><tbody><tr><td class="empty">Cargando posiciones…</td></tr></tbody></table></div>
+  <p class="legend">Total: suma de los 7 tableros. Cada error suma 1 minuto; eliminado, sin tiempo o sin jugar cuenta 30:00. Si hay empate, gana quien tenga menos errores.</p>
+
+  <section class="champs" id="champs" hidden>
+    <h2>Campeones</h2>
+    <ol id="champList"></ol>
+  </section>
+</main>
+
+<script>
+/*@shared/account.js*/
+</script>
+<script>
+(function () {
+  'use strict';
+  var API = '/api/sudoku';
+  var TZ = 'America/Argentina/Buenos_Aires';
+  var $ = function (id) { return document.getElementById(id); };
+  var data = null, week = null, skew = 0;
+
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function fmt(s) { s = Math.max(0, s | 0); var m = (s / 60) | 0, x = s % 60; return (m < 10 ? '0' : '') + m + ':' + (x < 10 ? '0' : '') + x; }
+  function fmtTotal(s) { var h = (s / 3600) | 0; if (!h) return fmt(s); var m = ((s % 3600) / 60) | 0, x = s % 60; return h + ':' + (m < 10 ? '0' : '') + m + ':' + (x < 10 ? '0' : '') + x; }
+  function dfmt(ms, o) { return new Intl.DateTimeFormat('es-AR', Object.assign({ timeZone: TZ }, o)).format(new Date(ms)); }
+  function until(ms) {
+    var s = Math.max(0, (ms - (Date.now() + skew)) / 1000 | 0), d = s / 86400 | 0, h = (s % 86400) / 3600 | 0, m = (s % 3600) / 60 | 0;
+    return d ? d + 'd ' + h + 'h' : h ? h + 'h ' + m + 'm' : m + 'm';
+  }
+
+  function load(w) {
+    return fetch(API + '/scoreboard' + (w ? '?week=' + w : ''))
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || 'No se pudo cargar.'); return j; }); })
+      .then(function (r) {
+        data = r; week = r.week; skew = r.now - Date.now();
+        try { if (r.week !== r.current) history.replaceState(null, '', '#' + r.week); else if (location.hash) history.replaceState(null, '', location.pathname); } catch (e) {}
+        render();
+      })
+      .catch(function (e) { $('table').innerHTML = '<tbody><tr><td class="empty">' + esc(e.message) + '</td></tr></tbody>'; });
+  }
+
+  function render() {
+    var r = data, isCurrent = r.week === r.current;
+    $('title').textContent = 'Semana del ' + dfmt(r.start, { day: 'numeric', month: 'short' }) + ' al ' + dfmt(r.end - 1, { day: 'numeric', month: 'short' });
+    $('sub').textContent = r.closed ? 'Semana cerrada' : 'Cierra el domingo a las 23:59 · faltan ' + until(r.end);
+    $('live').hidden = r.closed;
+    var i = r.weeks.indexOf(r.week);
+    $('prev').disabled = i < 0 || i >= r.weeks.length - 1;
+    $('next').disabled = isCurrent;
+
+    var head = '<thead><tr><th class="pos">#</th><th class="pl">Jugador</th>' +
+      r.days.map(function (d) { return '<th class="day-col">' + d.name.slice(0, 3) + '</th>'; }).join('') +
+      '<th class="played-col">Jugados</th><th>Total</th><th>Errores</th></tr></thead>';
+    var rows = r.standings.map(function (s) {
+      var cells = s.days.map(function (c) {
+        var dots = c.errors ? '<span class="dots">' + '●'.repeat(c.errors) + '</span>' : '';
+        var v = { solved: fmt(c.score), eliminated: '<span class="x">✕</span>', timeout: '<span class="x">30:00</span>', playing: '<span class="dim">' + (c.paused ? 'en pausa' : 'jugando') + '</span>', missed: '<span class="dim">30:00</span>', open: '<span class="dim">–</span>', locked: '' }[c.status] || '';
+        return '<td class="day-col">' + v + dots + '</td>';
+      }).join('');
+      var mine = window.gmAccount && gmAccount.get();
+      var cls = (s.position && s.position <= 3 && s.played ? 'p' + s.position : '') + (mine && mine.me.id === s.id ? ' me' : '');
+      cls = cls.trim() ? ' class="' + cls.trim() + '"' : '';
+      return '<tr' + cls + '><td class="pos"><span>' + (s.position || '') + '</span></td><td class="pl">' + esc(s.name) + '</td>' + cells +
+        '<td class="played-col played">' + s.played + '/7</td><td class="tot">' + fmtTotal(s.total) + '</td><td>' + s.errors + '</td></tr>';
+    }).join('');
+    $('table').innerHTML = head + '<tbody>' + (rows || '<tr><td class="empty" colspan="12">Todavía no hay jugadores esta semana.</td></tr>') + '</tbody>';
+
+    var ch = r.champions || [];
+    $('champs').hidden = !ch.length;
+    $('champList').innerHTML = ch.map(function (c) {
+      return '<li><small>Semana del ' + dfmt(c.start, { day: 'numeric', month: 'short' }) + '</small><b>' + c.names.map(esc).join(' y ') + '</b><span>' + fmtTotal(c.total) + '</span></li>';
+    }).join('');
+  }
+
+  $('prev').addEventListener('click', function () { var i = data.weeks.indexOf(week); if (data.weeks[i + 1]) load(data.weeks[i + 1]); });
+  $('next').addEventListener('click', function () { var i = data.weeks.indexOf(week); load(i > 0 ? data.weeks[i - 1] : data.current); });
+
+  // Se actualiza sola cada 20 segundos mientras la semana está abierta.
+  setInterval(function () { if (data && !data.closed && !document.hidden) load(week); }, 20000);
+  setInterval(function () { if (data && !data.closed) $('sub').textContent = 'Cierra el domingo a las 23:59 · faltan ' + until(data.end); }, 60000);
+
+  document.addEventListener('gm-account', function () { if (data) render(); });
+  var m = /^#(\d{4}-\d{2}-\d{2})$/.exec(location.hash);
+  load(m ? m[1] : null);
+})();
+</script>
+<script>
+/*@shared/notice.js*/
+</script>
+<script>
+/*@shared/theme.js*/
+</script>
