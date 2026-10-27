@@ -12,6 +12,7 @@ Sitio personal: un catálogo de herramientas y juegos que corren en el navegador
 | `/pomodoro/` | Temporizador pomodoro |
 | `/poker/` | Deudas de poker |
 | `/agenda/` | Agenda diaria privada (necesita el servidor y login) |
+| `/calorias/` | Contador de calorías con cuentas (las crea el admin en `/sudoku/admin/`) |
 
 ## Estructura
 
@@ -36,6 +37,8 @@ El VPS revisa este repo cada minuto (`giorgiomacri-sync.timer`):
 - Cambios en `deploy/` no se aplican solos (servicio de systemd y Nginx se tocan a mano).
 
 La agenda usa `AGENDA_USER` y `AGENDA_PASSWORD` de `/etc/sudoku-torneo.env`; si no están, el usuario es `giorgio` y la contraseña es `ADMIN_PASSWORD`. Después de cambiarlas: `systemctl restart sudoku-torneo`.
+
+El contador de calorías usa cuentas propias que se crean desde el panel de admin (sección "Calorías: cuentas"). Para "Describir" y "Leer etiqueta" hace falta `ANTHROPIC_API_KEY` en `/etc/sudoku-torneo.env`; el modelo es `claude-haiku-5-5` (cambiable con `CAL_AI_MODEL`) y el límite es de 30 consultas por persona por día (`CAL_AI_DAILY`). Después: `systemctl restart sudoku-torneo`.
 
 Instalación única: `bash deploy/install.sh` como root en el VPS.
 

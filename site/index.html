@@ -266,7 +266,8 @@ section.sec { margin-bottom: 46px; }
     { id: 'posiciones', name: 'Posiciones', url: '/sudoku/posiciones/', cat: 'juegos', tag: 'Sudoku', desc: 'La tabla del torneo, en vivo.', art: 'table', color: 'blush', featured: false, keywords: 'tabla ranking scoreboard campeones' },
     { id: 'pomodoro', name: 'Pomodoro', url: '/pomodoro/', cat: 'herramientas', tag: 'Herramienta', desc: 'Foco y descansos, con registro del día.', art: 'ring', color: 'sage', featured: true, keywords: 'timer temporizador estudio concentracion' },
     { id: 'poker', name: 'Deudas de poker', url: '/poker/', cat: 'herramientas', tag: 'Herramienta', desc: 'Quién le paga a quién al final de la noche.', art: 'cards', color: 'blue', featured: true, keywords: 'poker deudas cuentas fichas plata calculadora' },
-    { id: 'agenda', name: 'Agenda', url: '/agenda/', cat: 'herramientas', tag: 'Privada', desc: 'Mi día: bloques, prioridades, tareas y hábitos.', art: 'calendar', color: 'candle', featured: false, keywords: 'agenda planner diario calendario tareas habitos organizacion' }
+    { id: 'agenda', name: 'Agenda', url: '/agenda/', cat: 'herramientas', tag: 'Privada', desc: 'Mi día: bloques, prioridades, tareas y hábitos.', art: 'calendar', color: 'candle', featured: false, keywords: 'agenda planner diario calendario tareas habitos organizacion' },
+    { id: 'calorias', name: 'Calorías', url: '/calorias/', cat: 'herramientas', tag: 'Con cuenta', desc: 'Comidas, macros y peso. Describí lo que comiste.', art: 'macros', color: 'sage', featured: false, keywords: 'calorias macros dieta nutricion comida peso proteinas contador diario' }
   ];
   var PALETTE = { persimmon: '#fd9b65', sage: '#9ac8ae', candle: '#f8f5d1', blush: '#e9d1c7', blue: '#004b82', ink: '#0f0f14' };
 
@@ -323,6 +324,16 @@ section.sec { margin-bottom: 46px; }
       for (var hr = 0; hr < 6; hr++) s += '<line x1="128" y1="' + (98 + hr * 28) + '" x2="290" y2="' + (98 + hr * 28) + '" stroke="#0f0f14" stroke-opacity=".15"/>' +
         '<text x="120" y="' + (102 + hr * 28) + '" text-anchor="end" font-family="Inter Tight, sans-serif" font-size="10" fill="#0f0f14" fill-opacity=".5">' + (8 + hr * 2) + '</text>';
       s += '<rect x="132" y="102" width="150" height="38" rx="6" fill="#fd9b65"/><rect x="132" y="158" width="110" height="22" rx="6" fill="#9ac8ae"/><rect x="132" y="206" width="134" height="40" rx="6" fill="#004b82"/>';
+    } else if (item.art === 'macros') {
+      // anillo de calorías y tres barras de macros
+      var C = 2 * Math.PI * 74;
+      s += '<circle cx="150" cy="150" r="74" fill="none" stroke="#0f0f14" stroke-opacity=".12" stroke-width="24"/>';
+      s += '<circle cx="150" cy="150" r="74" fill="none" stroke="#0f0f14" stroke-width="24" stroke-linecap="round" stroke-dasharray="' + (C * 0.68).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 150 150)"/>';
+      s += '<text x="150" y="160" text-anchor="middle" font-family="Inter Tight, sans-serif" font-size="30" font-weight="700" fill="#0f0f14">kcal</text>';
+      [['#fd9b65', 0.8], ['#004b82', 0.55], ['#f8f5d1', 0.7]].forEach(function (b, k) {
+        var y = 96 + k * 44;
+        s += '<rect x="262" y="' + y + '" width="96" height="16" rx="8" fill="#0f0f14" fill-opacity=".12"/><rect x="262" y="' + y + '" width="' + (96 * b[1]) + '" height="16" rx="8" fill="' + b[0] + '" stroke="#0f0f14" stroke-width="1.5"/>';
+      });
     } else if (item.art === 'cards') {
       // dos cartas en abanico y una pila de fichas
       var card = function (x, y, rot, label, suit, red) {

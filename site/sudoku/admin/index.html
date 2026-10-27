@@ -479,6 +479,15 @@ dialog { width: min(560px, calc(100vw - 32px)); }
       <h2>Bloqueos</h2>
       <div class="table-wrap"><table id="bans"></table></div>
     </section>
+
+    <section class="block">
+      <div class="sec-head">
+        <h2>Calorías: cuentas</h2>
+        <button class="btn small" type="button" id="calAdd">Crear cuenta</button>
+      </div>
+      <p class="hint" id="calInfo">Cuentas del contador de calorías (separadas del torneo). Entran en <a href="/calorias/">/calorias/</a>.</p>
+      <div class="table-wrap"><table id="calUsers"></table></div>
+    </section>
   </section>
 </main>
 
@@ -576,7 +585,7 @@ dialog { width: min(560px, calc(100vw - 32px)); }
 
   /* ---------- Datos ---------- */
   function load(w) {
-    return call('GET', '/admin/overview' + (w ? '?week=' + w : '')).then(function (r) { data = r; week = r.week; show('dash'); render(); if (!liveLast) pollLive(); })
+    return call('GET', '/admin/overview' + (w ? '?week=' + w : '')).then(function (r) { data = r; week = r.week; show('dash'); render(); loadCal(); if (!liveLast) pollLive(); })
       .catch(function (e) { if (e.status !== 401) toast(e.message); });
   }
   $('refresh').addEventListener('click', function () { load(week).then(function () { toast('Actualizado'); }); });
@@ -904,6 +913,52 @@ dialog { width: min(560px, calc(100vw - 32px)); }
       });
     });
   }
+
+  /* ---------- Calorías: cuentas ---------- */
+  var cal = null;
+  function loadCal() {
+    return call('GET', '/admin/cal/users').then(function (r) { cal = r; renderCal(); }).catch(function (e) { if (e.status !== 401) $('calInfo').textContent = e.message; });
+  }
+  function renderCal() {
+    var a = cal.ai;
+    $('calInfo').innerHTML = 'Cuentas del contador de calorías (separadas del torneo). Entran en <a href="/calorias/">/calorias/</a>. ' +
+      (a.enabled ? 'IA: <span class="mono">' + esc(a.model) + '</span>, ' + a.limit + ' consultas por persona por día.' : '<span class="tag bad">IA sin configurar</span> falta ANTHROPIC_API_KEY en el servidor.');
+    $('calUsers').innerHTML = '<thead><tr><th>Usuario</th><th>Creada</th><th>Último ingreso</th><th>Registros</th><th>Último día cargado</th><th>IA hoy</th><th>Estado</th><th></th></tr></thead><tbody>' +
+      (cal.users.map(function (u) {
+        return '<tr><td><b>' + esc(u.username) + '</b></td><td>' + dfmt(u.created_at, { day: 'numeric', month: 'short', year: 'numeric' }) + '</td><td>' + dfmt(u.last_login) + '</td>' +
+          '<td>' + u.entries + '</td><td>' + (u.last_entry ? u.last_entry.split('-').reverse().join('/') : '–') + '</td><td>' + (u.ai_today || 0) + ' / ' + a.limit + '</td>' +
+          '<td>' + (u.disabled ? '<span class="pill bad">deshabilitada</span>' : '<span class="pill ok">activa</span>') + '</td>' +
+          '<td><div class="actions"><button class="btn small ghost" type="button" data-cpw="' + u.id + '">Contraseña</button>' +
+          '<button class="btn small ghost" type="button" data-cdis="' + u.id + '">' + (u.disabled ? 'Habilitar' : 'Deshabilitar') + '</button>' +
+          '<button class="btn small danger" type="button" data-cdel="' + u.id + '">Borrar</button></div></td></tr>';
+      }).join('') || '<tr><td colspan="8" class="dim">Todavía no hay cuentas. Creá la tuya con "Crear cuenta".</td></tr>') + '</tbody>';
+  }
+  function calUser(id) { return cal.users.filter(function (u) { return u.id === id; })[0]; }
+  $('calAdd').addEventListener('click', function () {
+    dialog({
+      title: 'Nueva cuenta de calorías', text: 'Pasale el usuario y la contraseña a la persona. Después la puede cambiar desde su menú.',
+      fields: [{ id: 'u', label: 'Usuario (minúsculas, sin espacios)' }, { id: 'p', label: 'Contraseña (mínimo 8 caracteres)', type: 'text' }],
+      ok: 'Crear', run: function (v) { return call('POST', '/admin/cal/users', { username: v.u.trim().toLowerCase(), password: v.p }); }
+    }).then(function (v) { if (v) { toast('Cuenta creada'); loadCal(); } });
+  });
+  $('calUsers').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.cpw) {
+      var u = calUser(+b.dataset.cpw);
+      dialog({ title: 'Nueva contraseña para ' + u.username, text: 'Cierra sus sesiones abiertas.', fields: [{ id: 'p', label: 'Contraseña (mínimo 8 caracteres)', type: 'text' }],
+        ok: 'Guardar', run: function (v) { return call('POST', '/admin/cal/users/' + u.id, { password: v.p }); } })
+        .then(function (v) { if (v) toast('Contraseña cambiada'); });
+    } else if (b.dataset.cdis) {
+      var u2 = calUser(+b.dataset.cdis);
+      call('POST', '/admin/cal/users/' + u2.id, { disabled: !u2.disabled }).then(function () { toast(u2.disabled ? 'Cuenta habilitada' : 'Cuenta deshabilitada'); loadCal(); }).catch(function (err) { toast(err.message); });
+    } else if (b.dataset.cdel) {
+      var u3 = calUser(+b.dataset.cdel);
+      dialog({ title: 'Borrar la cuenta ' + u3.username, text: 'Se borran para siempre sus comidas, alimentos, pesadas y objetivos (' + u3.entries + ' registros). No se puede deshacer.',
+        ok: 'Borrar todo', danger: true, run: function () { return call('DELETE', '/admin/cal/users/' + u3.id); } })
+        .then(function (v) { if (v) { toast('Cuenta borrada'); loadCal(); } });
+    }
+  });
+
   setInterval(pollLive, 3000);
 
   setInterval(function () { if (token && data && !document.hidden && !$('dlg').open) load(week); }, 30000);

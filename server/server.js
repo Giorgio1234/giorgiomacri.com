@@ -880,6 +880,9 @@ route('POST', '/admin/boards/regenerate', async (req) => {
   return { ok: true, removedAttempts: n };
 });
 
+/* Contador de calorías */
+require('./lib/calorias')({ db, route, fail, readBody, rateLimited, hashPin, checkPin, sha, now, requireAdmin, validDate, DAY_MS, TZ_OFFSET_MIN });
+
 if (TEST_CLOCK) {
   route('POST', '/__clock', async (req) => { const b = await readBody(req); clockOffset = Number(b.offsetMs) || 0; return { now: now() }; });
   route('GET', '/__solution', async (req, url) => { const b = getBoard(weekParam(url), dayParam(url.searchParams.get('day'))); return { solution: b.solution }; });
