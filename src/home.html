@@ -259,7 +259,8 @@ section.sec { margin-bottom: 46px; }
     { id: 'torneo', name: 'Torneo semanal', url: '/sudoku/torneo/', cat: 'juegos', tag: 'Sudoku', desc: 'Un Experto por día. Gana el menor tiempo.', art: 'trophy', color: 'persimmon', featured: true, keywords: 'competencia amigos ranking experto' },
     { id: 'posiciones', name: 'Posiciones', url: '/sudoku/posiciones/', cat: 'juegos', tag: 'Sudoku', desc: 'La tabla del torneo, en vivo.', art: 'table', color: 'blush', featured: false, keywords: 'tabla ranking scoreboard campeones' },
     { id: 'pomodoro', name: 'Pomodoro', url: '/pomodoro/', cat: 'herramientas', tag: 'Herramienta', desc: 'Foco y descansos, con registro del día.', art: 'ring', color: 'sage', featured: true, keywords: 'timer temporizador estudio concentracion' },
-    { id: 'poker', name: 'Deudas de poker', url: '/poker/', cat: 'herramientas', tag: 'Herramienta', desc: 'Quién le paga a quién al final de la noche.', art: 'cards', color: 'blue', featured: true, keywords: 'poker deudas cuentas fichas plata calculadora' }
+    { id: 'poker', name: 'Deudas de poker', url: '/poker/', cat: 'herramientas', tag: 'Herramienta', desc: 'Quién le paga a quién al final de la noche.', art: 'cards', color: 'blue', featured: true, keywords: 'poker deudas cuentas fichas plata calculadora' },
+    { id: 'agenda', name: 'Agenda', url: '/agenda/', cat: 'herramientas', tag: 'Privada', desc: 'Mi día: bloques, prioridades, tareas y hábitos.', art: 'calendar', color: 'candle', featured: false, keywords: 'agenda planner diario calendario tareas habitos organizacion' }
   ];
   var PALETTE = { persimmon: '#fd9b65', sage: '#9ac8ae', candle: '#f8f5d1', blush: '#e9d1c7', blue: '#004b82', ink: '#0f0f14' };
 
@@ -308,6 +309,14 @@ section.sec { margin-bottom: 46px; }
       s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="none" stroke="' + ink + '" stroke-opacity=".18" stroke-width="18"/>';
       s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="none" stroke="' + ink + '" stroke-width="18" stroke-linecap="round" stroke-dasharray="' + (C * .68).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 ' + cx + ' ' + cy + ')"/>';
       s += '<text x="' + cx + '" y="' + (cy + 16) + '" text-anchor="middle" font-family="Inter Tight, sans-serif" font-size="46" font-weight="600" letter-spacing="-1" fill="' + ink + '">25:00</text>';
+    } else if (item.art === 'calendar') {
+      // hoja de agenda: líneas de hora y bloques de color
+      s += '<rect x="96" y="40" width="208" height="224" rx="14" fill="#ffffff" stroke="#0f0f14" stroke-width="2"/>';
+      s += '<rect x="96" y="40" width="208" height="40" rx="14" fill="#0f0f14"/><rect x="96" y="64" width="208" height="16" fill="#0f0f14"/>';
+      s += '<text x="200" y="68" text-anchor="middle" font-family="Inter Tight, sans-serif" font-size="18" font-weight="700" fill="#f8f5d1">HOY</text>';
+      for (var hr = 0; hr < 6; hr++) s += '<line x1="128" y1="' + (98 + hr * 28) + '" x2="290" y2="' + (98 + hr * 28) + '" stroke="#0f0f14" stroke-opacity=".15"/>' +
+        '<text x="120" y="' + (102 + hr * 28) + '" text-anchor="end" font-family="Inter Tight, sans-serif" font-size="10" fill="#0f0f14" fill-opacity=".5">' + (8 + hr * 2) + '</text>';
+      s += '<rect x="132" y="102" width="150" height="38" rx="6" fill="#fd9b65"/><rect x="132" y="158" width="110" height="22" rx="6" fill="#9ac8ae"/><rect x="132" y="206" width="134" height="40" rx="6" fill="#004b82"/>';
     } else if (item.art === 'cards') {
       // dos cartas en abanico y una pila de fichas
       var card = function (x, y, rot, label, suit, red) {

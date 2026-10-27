@@ -29,6 +29,9 @@ const PORT = +process.env.PORT || 3001;
 const HOST = process.env.HOST || '127.0.0.1';
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'torneo.db');
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
+// Agenda privada: usuario y contraseña propios (si no se configuran, usuario "giorgio" y la contraseña del admin)
+const AGENDA_USER = (process.env.AGENDA_USER || 'giorgio').trim().toLowerCase();
+const AGENDA_PASSWORD = process.env.AGENDA_PASSWORD || ADMIN_PASSWORD;
 const TEST_CLOCK = process.env.TEST_CLOCK === '1';
 if (ADMIN_PASSWORD.length < 8) {
   console.error('Falta ADMIN_PASSWORD (mínimo 8 caracteres).');
@@ -146,6 +149,10 @@ const FREE_LEVELS = ['Muy fácil', 'Fácil', 'Media', 'Difícil', 'Experto'];
 for (const [col, def] of [['paused_at', 'INTEGER'], ['paused_ms', 'INTEGER NOT NULL DEFAULT 0'], ['pauses', 'INTEGER NOT NULL DEFAULT 0']]) {
   if (!db.prepare("SELECT 1 FROM pragma_table_info('attempts') WHERE name = ?").get(col)) db.exec(`ALTER TABLE attempts ADD COLUMN ${col} ${def}`);
 }
+db.exec(`
+  CREATE TABLE IF NOT EXISTS agenda_days (date TEXT PRIMARY KEY, data TEXT NOT NULL, updated_at INTEGER NOT NULL);
+  CREATE TABLE IF NOT EXISTS agenda_settings (key TEXT PRIMARY KEY, data TEXT NOT NULL, updated_at INTEGER NOT NULL);
+`);
 // Cuentas nuevas por IP o dispositivo en 24 h (para frenar la creación masiva)
 const MAX_NEW_PER_DAY = 3;
 // Tiempo mínimo entre cuentas nuevas desde la misma IP
@@ -306,7 +313,7 @@ function checkPin(pin, stored) {
 function sha(s) { return crypto.createHash('sha256').update(s).digest('hex'); }
 function newSession(playerId, isAdmin) {
   const token = crypto.randomBytes(32).toString('base64url');
-  db.prepare('INSERT INTO sessions (token_hash, player_id, is_admin, created_at) VALUES (?, ?, ?, ?)').run(sha(token), playerId, isAdmin ? 1 : 0, now());
+  db.prepare('INSERT INTO sessions (token_hash, player_id, is_admin, created_at) VALUES (?, ?, ?, ?)').run(sha(token), playerId, typeof isAdmin === 'number' ? isAdmin : isAdmin ? 1 : 0, now());
   return token;
 }
 function sessionFrom(req) {
@@ -314,7 +321,9 @@ function sessionFrom(req) {
   if (!m) return null;
   const s = db.prepare('SELECT * FROM sessions WHERE token_hash = ?').get(sha(m[1]));
   if (!s) return null;
-  if (s.is_admin && Date.now() - s.created_at > 7 * DAY_MS) return null;
+  // is_admin: 1 = panel del torneo (7 días), 2 = agenda privada (60 días)
+  if (s.is_admin === 1 && Date.now() - s.created_at > 7 * DAY_MS) return null;
+  if (s.is_admin === 2 && Date.now() - s.created_at > 60 * DAY_MS) return null;
   return s;
 }
 
@@ -345,10 +354,10 @@ function rateLimited(req, key, max) {
 class HttpError extends Error { constructor(status, msg) { super(msg); this.status = status; } }
 const fail = (s, m) => { throw new HttpError(s, m); };
 
-function readBody(req) {
+function readBody(req, limit = 16384) {
   return new Promise((resolve, reject) => {
     let size = 0; const chunks = [];
-    req.on('data', c => { size += c.length; if (size > 16384) { reject(new HttpError(413, 'Pedido demasiado grande.')); req.destroy(); } else chunks.push(c); });
+    req.on('data', c => { size += c.length; if (size > limit) { reject(new HttpError(413, 'Pedido demasiado grande.')); req.destroy(); } else chunks.push(c); });
     req.on('end', () => {
       if (!chunks.length) return resolve({});
       try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))); } catch (e) { reject(new HttpError(400, 'JSON inválido.')); }
@@ -368,7 +377,11 @@ function requirePlayer(req) {
 }
 function requireAdmin(req) {
   const s = sessionFrom(req);
-  if (!s || !s.is_admin) fail(401, 'Sesión de administrador vencida. Volvé a entrar.');
+  if (!s || s.is_admin !== 1) fail(401, 'Sesión de administrador vencida. Volvé a entrar.');
+}
+function requireAgenda(req) {
+  const s = sessionFrom(req);
+  if (!s || s.is_admin !== 2) fail(401, 'Tenés que entrar a la agenda.');
 }
 function requireViewer(req) {
   const s = sessionFrom(req);
@@ -453,6 +466,67 @@ route('POST', '/free/finish', async (req) => {
   const clamp = (v, max) => Math.max(0, Math.min(max, Math.floor(Number(v) || 0)));
   db.prepare("UPDATE free_games SET status = 'solved', finished_at = ?, seconds = ?, mistakes = ?, hints = ? WHERE id = ?")
     .run(now(), clamp(b.seconds, 24 * 3600), clamp(b.mistakes, 999), clamp(b.hints, 3), g.id);
+  return { ok: true };
+});
+
+/* ---------- Agenda privada ---------- */
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+function validDate(d) { return DATE_RE.test(d) && !isNaN(Date.parse(d + 'T00:00:00Z')) && new Date(d + 'T00:00:00Z').toISOString().slice(0, 10) === d; }
+function sameText(a, b) {
+  const x = crypto.createHash('sha256').update(String(a)).digest(), y = crypto.createHash('sha256').update(String(b)).digest();
+  return crypto.timingSafeEqual(x, y);
+}
+function getSettingJson(key, def) { const r = db.prepare('SELECT data FROM agenda_settings WHERE key = ?').get(key); try { return r ? JSON.parse(r.data) : def; } catch (e) { return def; } }
+
+route('POST', '/agenda/login', async (req) => {
+  if (rateLimited(req, 'agenda', 8)) fail(429, 'Demasiados intentos. Esperá unos minutos.');
+  const b = await readBody(req);
+  const okUser = sameText(String(b.user || '').trim().toLowerCase(), AGENDA_USER);
+  const okPass = sameText(String(b.password || ''), AGENDA_PASSWORD);
+  if (!okUser || !okPass) fail(401, 'Usuario o contraseña incorrectos.');
+  return { token: newSession(null, 2) };
+});
+
+route('GET', '/agenda/data', async (req, url) => {
+  requireAgenda(req);
+  const from = url.searchParams.get('from'), to = url.searchParams.get('to');
+  if (!validDate(from) || !validDate(to) || to < from) fail(400, 'Fechas inválidas.');
+  if ((Date.parse(to) - Date.parse(from)) / DAY_MS > 62) fail(400, 'Pedí como mucho dos meses por vez.');
+  const days = {};
+  db.prepare('SELECT date, data, updated_at FROM agenda_days WHERE date >= ? AND date <= ?').all(from, to)
+    .forEach(r => { try { days[r.date] = Object.assign(JSON.parse(r.data), { updatedAt: r.updated_at }); } catch (e) {} });
+  return { days, recurring: getSettingJson('recurring', []), habits: getSettingJson('habits', []), now: now() };
+});
+
+route('PUT', '/agenda/day/(\\d{4}-\\d{2}-\\d{2})', async (req, url, m) => {
+  requireAgenda(req);
+  const date = m[1];
+  if (!validDate(date)) fail(400, 'Fecha inválida.');
+  const b = await readBody(req, 256 * 1024);
+  const d = b && typeof b.data === 'object' && b.data ? b.data : null;
+  if (!d) fail(400, 'Faltan los datos del día.');
+  const clean = {
+    priorities: Array.isArray(d.priorities) ? d.priorities.slice(0, 3) : [],
+    tasks: Array.isArray(d.tasks) ? d.tasks.slice(0, 200) : [],
+    events: Array.isArray(d.events) ? d.events.slice(0, 100) : [],
+    skip: Array.isArray(d.skip) ? d.skip.slice(0, 100) : [],
+    habitsDone: Array.isArray(d.habitsDone) ? d.habitsDone.slice(0, 50) : [],
+    notes: typeof d.notes === 'string' ? d.notes.slice(0, 20000) : ''
+  };
+  const empty = !clean.priorities.some(p => p && p.text) && !clean.tasks.length && !clean.events.length && !clean.skip.length && !clean.habitsDone.length && !clean.notes;
+  if (empty) db.prepare('DELETE FROM agenda_days WHERE date = ?').run(date);
+  else db.prepare('INSERT INTO agenda_days (date, data, updated_at) VALUES (?, ?, ?) ON CONFLICT(date) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at')
+    .run(date, JSON.stringify(clean), now());
+  return { ok: true, updatedAt: now() };
+});
+
+route('PUT', '/agenda/settings', async (req) => {
+  requireAgenda(req);
+  const b = await readBody(req, 128 * 1024);
+  const put = (key, val, max) => db.prepare('INSERT INTO agenda_settings (key, data, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at')
+    .run(key, JSON.stringify(val.slice(0, max)), now());
+  if (Array.isArray(b.recurring)) put('recurring', b.recurring, 200);
+  if (Array.isArray(b.habits)) put('habits', b.habits, 30);
   return { ok: true };
 });
 

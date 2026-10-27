@@ -11,6 +11,7 @@ Sitio personal: un catálogo de herramientas y juegos que corren en el navegador
 | `/sudoku/admin/` | Panel del torneo |
 | `/pomodoro/` | Temporizador pomodoro |
 | `/poker/` | Deudas de poker |
+| `/agenda/` | Agenda diaria privada (necesita el servidor y login) |
 
 ## Estructura
 
@@ -33,6 +34,8 @@ El VPS revisa este repo cada minuto (`giorgiomacri-sync.timer`):
 - Cambios en `site/` se publican al instante en `/var/www/giorgiomacri.com`.
 - Cambios en `server/` se copian a `/opt/sudoku-torneo`, con backup previo de la base en `/var/lib/giorgiomacri-deploy/backups/` (últimos 30). El servicio se reinicia cuando no hay tableros en juego, o a los 45 minutos como máximo.
 - Cambios en `deploy/` no se aplican solos (servicio de systemd y Nginx se tocan a mano).
+
+La agenda usa `AGENDA_USER` y `AGENDA_PASSWORD` de `/etc/sudoku-torneo.env`; si no están, el usuario es `giorgio` y la contraseña es `ADMIN_PASSWORD`. Después de cambiarlas: `systemctl restart sudoku-torneo`.
 
 Instalación única: `bash deploy/install.sh` como root en el VPS.
 

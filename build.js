@@ -16,7 +16,8 @@ const PAGES = [
   ['admin.html', 'sudoku/admin/index.html'],
   ['posiciones.html', 'sudoku/posiciones/index.html'],
   ['pomodoro.html', 'pomodoro/index.html'],
-  ['poker.html', 'poker/index.html']
+  ['poker.html', 'poker/index.html'],
+  ['agenda.html', 'agenda/index.html']
 ];
 
 function inline(src) {
