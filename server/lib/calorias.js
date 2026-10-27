@@ -10,12 +10,15 @@ const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const USER_RE = /^[a-z0-9._-]{3,24}$/;
 const SESSION_DAYS = 90;
 const AI_URL = 'https://api.anthropic.com/v1/messages';
+const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const IMG_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 module.exports = function install(d) {
   const { db, route, fail, readBody, rateLimited, hashPin, checkPin, sha, now, requireAdmin, validDate, DAY_MS, TZ_OFFSET_MIN } = d;
-  const AI_KEY = () => process.env.ANTHROPIC_API_KEY || '';
-  const AI_MODEL = () => process.env.CAL_AI_MODEL || 'claude-haiku-5-5';
+  // Proveedor: OpenRouter si hay OPENROUTER_API_KEY; si no, Anthropic directo.
+  const OR = () => !!process.env.OPENROUTER_API_KEY;
+  const AI_KEY = () => process.env.OPENROUTER_API_KEY || process.env.ANTHROPIC_API_KEY || '';
+  const AI_MODEL = () => process.env.CAL_AI_MODEL || (OR() ? 'deepseek/deepseek-v4.1-flash-1017' : 'claude-haiku-5-5');
   const AI_LIMIT = () => Math.max(0, parseInt(process.env.CAL_AI_DAILY || '30', 10) || 30);
 
   db.exec(`
@@ -269,22 +272,32 @@ module.exports = function install(d) {
     return { type: 'image', source: { type: 'base64', media_type: img.media_type, data: img.data } };
   }
   async function askJson(prompt, image) {
-    const content = image ? [image, { type: 'text', text: prompt }] : prompt;
+    let url, headers, body;
+    if (OR()) {
+      // formato OpenAI de OpenRouter; la foto va como data URL
+      const content = image ? [{ type: 'text', text: prompt }, { type: 'image_url', image_url: { url: 'data:' + image.source.media_type + ';base64,' + image.source.data } }] : prompt;
+      url = process.env.CAL_AI_URL || OR_URL;
+      headers = { Authorization: 'Bearer ' + AI_KEY(), 'Content-Type': 'application/json', 'HTTP-Referer': 'https://giorgiomacri.com', 'X-Title': 'giorgiomacri.com calorias' };
+      body = { model: AI_MODEL(), max_tokens: 2000, messages: [{ role: 'user', content }] };
+    } else {
+      const content = image ? [image, { type: 'text', text: prompt }] : prompt;
+      url = process.env.CAL_AI_URL || AI_URL;
+      headers = { 'x-api-key': AI_KEY(), 'anthropic-version': '2023-06-01', 'content-type': 'application/json' };
+      body = { model: AI_MODEL(), max_tokens: 2000, messages: [{ role: 'user', content }] };
+    }
     let r;
     try {
-      r = await fetch(process.env.CAL_AI_URL || AI_URL, {
-        method: 'POST',
-        headers: { 'x-api-key': AI_KEY(), 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-        body: JSON.stringify({ model: AI_MODEL(), max_tokens: 2000, messages: [{ role: 'user', content }] }),
-        signal: AbortSignal.timeout(60000)
-      });
+      r = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal: AbortSignal.timeout(90000) });
     } catch (e) { const x = new Error('net'); x.refund = true; throw x; }
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) {
-      console.error('IA calorías:', r.status, j && j.error && j.error.message);
-      const x = new Error('api'); x.refund = true; x.status = r.status; throw x;
+    if (!r.ok || (j && j.error && !j.choices && !j.content)) {
+      console.error('IA calorías:', r.status, JSON.stringify(j && j.error || '').slice(0, 300));
+      const x = new Error('api'); x.refund = true; x.status = r.ok ? 502 : r.status; throw x;
     }
-    const text = (j.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
+    const msg = OR() && j.choices && j.choices[0] && j.choices[0].message ? j.choices[0].message.content : '';
+    const text = OR()
+      ? (Array.isArray(msg) ? msg.map(c => c && c.text || '').join('') : String(msg || ''))
+      : (j.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
     const a = text.indexOf('{'), b = text.lastIndexOf('}');
     const out = a >= 0 && b > a ? parse(text.slice(a, b + 1)) : null;
     if (!out) { const x = new Error('parse'); throw x; }
@@ -335,7 +348,7 @@ Si la tabla tiene columna por 100 g o 100 ml, usá esa y basis "100"; si solo tr
         (SELECT MAX(date) FROM cal_entries e WHERE e.user_id = u.id) last_entry,
         (SELECT n FROM cal_ai_usage a WHERE a.user_id = u.id AND a.day = ?) ai_today
       FROM cal_users u ORDER BY u.username`).all(day);
-    return { users, ai: { enabled: !!AI_KEY(), model: AI_MODEL(), limit: AI_LIMIT() } };
+    return { users, ai: { enabled: !!AI_KEY(), provider: OR() ? 'OpenRouter' : 'Anthropic', model: AI_MODEL(), limit: AI_LIMIT() } };
   });
   route('POST', '/admin/cal/users', async (req) => {
     requireAdmin(req);

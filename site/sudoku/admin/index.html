@@ -922,7 +922,7 @@ dialog { width: min(560px, calc(100vw - 32px)); }
   function renderCal() {
     var a = cal.ai;
     $('calInfo').innerHTML = 'Cuentas del contador de calorías (separadas del torneo). Entran en <a href="/calorias/">/calorias/</a>. ' +
-      (a.enabled ? 'IA: <span class="mono">' + esc(a.model) + '</span>, ' + a.limit + ' consultas por persona por día.' : '<span class="tag bad">IA sin configurar</span> falta ANTHROPIC_API_KEY en el servidor.');
+      (a.enabled ? 'IA: ' + esc(a.provider) + ' · <span class="mono">' + esc(a.model) + '</span>, ' + a.limit + ' consultas por persona por día.' : '<span class="tag bad">IA sin configurar</span> falta OPENROUTER_API_KEY en el servidor.');
     $('calUsers').innerHTML = '<thead><tr><th>Usuario</th><th>Creada</th><th>Último ingreso</th><th>Registros</th><th>Último día cargado</th><th>IA hoy</th><th>Estado</th><th></th></tr></thead><tbody>' +
       (cal.users.map(function (u) {
         return '<tr><td><b>' + esc(u.username) + '</b></td><td>' + dfmt(u.created_at, { day: 'numeric', month: 'short', year: 'numeric' }) + '</td><td>' + dfmt(u.last_login) + '</td>' +

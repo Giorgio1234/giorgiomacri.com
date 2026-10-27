@@ -38,7 +38,7 @@ El VPS revisa este repo cada minuto (`giorgiomacri-sync.timer`):
 
 La agenda usa `AGENDA_USER` y `AGENDA_PASSWORD` de `/etc/sudoku-torneo.env`; si no están, el usuario es `giorgio` y la contraseña es `ADMIN_PASSWORD`. Después de cambiarlas: `systemctl restart sudoku-torneo`.
 
-El contador de calorías usa cuentas propias que se crean desde el panel de admin (sección "Calorías: cuentas"). Para "Describir" y "Leer etiqueta" hace falta `ANTHROPIC_API_KEY` en `/etc/sudoku-torneo.env`; el modelo es `claude-haiku-5-5` (cambiable con `CAL_AI_MODEL`) y el límite es de 30 consultas por persona por día (`CAL_AI_DAILY`). Después: `systemctl restart sudoku-torneo`.
+El contador de calorías usa cuentas propias que se crean desde el panel de admin (sección "Calorías: cuentas"). Para "Describir" y "Leer etiqueta" hace falta `OPENROUTER_API_KEY` (modelo `deepseek/deepseek-v4.1-flash-1017`) o `ANTHROPIC_API_KEY` (modelo `claude-haiku-5-5`) en `/etc/sudoku-torneo.env`; el modelo se cambia con `CAL_AI_MODEL` y el límite es de 30 consultas por persona por día (`CAL_AI_DAILY`). Después: `systemctl restart sudoku-torneo`.
 
 Instalación única: `bash deploy/install.sh` como root en el VPS.
 
