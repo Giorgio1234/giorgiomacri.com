@@ -71,6 +71,17 @@ module.exports = function install(d) {
   }
   function cleanProfile(p) {
     const out = { goals: cleanGoals(p && p.goals) };
+    const b = p && p.body;
+    if (b && typeof b === 'object') {
+      const inr = (v, lo, hi) => { const x = numv(v); return x >= lo && x <= hi ? r2(x) : null; };
+      out.body = {
+        sex: b.sex === 'f' ? 'f' : 'm', age: inr(b.age, 10, 100), heightCm: inr(b.heightCm, 100, 250), weightKg: inr(b.weightKg, 30, 300),
+        goal: ['lose', 'maintain', 'gain'].includes(b.goal) ? b.goal : 'maintain', rate: inr(b.rate, 0, 1) || 0,
+        train: Math.round(inr(b.train, 0, 14) || 0), daily: ['sit', 'mid', 'active'].includes(b.daily) ? b.daily : 'sit',
+        at: Math.round(numv(b.at)) || now()
+      };
+    }
+    if (p && p.skippedOnboarding) out.skippedOnboarding = true;
     const w = p && p.weightGoal;
     if (w && numv(w.kg) >= 30 && numv(w.kg) <= 300) {
       out.weightGoal = { kg: Math.round(numv(w.kg) * 10) / 10 };
