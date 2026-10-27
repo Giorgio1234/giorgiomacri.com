@@ -41,7 +41,10 @@ echo "y agregala en GitHub: repo giorgiomacri.com -> Settings -> Deploy keys -> 
 echo "(título: VPS, NO marques 'Allow write access')."
 read -r -p "Cuando la hayas agregado, apretá Enter... " _
 
-until ssh -o BatchMode=yes -T github-giorgiomacri 2>&1 | grep -q "successfully authenticated"; do
+# GitHub responde "successfully authenticated" pero sale con código 1 (no da shell): se mira el texto, no el código
+github_ok() { local out; out=$(ssh -o BatchMode=yes -o ConnectTimeout=10 -T github-giorgiomacri 2>&1 || true); echo "$out" | grep -q "successfully authenticated"; }
+until github_ok; do
+  echo "Respuesta de GitHub:"; ssh -o BatchMode=yes -o ConnectTimeout=10 -T github-giorgiomacri 2>&1 | sed 's/^/  /' || true
   read -r -p "GitHub todavía no acepta la clave. Revisá que esté agregada y apretá Enter para reintentar... " _
 done
 echo "GitHub OK."
