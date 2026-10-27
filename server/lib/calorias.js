@@ -14,7 +14,7 @@ const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const IMG_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 module.exports = function install(d) {
-  const { db, route, fail, readBody, rateLimited, hashPin, checkPin, sha, now, requireAdmin, validDate, DAY_MS, TZ_OFFSET_MIN } = d;
+  const { db, route, fail, readBody, rateLimited, hashPin, checkPin, sha, now, requireAdmin, validDate, DAY_MS, TZ_OFFSET_MIN, AGENDA_USER } = d;
   // Proveedor: OpenRouter si hay OPENROUTER_API_KEY; si no, Anthropic directo.
   const OR = () => !!process.env.OPENROUTER_API_KEY;
   const AI_KEY = () => process.env.OPENROUTER_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -143,7 +143,7 @@ module.exports = function install(d) {
     const foods = db.prepare('SELECT id, data FROM cal_foods WHERE user_id = ?').all(u.id).map(r => Object.assign({ id: r.id }, parse(r.data)));
     const entries = db.prepare('SELECT id, data FROM cal_entries WHERE user_id = ? AND date >= ? AND date <= ?').all(u.id, from, to).map(r => Object.assign({ id: r.id }, parse(r.data)));
     const weights = db.prepare('SELECT date, kg FROM cal_weights WHERE user_id = ? ORDER BY date').all(u.id).map(r => ({ id: r.date, date: r.date, kg: r.kg }));
-    return { user: u.username, profile: (p && parse(p.data)) || { goals: {} }, foods, entries, weights, ai: aiInfo(u.id) };
+    return { user: u.username, chat: u.username === (process.env.CHAT_OWNER || AGENDA_USER || 'giorgio').trim().toLowerCase() && !!process.env.OPENROUTER_API_KEY, profile: (p && parse(p.data)) || { goals: {} }, foods, entries, weights, ai: aiInfo(u.id) };
   });
 
   route('PUT', '/cal/profile', async (req) => {

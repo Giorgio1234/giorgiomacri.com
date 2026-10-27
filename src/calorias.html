@@ -448,6 +448,9 @@ dialog::backdrop{background:rgba(8,12,18,.55)}
 <div id="toast" role="status"></div>
 
 <script>
+/*@shared/chat.js*/
+</script>
+<script>
 const $ = s => document.querySelector(s);
 const NUT = [
   {k:'kcal', l:'Energía', u:'kcal'},
@@ -540,13 +543,18 @@ function applyState(r,s,e,fromCache){
   state.foods=r.foods||[]; state.weights=r.weights||[];
   for(const [id,x] of Store.entries) if(x.date>=s&&x.date<=e) Store.entries.delete(id);
   (r.entries||[]).forEach(x=>Store.entries.set(x.id,x)); syncEntries();
-  setAi(r.ai); $('#who').textContent=r.user||'';
+  setAi(r.ai); $('#who').textContent=r.user||''; setChat(r.chat);
   $('#importHint').hidden=!!(state.foods.length||state.weights.length||state.entries.length);
   if(!fromCache){
     $('#status').hidden=true;
     try{localStorage.setItem(CACHE,JSON.stringify({...r,from:s,to:e}))}catch(err){}
   }
   render();
+}
+let chat=null;
+function setChat(on){
+  if(on&&!chat&&window.GMChat) chat=GMChat.mount({mode:'float',page:'calorías',token:()=>token,date:()=>state.date,onChange:k=>{if(k.calorias)Store.load().catch(loadErr)}});
+  if(chat){chat.el.hidden=!on;if(!on)chat.close()}
 }
 function loadErr(e){
   if(e&&e.status===401) return;
@@ -1060,7 +1068,7 @@ function logoutLocal(msg){
   token=null; try{localStorage.removeItem(TK);localStorage.removeItem(CACHE)}catch(e){}
   Store.entries.clear(); Store.seq++; state.entries=[]; state.foods=[]; state.weights=[]; state.profile={goals:{}}; syncProfile();
   document.querySelectorAll('dialog[open]').forEach(d=>d.close());
-  $('#lErr').textContent=msg||''; show('login');
+  $('#lErr').textContent=msg||''; setChat(false); show('login');
 }
 $('#loginForm').onsubmit=async e=>{
   e.preventDefault(); $('#lErr').textContent='';

@@ -277,6 +277,9 @@ dialog::backdrop { background: rgba(0, 0, 0, .5); }
 <div class="toast" id="toast" hidden role="status"></div>
 
 <script>
+/*@shared/chat.js*/
+</script>
+<script>
 (function () {
   'use strict';
   var API = '/api/sudoku/agenda';
@@ -412,7 +415,13 @@ dialog::backdrop { background: rgba(0, 0, 0, .5); }
   });
 
   /* ---------- Ingreso ---------- */
-  function show(app) { $('loginView').hidden = app; $('appView').hidden = !app; $('logout').hidden = !app; }
+  var chat = null;
+  function show(app) {
+    $('loginView').hidden = app; $('appView').hidden = !app; $('logout').hidden = !app;
+    if (app && !chat && window.GMChat) chat = GMChat.mount({ mode: 'float', page: 'agenda', token: function () { return token; }, date: function () { return cur; },
+      onChange: function (k) { if (k.agenda) { loaded = {}; loadWeek(monday(cur), true).then(render).catch(function () {}); } } });
+    if (chat) { chat.el.hidden = !app; if (!app) chat.close(); }
+  }
   $('loginView').addEventListener('submit', function (e) {
     e.preventDefault(); $('lErr').textContent = ''; $('lBtn').disabled = true;
     call('POST', '/login', { user: $('lUser').value, password: $('lPass').value }).then(function (r) {

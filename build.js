@@ -18,7 +18,8 @@ const PAGES = [
   ['pomodoro.html', 'pomodoro/index.html'],
   ['poker.html', 'poker/index.html'],
   ['agenda.html', 'agenda/index.html'],
-  ['calorias.html', 'calorias/index.html']
+  ['calorias.html', 'calorias/index.html'],
+  ['asistente.html', 'asistente/index.html']
 ];
 
 function inline(src) {

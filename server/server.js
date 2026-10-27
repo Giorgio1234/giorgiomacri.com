@@ -881,7 +881,9 @@ route('POST', '/admin/boards/regenerate', async (req) => {
 });
 
 /* Contador de calorías */
-require('./lib/calorias')({ db, route, fail, readBody, rateLimited, hashPin, checkPin, sha, now, requireAdmin, validDate, DAY_MS, TZ_OFFSET_MIN });
+require('./lib/calorias')({ db, route, fail, readBody, rateLimited, hashPin, checkPin, sha, now, requireAdmin, validDate, DAY_MS, TZ_OFFSET_MIN, AGENDA_USER });
+/* Asistente con herramientas */
+require('./lib/asistente')({ db, route, fail, readBody, rateLimited, sha, now, sessionFrom, validDate, DAY_MS, TZ_OFFSET_MIN, AGENDA_USER });
 
 if (TEST_CLOCK) {
   route('POST', '/__clock', async (req) => { const b = await readBody(req); clockOffset = Number(b.offsetMs) || 0; return { now: now() }; });
