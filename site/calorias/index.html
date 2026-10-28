@@ -262,9 +262,6 @@ dialog::backdrop{background:rgba(8,12,18,.55)}
 .imphint{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:12px}
 .imphint p{margin:0;flex:1 1 220px;color:var(--muted);font-size:.92rem}
 .imphint .ghost{background:var(--bg)}
-.install ol{margin:8px 0 0;padding-left:20px;font-size:.92rem}
-.install li{margin-top:6px}
-.install .ios-share{display:inline-block;vertical-align:-3px}
 
 @media (prefers-reduced-motion:reduce){#toast,.prog{transition:none}}
 </style>
@@ -384,16 +381,6 @@ dialog::backdrop{background:rgba(8,12,18,.55)}
   <section class="card">
     <div class="addhead"><h2>Mis alimentos</h2><button class="ghost" id="newFood">Nuevo alimento</button></div>
     <div id="foodList"></div>
-  </section>
-
-  <section class="card install" id="installCard">
-    <h2>Agregar a inicio</h2>
-    <p class="hint">Para usar el contador como una app, con su ícono en el iPhone:</p>
-    <ol>
-      <li>Abrí esta página en <b>Safari</b>.</li>
-      <li>Tocá el botón <b>Compartir</b> <span class="ios-share"><svg width="16" height="18" viewBox="0 0 16 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 12V2.5"/><path d="M4.8 5.4 8 2.2l3.2 3.2"/><path d="M2.5 9.5v6.3h11V9.5"/></svg></span> (el cuadrado con la flecha para arriba).</li>
-      <li>Bajá y elegí <b>Agregar a pantalla de inicio</b>.</li>
-    </ol>
   </section>
 </div>
 

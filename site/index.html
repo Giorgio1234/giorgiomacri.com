@@ -215,6 +215,11 @@ section.sec { margin-bottom: 46px; }
 
   <div class="resume" id="resume" hidden></div>
 
+  <section class="sec" id="recentSec" hidden>
+    <div class="sec-head"><h2>Recientes</h2></div>
+    <div class="rail" id="recent"></div>
+  </section>
+
   <div id="home">
     <div class="cats" id="cats"></div>
     <section class="sec">
@@ -365,6 +370,13 @@ section.sec { margin-bottom: 46px; }
 
   /* ---------- Estado en vivo leído de este navegador (mismo sitio) ---------- */
   function read(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+  var RK = 'gm-recent-v1';
+  function readRecent() { var a = read(RK); return Array.isArray(a) ? a : []; }
+  function pushRecent(id) {
+    var a = readRecent().filter(function (x) { return x !== id; });
+    a.unshift(id);
+    try { localStorage.setItem(RK, JSON.stringify(a.slice(0, 8))); } catch (e) {}
+  }
   function fmt(s) { s = Math.max(0, Math.round(s)); var m = Math.floor(s / 60), x = s % 60; return (m < 10 ? '0' : '') + m + ':' + (x < 10 ? '0' : '') + x; }
   var LEVELS = ['Muy fácil', 'Fácil', 'Media', 'Difícil', 'Experto'];
   var live = {};   // id -> texto corto
@@ -401,7 +413,7 @@ section.sec { margin-bottom: 46px; }
   /* ---------- Vistas ---------- */
   var current = 'todo';
   function card(it) {
-    return '<a class="item" href="' + esc(it.url) + '">' + art(it) +
+    return '<a class="item" href="' + esc(it.url) + '" data-id="' + esc(it.id) + '">' + art(it) +
       '<div><div class="row"><h3>' + esc(it.name) + '</h3><span class="tag">' + esc(it.tag || CATS[it.cat].name) + '</span></div>' +
       '<p>' + esc(it.desc) + '</p>' +
       '<span class="live" data-live="' + esc(it.id) + '"' + (live[it.id] ? '' : ' hidden') + '><span class="dot"></span><span class="lt">' + esc(live[it.id] || '') + '</span></span></div></a>';
@@ -423,6 +435,13 @@ section.sec { margin-bottom: 46px; }
     $('resume').innerHTML = resumeLinks.map(function (r) {
       return '<a href="' + r.url + '"><span class="dot"></span><span><b>Seguí con ' + esc(r.title) + '</b><br><small>' + esc(r.sub) + '</small></span></a>';
     }).join('');
+
+    // Recientes: lo último que abriste desde acá (queda guardado en este navegador)
+    var rec = readRecent().map(function (id) {
+      return ITEMS.filter(function (i) { return i.id === id; })[0];
+    }).filter(Boolean).slice(0, 6);
+    $('recentSec').hidden = !rec.length || !!q || current !== 'todo';
+    $('recent').innerHTML = rec.map(card).join('');
 
     var showFiltered = !!q || current !== 'todo';
     $('home').hidden = showFiltered; $('filtered').hidden = !showFiltered;
@@ -461,6 +480,7 @@ section.sec { margin-bottom: 46px; }
     if (scroll) window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   document.addEventListener('click', function (e) {
+    var it = e.target.closest('.item[data-id]'); if (it) pushRecent(it.dataset.id);
     var b = e.target.closest('[data-t]'); if (!b) return;
     e.preventDefault(); $('q').value = ''; setTab(b.dataset.t, true);
   });
