@@ -438,7 +438,7 @@ dialog::backdrop{background:rgba(8,12,18,.55)}
   <div class="dlg-h"><h2 id="wGoalH">Peso objetivo</h2><button class="del" data-close aria-label="Cerrar">×</button></div>
   <div class="stack">
     <div><label class="f" for="wGoalIn">Peso al que querés llegar (kg)</label><input id="wGoalIn" type="text" inputmode="decimal" autocomplete="off" placeholder="Ej: 89"></div>
-    <p class="hint">El progreso se mide desde tu primera pesada del último mes. La fecha estimada usa cómo viene bajando tu peso en las últimas 3 semanas.</p>
+    <p class="hint">El progreso se mide desde tu primera pesada del último mes. La fecha estimada usa cómo viene moviéndose tu peso en las últimas 3 semanas, hacia arriba o hacia abajo.</p>
   </div>
   <div class="dlg-actions"><button class="ghost" id="wGoalDel">Quitar objetivo</button><button class="primary" id="wGoalSave">Guardar objetivo</button></div>
 </dialog>
@@ -500,6 +500,8 @@ function uid(p){return p+Date.now().toString(36)+Math.random().toString(36).slic
 function today(){return ymd(new Date())}
 function scale(per100,factor){const o={};NUT.forEach(n=>o[n.k]=Math.round(num(per100&&per100[n.k])*factor*100)/100);return o}
 function defaultMeal(){const h=new Date().getHours();return h<11?'Desayuno':h<15?'Almuerzo':h<19?'Merienda':'Cena'}
+function goalMode(){const g=(state.profile&&state.profile.body&&state.profile.body.goal)||'';return g==='gain'?'gain':g==='lose'?'lose':'maintain'}
+function extraOk(){return goalMode()==='gain'}
 
 let toastT;
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2600)}
@@ -637,7 +639,8 @@ function renderLabel(){
   const pk=t.prot*4, ck=t.carb*4, fk=t.fat*9, sum=pk+ck+fk;
   const pct=v=>sum?(v/sum*100):0;
   let kcalSide;
-  if(gk){const left=gk-t.kcal;kcalSide=`de <strong>${fmt(gk,'kcal')}</strong> kcal<br>${left>=0?`quedan ${fmt(left,'kcal')}`:`${fmt(-left,'kcal')} por encima`}`}
+  if(gk){const left=gk-t.kcal, up=extraOk();
+    kcalSide=`de <strong>${fmt(gk,'kcal')}</strong> kcal<br>${left>=0?`${up?'faltan':'quedan'} ${fmt(left,'kcal')}`:`${fmt(-left,'kcal')} ${up?'por encima del objetivo':'por encima'}`}`}
   else kcalSide=`<button class="linkish" id="setGoalInline">Definir objetivos</button>`;
   const rows=NUT.filter(n=>n.k!=='kcal').map(n=>{
     const goal=num(g[n.k]), v=t[n.k];
@@ -651,7 +654,7 @@ function renderLabel(){
     <div class="lbl-title"><b>Información nutricional</b><span>${list.length} ${list.length===1?'registro':'registros'}</span></div>
     <div class="thick"></div>
     <div class="kcal"><div class="v">${fmt(t.kcal,'kcal')}<small>kcal</small></div><div class="g">${kcalSide}</div></div>
-    ${gk?`<div class="meter${t.kcal>gk?' over':''}" style="margin-top:8px;height:6px"><i style="width:${Math.min(100,t.kcal/gk*100)}%"></i></div>`:''}
+    ${gk?`<div class="meter${t.kcal>gk&&!extraOk()?' over':''}" style="margin-top:8px;height:6px"><i style="width:${Math.min(100,t.kcal/gk*100)}%"></i></div>`:''}
     <div class="split" aria-hidden="true"><i style="width:${pct(pk)}%;background:var(--prot)"></i><i style="width:${pct(ck)}%;background:var(--carb)"></i><i style="width:${pct(fk)}%;background:var(--fat)"></i></div>
     <div class="legend"><span><b style="background:var(--prot)"></b>Proteínas ${Math.round(pct(pk))}%</span><span><b style="background:var(--carb)"></b>Carbos ${Math.round(pct(ck))}%</span><span><b style="background:var(--fat)"></b>Grasas ${Math.round(pct(fk))}%</span></div>
     <div class="mid"></div>
@@ -733,7 +736,7 @@ function renderWeek(){
   let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Calorías de los últimos 7 días">`;
   days.forEach((d,i)=>{
     const h=vals[i]/max*ch, x=i*bw+7, y=top+ch-h, sel=d===state.date;
-    const cls='bar'+(vals[i]?' has':'')+(sel?' sel':'')+(goal&&vals[i]>goal&&!sel?' over':'');
+    const cls='bar'+(vals[i]?' has':'')+(sel?' sel':'')+(goal&&vals[i]>goal&&!sel&&!extraOk()?' over':'');
     s+=`<rect class="${cls}" data-d="${d}" x="${x}" y="${vals[i]?y:top+ch-2}" width="${bw-14}" height="${vals[i]?Math.max(h,2):2}" rx="2"><title>${fmt(vals[i],'kcal')} kcal</title></rect>`;
     if(vals[i]) s+=`<text x="${x+(bw-14)/2}" y="${y-4}" text-anchor="middle"${sel?' class="sel"':''}>${Math.round(vals[i])}</text>`;
     s+=`<text x="${x+(bw-14)/2}" y="${H-6}" text-anchor="middle"${sel?' class="sel"':''}>${wd[parseYmd(d).getDay()]}</text>`;
@@ -798,12 +801,12 @@ function renderHero(){
   const t=totals(dayEntries(state.date)), g=state.goals||{}, gk=num(g.kcal);
   const rk=$('#rK'), CK=2*Math.PI*86;
   if(gk){
-    const left=gk-t.kcal;
+    const left=gk-t.kcal, up=extraOk(), over=left<0&&!up;
     $('#kNum').textContent=fmt(Math.abs(left),'kcal');
-    $('#kCap').textContent=left>=0?'kcal restantes':'kcal por encima';
-    $('#kOf').textContent=`${fmt(t.kcal,'kcal')} de ${fmt(gk,'kcal')}`;
+    $('#kCap').textContent=over?'kcal por encima':up?'kcal para llegar':'kcal restantes';
+    $('#kOf').textContent=left<0&&up?`${fmt(t.kcal,'kcal')} · ${fmt(-left,'kcal')} sobre el objetivo`:`${fmt(t.kcal,'kcal')} de ${fmt(gk,'kcal')}`;
     setRing(rk,CK,t.kcal/gk);
-    $('#bigRing').classList.toggle('over',left<0);
+    $('#bigRing').classList.toggle('over',over);
   } else {
     $('#kNum').textContent=fmt(t.kcal,'kcal'); $('#kCap').textContent='kcal consumidas'; $('#kOf').textContent='sin objetivo';
     setRing(rk,CK,0); $('#bigRing').classList.remove('over');
@@ -1132,7 +1135,7 @@ const OB_STEPS=[
     <div><label class="f">Entrenamientos por semana</label><div class="choices c3">${TRAIN.map(t=>choice('train',t[0],t[1],t[2])).join('')}</div></div>
     <div><label class="f">Y el resto del día…</label><div class="choices c1">${DAILY.map(t=>choice('daily',t[0],t[1],t[2])).join('')}</div></div>`,
   ()=>{const p=obPlan(OB.d),g=p.goals;OB.plan=p;
-    const what=OB.d.goal==='lose'?`para bajar ~${String(OB.d.rate).replace('.',',')} kg por semana`:OB.d.goal==='gain'?'para ganar músculo de a poco':'para mantenerte';
+    const what=OB.d.goal==='lose'?`para bajar ~${String(OB.d.rate).replace('.',',')} kg por semana`:OB.d.goal==='gain'?`para subir ~${String(OB.d.rate).replace('.',',')} kg por semana`:'para mantenerte';
     return `<p class="ob-q">Tus objetivos diarios</p>
     <div class="ob-res"><div class="big"><b>${fmt(g.kcal,'kcal')}</b><span>kcal por día ${what}</span></div>
     <div><b>${g.prot} g</b><span>Proteínas</span></div><div><b>${g.carb} g</b><span>Carbohidratos</span></div>
