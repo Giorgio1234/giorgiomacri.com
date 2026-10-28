@@ -289,12 +289,14 @@ module.exports = function install(d) {
       const content = image ? [{ type: 'text', text: prompt }, { type: 'image_url', image_url: { url: 'data:' + image.source.media_type + ';base64,' + image.source.data } }] : prompt;
       url = process.env.CAL_AI_URL || OR_URL;
       headers = { Authorization: 'Bearer ' + AI_KEY(), 'Content-Type': 'application/json', 'HTTP-Referer': 'https://giorgiomacri.com', 'X-Title': 'giorgiomacri.com calorias' };
-      body = { model: AI_MODEL(), max_tokens: 2000, messages: [{ role: 'user', content }] };
+      // poco razonamiento: si piensa mucho se come el límite de tokens y no queda respuesta
+      body = { model: AI_MODEL(), max_tokens: 6000, reasoning: { effort: 'low', exclude: true }, response_format: { type: 'json_object' },
+        messages: [{ role: 'system', content: 'Respondés únicamente con un objeto JSON válido, sin texto antes ni después, sin markdown y sin cuentas: solo números finales.' }, { role: 'user', content }] };
     } else {
       const content = image ? [image, { type: 'text', text: prompt }] : prompt;
       url = process.env.CAL_AI_URL || AI_URL;
       headers = { 'x-api-key': AI_KEY(), 'anthropic-version': '2023-06-01', 'content-type': 'application/json' };
-      body = { model: AI_MODEL(), max_tokens: 2000, messages: [{ role: 'user', content }] };
+      body = { model: AI_MODEL(), max_tokens: 4000, messages: [{ role: 'user', content }] };
     }
     let r;
     try {
@@ -309,10 +311,30 @@ module.exports = function install(d) {
     const text = OR()
       ? (Array.isArray(msg) ? msg.map(c => c && c.text || '').join('') : String(msg || ''))
       : (j.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
-    const a = text.indexOf('{'), b = text.lastIndexOf('}');
-    const out = a >= 0 && b > a ? parse(text.slice(a, b + 1)) : null;
-    if (!out) { const x = new Error('parse'); throw x; }
+    const out = extractJson(text);
+    if (!out) {
+      const fin = OR() && j.choices && j.choices[0] ? j.choices[0].finish_reason : j.stop_reason;
+      console.error('IA calorías: respuesta sin JSON (fin: ' + fin + '):', JSON.stringify(text.slice(0, 400)));
+      const x = new Error('parse'); throw x;
+    }
     return out;
+  }
+  // Saca el JSON de la respuesta aunque venga con ```json, texto alrededor, comas de más o un array suelto
+  function extractJson(text) {
+    let t = String(text || '').replace(/```(?:json)?/gi, '').trim();
+    const tries = [t];
+    const a = t.indexOf('{'), b = t.lastIndexOf('}');
+    if (a >= 0 && b > a) tries.push(t.slice(a, b + 1));
+    const c = t.indexOf('['), e = t.lastIndexOf(']');
+    if (c >= 0 && e > c && (a < 0 || c < a)) tries.push(t.slice(c, e + 1));
+    for (const x of tries) {
+      for (const y of [x, x.replace(/,\s*([}\]])/g, '$1').replace(/\/\/[^\n]*/g, '')]) {
+        const v = parse(y);
+        if (Array.isArray(v)) return { items: v };
+        if (v && typeof v === 'object') return v;
+      }
+    }
+    return null;
   }
   async function runAi(req, build) {
     const u = calUser(req);
@@ -322,7 +344,10 @@ module.exports = function install(d) {
     if (!text && !image) fail(400, 'Escribí algo o subí una foto.');
     const day = takeAi(u.id);
     try {
-      const out = await askJson(build(u, text, !!image), image);
+      const prompt = build(u, text, !!image);
+      let out;
+      try { out = await askJson(prompt, image); }
+      catch (e) { if (e.message !== 'parse') throw e; out = await askJson(prompt, image); } // un reintento si vino sin JSON
       return { result: out, ai: aiInfo(u.id) };
     } catch (e) {
       if (e.refund) refundAi(u.id, day);
