@@ -423,6 +423,7 @@ Si la tabla tiene columna por 100 g o 100 ml, usá esa y basis "100"; si solo tr
       }
       db.prepare('UPDATE cal_users SET player_id = ? WHERE id = ?').run(pid, u.id);
     }
+    if (b.reset_ai) db.prepare('DELETE FROM cal_ai_usage WHERE user_id = ? AND day = ?').run(u.id, localDay());
     if (b.disabled !== undefined) {
       if (b.disabled && u.is_admin && admins() <= 1) fail(400, 'No podés deshabilitar la única cuenta de admin.');
       db.prepare('UPDATE cal_users SET disabled = ? WHERE id = ?').run(b.disabled ? 1 : 0, u.id);
