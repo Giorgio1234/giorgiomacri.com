@@ -21,7 +21,8 @@ const PAGES = [
   ['agenda.html', 'agenda/index.html'],
   ['calorias.html', 'calorias/index.html'],
   ['asistente.html', 'asistente/index.html'],
-  ['radio.html', 'radio/index.html']
+  ['radio.html', 'radio/index.html'],
+  ['flash.html', 'flash/index.html']
 ];
 
 function inline(src) {

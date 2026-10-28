@@ -257,12 +257,25 @@ section.sec { margin-bottom: 46px; }
      ===================================================================== */
   var CATS = {
     juegos:       { name: 'Juegos', sub: 'Sudoku libre y el torneo semanal con amigos' },
+    flash:        { name: 'Juegos Flash', sub: 'Los clásicos de los 2000, en el navegador' },
     herramientas: { name: 'Herramientas', sub: 'Cosas útiles para estudiar, trabajar y la mesa de poker' }
   };
   var ITEMS = [
     { id: 'sudoku', name: 'Sudoku', url: '/sudoku/', cat: 'juegos', tag: 'Juego', desc: 'Cinco dificultades, notas y pistas.', art: 'sudoku', color: 'candle', featured: true, keywords: 'puzzle numeros libre' },
     { id: 'torneo', name: 'Torneo semanal', url: '/sudoku/torneo/', cat: 'juegos', tag: 'Sudoku', desc: 'Un Experto por día. Gana el menor tiempo.', art: 'trophy', color: 'persimmon', featured: true, keywords: 'competencia amigos ranking experto' },
     { id: 'posiciones', name: 'Posiciones', url: '/sudoku/posiciones/', cat: 'juegos', tag: 'Sudoku', desc: 'La tabla del torneo, en vivo.', art: 'table', color: 'blush', featured: false, keywords: 'tabla ranking scoreboard campeones' },
+    { id: 'flash-happy-wheels', name: 'Happy Wheels', url: '/flash/#happy-wheels', cat: 'flash', tag: 'Flash', desc: 'Física bestial: llegá a la meta entero, si podés.', art: 'flash', color: 'persimmon', featured: false, keywords: 'flash juego clasico viejo happy wheels' },
+    { id: 'flash-boxhead-2play', name: 'Boxhead 2Play', url: '/flash/#boxhead-2play', cat: 'flash', tag: 'Flash', desc: 'Zombis por oleadas. Solo o de a dos en el mismo teclado.', art: 'flash', color: 'sage', featured: false, keywords: 'flash juego clasico viejo boxhead 2play' },
+    { id: 'flash-papas-pizzeria', name: 'Papa\'s Pizzeria', url: '/flash/#papas-pizzeria', cat: 'flash', tag: 'Flash', desc: 'Tomá pedidos, armá las pizzas y que no se te quemen.', art: 'flash', color: 'candle', featured: false, keywords: 'flash juego clasico viejo papa\'s pizzeria' },
+    { id: 'flash-papas-donuteria', name: 'Papa\'s Donuteria', url: '/flash/#papas-donuteria', cat: 'flash', tag: 'Flash', desc: 'Freí, glaseá y decorá donas para una fila que no termina.', art: 'flash', color: 'blush', featured: false, keywords: 'flash juego clasico viejo papa\'s donuteria' },
+    { id: 'flash-swords-and-sandals-2', name: 'Swords and Sandals 2', url: '/flash/#swords-and-sandals-2', cat: 'flash', tag: 'Flash', desc: 'Gladiadores por turnos: armá tu luchador y ganá la arena.', art: 'flash', color: 'persimmon', featured: false, keywords: 'flash juego clasico viejo swords and sandals 2' },
+    { id: 'flash-swords-and-sandals-3', name: 'Swords and Sandals 3', url: '/flash/#swords-and-sandals-3', cat: 'flash', tag: 'Flash', desc: 'Más gladiadores, más armas, más arena.', art: 'flash', color: 'sage', featured: false, keywords: 'flash juego clasico viejo swords and sandals 3' },
+    { id: 'flash-tank-trouble', name: 'Tank Trouble', url: '/flash/#tank-trouble', cat: 'flash', tag: 'Flash', desc: 'Tanquecitos en un laberinto con balas que rebotan. Hasta 3 en un teclado.', art: 'flash', color: 'blue', featured: false, keywords: 'flash juego clasico viejo tank trouble' },
+    { id: 'flash-motherload', name: 'Motherload', url: '/flash/#motherload', cat: 'flash', tag: 'Flash', desc: 'Excavá Marte, vendé minerales y mejorá tu máquina.', art: 'flash', color: 'candle', featured: false, keywords: 'flash juego clasico viejo motherload' },
+    { id: 'flash-doom', name: 'DOOM', url: '/flash/#doom', cat: 'flash', tag: 'Flash', desc: 'El clásico de 1993, portado a Flash.', art: 'flash', color: 'blush', featured: false, keywords: 'flash juego clasico viejo doom' },
+    { id: 'flash-texas-holdem', name: 'Texas Hold\'em', url: '/flash/#texas-holdem', cat: 'flash', tag: 'Flash', desc: 'Póker contra la máquina.', art: 'flash', color: 'blue', featured: false, keywords: 'flash juego clasico viejo texas hold\'em' },
+    { id: 'flash-skies-of-war', name: 'Skies of War', url: '/flash/#skies-of-war', cat: 'flash', tag: 'Flash', desc: 'Aviones en guerra: subí de nivel y mejorá tu flota.', art: 'flash', color: 'candle', featured: false, keywords: 'flash juego clasico viejo skies of war' },
+    { id: 'flash-rail-of-war', name: 'Rail of War', url: '/flash/#rail-of-war', cat: 'flash', tag: 'Flash', desc: 'Un tren blindado contra todo lo que aparezca en las vías.', art: 'flash', color: 'sage', featured: false, keywords: 'flash juego clasico viejo rail of war' },
     { id: 'pomodoro', name: 'Pomodoro', url: '/pomodoro/', cat: 'herramientas', tag: 'Herramienta', desc: 'Foco y descansos, con registro del día.', art: 'ring', color: 'sage', featured: true, keywords: 'timer temporizador estudio concentracion' },
     { id: 'poker', name: 'Deudas de poker', url: '/poker/', cat: 'herramientas', tag: 'Herramienta', desc: 'Quién le paga a quién al final de la noche.', art: 'cards', color: 'blue', featured: true, keywords: 'poker deudas cuentas fichas plata calculadora' },
     { id: 'radio', name: 'Radio', url: '/radio/', cat: 'herramientas', tag: 'Música', desc: 'Miles de radios en vivo de todo el mundo.', art: 'radio', color: 'persimmon', featured: false, keywords: 'radio musica en vivo fm am emisoras escuchar noticias deportes' },
@@ -339,6 +352,14 @@ section.sec { margin-bottom: 46px; }
       for (var ry = -2; ry <= 2; ry++) for (var rx = -2; rx <= 2; rx++) if (rx * rx + ry * ry <= 5) s += '<circle cx="' + (148 + rx * 15) + '" cy="' + (172 + ry * 15) + '" r="4" fill="#f8f5d1" fill-opacity=".55"/>';
       s += '<rect x="214" y="126" width="84" height="34" rx="8" fill="#0f0f14"/><rect x="222" y="134" width="68" height="18" rx="4" fill="#004b82"/><rect x="250" y="131" width="4" height="24" rx="2" fill="#fd9b65"/>';
       s += '<circle cx="234" cy="206" r="16" fill="#0f0f14"/><circle cx="278" cy="206" r="16" fill="#0f0f14"/><circle cx="234" cy="196" r="3" fill="#f8f5d1"/><circle cx="286" cy="200" r="3" fill="#f8f5d1"/>';
+    } else if (item.art === 'flash') {
+      // tapa de juego Flash: chip "FLASH", botón de play y el nombre grande (centrado: las miniaturas recortan los costados)
+      var words = String(item.name).split(' '), lines = [''];
+      words.forEach(function (w) { var l = lines[lines.length - 1]; if ((l + ' ' + w).trim().length > 10 && l) lines.push(w); else lines[lines.length - 1] = (l + ' ' + w).trim(); });
+      s += '<rect x="66" y="34" width="74" height="28" rx="7" fill="#0f0f14" fill-opacity=".88"/><text x="103" y="53" text-anchor="middle" font-family="Inter Tight, sans-serif" font-size="14" font-weight="700" letter-spacing="2" fill="#f8f5d1">FLASH</text>';
+      s += '<circle cx="312" cy="48" r="22" fill="#0f0f14" fill-opacity=".88"/><path d="M305 37v22l18-11z" fill="#f8f5d1"/>';
+      var fs = lines.some(function (l) { return l.length > 8; }) ? 42 : 50;
+      lines.slice(-3).forEach(function (l, i, a) { s += '<text x="200" y="' + (250 - (a.length - 1 - i) * (fs + 4)) + '" text-anchor="middle" font-family="Inter Tight, sans-serif" font-size="' + fs + '" font-weight="800" letter-spacing="-1.5" fill="' + ink + '">' + esc(l) + '</text>'; });
     } else if (item.art === 'macros') {
       // anillo de calorías y tres barras de macros
       var C = 2 * Math.PI * 74;
