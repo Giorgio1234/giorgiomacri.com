@@ -202,7 +202,6 @@ section.sec { margin-bottom: 46px; }
 <main id="contenido" class="wrap">
   <div class="hero">
     <h1>Utilidades</h1>
-    <p id="tagline"></p>
   </div>
 
   <div class="resume" id="resume" hidden></div>
@@ -408,8 +407,6 @@ section.sec { margin-bottom: 46px; }
     computeLive();
     var q = $('q').value.trim().toLowerCase();
     renderTabs();
-    var nCats = Object.keys(CATS).length;
-    $('tagline').textContent = plural(ITEMS.length, 'proyecto', 'proyectos') + ' en ' + plural(nCats, 'categoría', 'categorías') + '. Sin instalar nada.';
     $('q').placeholder = 'Buscar en ' + plural(ITEMS.length, 'cosa', 'cosas');
 
     // Seguí donde estabas
