@@ -392,8 +392,6 @@ dialog::backdrop{background:rgba(8,12,18,.55)}
       <li>Tocá el botón <b>Compartir</b> <span class="ios-share"><svg width="16" height="18" viewBox="0 0 16 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 12V2.5"/><path d="M4.8 5.4 8 2.2l3.2 3.2"/><path d="M2.5 9.5v6.3h11V9.5"/></svg></span> (el cuadrado con la flecha para arriba).</li>
       <li>Bajá y elegí <b>Agregar a pantalla de inicio</b>.</li>
     </ol>
-    <p class="hint" style="margin-top:10px">Si ya lo tenés agregado, tocá <b>Actualizar ícono</b>.</p>
-    <button class="primary" id="installRefresh" style="margin-top:10px">Actualizar ícono</button>
   </section>
 </div>
 
@@ -1600,7 +1598,6 @@ $('#loginForm').onsubmit=async e=>{
   finally{$('#lBtn').disabled=false}
 };
 $('#menuBtn').onclick=()=>$('#menuDlg').showModal();
-$('#installRefresh').onclick=()=>{toast('Buscando el ícono nuevo…');setTimeout(()=>location.reload(),600)};
 $('#mLogout').onclick=()=>GMAuth.logout();
 $('#mExport').onclick=async()=>{
   try{
