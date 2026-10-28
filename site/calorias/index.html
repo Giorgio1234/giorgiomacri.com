@@ -940,8 +940,11 @@ const Store = {
   }
 };
 function syncEntries(){state.entries=[...Store.entries.values()]}
-function syncProfile(){state.goals={...((state.profile&&state.profile.goals)||{})};state.weightGoal=(state.profile&&state.profile.weightGoal)||null;state.cr=!!state.goals.cr}
-function crDays(){return (state.profile&&state.profile.crDays)||{}}
+const CRK='gm-cal-cre';
+function crLocal(){try{const v=JSON.parse(localStorage.getItem(CRK)||'null');return {opt:!!(v&&v.opt),days:(v&&v.days&&typeof v.days==='object')?v.days:{}}}catch(e){return {opt:false,days:{}}}}
+function crSaveLocal(o){try{localStorage.setItem(CRK,JSON.stringify({opt:!!o.opt,days:o.days||{}}))}catch(e){}}
+function syncProfile(){state.goals={...((state.profile&&state.profile.goals)||{})};state.weightGoal=(state.profile&&state.profile.weightGoal)||null;state.cr=!!state.goals.cr||crLocal().opt}
+function crDays(){return {...((state.profile&&state.profile.crDays)||{}),...crLocal().days}}
 function applyState(r,s,e,fromCache){
   state.profile=r.profile||{goals:{}}; syncProfile();
   state.foods=r.foods||[]; state.weights=r.weights||[];
@@ -1431,16 +1434,19 @@ $('#goalsBtn').onclick=openGoals;
 $('#saveGoals').onclick=async()=>{
   const raw=readNut('g_',true), g={};
   NUT.forEach(n=>{if(raw[n.k]!==null&&raw[n.k]>0)g[n.k]=raw[n.k]});
-  if($('#crOpt').checked) g.cr=1;
+  const crOn=$('#crOpt').checked;
+  if(crOn) g.cr=1;
+  const cl=crLocal(); cl.opt=crOn; crSaveLocal(cl); syncProfile(); renderCr();
   try{await Store.setGoals(g);$('#goalsDlg').close();toast('Objetivos guardados')}catch(e){toast(errMsg(e,'No se pudieron guardar.'))}
 };
 
 $('#crBtn').onclick=async()=>{
   const d=state.date, days={...crDays()};
   if(days[d]) delete days[d]; else days[d]=1;
-  $('#crBtn').setAttribute('aria-pressed',days[d]?'true':'false');
+  const cl=crLocal(); cl.days=days; crSaveLocal(cl);
+  renderCr();
   try{await Store.saveProfile({...state.profile,crDays:days});toast(days[d]?'Creatina marcada':'Creatina desmarcada')}
-  catch(e){toast(errMsg(e,'No se pudo guardar.'))}
+  catch(e){renderCr();toast('Quedó marcada en este dispositivo. No se pudo sincronizar: '+errMsg(e,'sin conexión'))}
 };
 
 /* ---------- foods ---------- */
