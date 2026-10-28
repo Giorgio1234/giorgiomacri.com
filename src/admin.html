@@ -650,9 +650,8 @@ dialog { width: min(560px, calc(100vw - 32px)); }
           '<td>' + u.entries + ' reg.' + (u.last_entry ? ' · ' + u.last_entry.split('-').reverse().slice(0, 2).join('/') : '') + '</td><td>' + (u.ai_today || 0) + ' / ' + a.limit + (u.ai_today ? ' <button class="link" type="button" data-cai="' + u.id + '">Resetear</button>' : '') + '</td><td>' + dfmt(u.last_login) + '</td>' +
           '<td>' + (u.disabled ? '<span class="pill bad">deshabilitada</span>' : '<span class="pill ok">activa</span>') + '</td>' +
           '<td><div class="actions"><button class="btn small ghost" type="button" data-cpw="' + u.id + '">Contraseña</button>' +
-          '<button class="btn small ghost" type="button" data-cadm="' + u.id + '">' + (u.is_admin ? 'Quitar admin' : 'Hacer admin') + '</button>' +
-          '<button class="btn small ghost" type="button" data-cdis="' + u.id + '">' + (u.disabled ? 'Habilitar' : 'Deshabilitar') + '</button>' +
-          '<button class="btn small danger" type="button" data-cdel="' + u.id + '">Borrar</button></div></td></tr>';
+          (u.is_admin ? '' : '<button class="btn small ghost" type="button" data-cdis="' + u.id + '">' + (u.disabled ? 'Habilitar' : 'Deshabilitar') + '</button>' +
+          '<button class="btn small danger" type="button" data-cdel="' + u.id + '">Borrar</button>') + '</div></td></tr>';
       }).join('') || '<tr><td colspan="8" class="dim">Todavía no hay cuentas.</td></tr>') + '</tbody>';
   }
   $('calUsers').addEventListener('change', function (e) {

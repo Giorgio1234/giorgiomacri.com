@@ -42,9 +42,9 @@ El VPS revisa este repo cada minuto (`giorgiomacri-sync.timer`):
 
 Hay una sola cuenta para todo el sitio (`server/lib/cuentas.js`): se entra con el botón de arriba a la derecha en cualquier página y la sesión vale para Sudoku, Calorías, Agenda, Asistente y el panel. Las cuentas las crea el admin en `/admin/`. Cada cuenta puede tener un jugador de sudoku unido (se elige en el panel, o se une sola si entra al torneo con la cuenta puesta). Los amigos que solo juegan siguen entrando con apodo y PIN.
 
-Al arrancar, el servidor se asegura de que exista la cuenta del dueño (`CHAT_OWNER`, o si no `AGENDA_USER`, por defecto `giorgio`). Si no existe la crea con `AGENDA_PASSWORD` y la marca como admin. Además une una sola vez el jugador `OWNER_PLAYER` (por defecto `giovanni`). `ADMIN_PASSWORD` queda como respaldo para la API vieja del panel.
+El único admin es la cuenta `OWNER_USER` (por defecto `giorgio`); al arrancar, el servidor se lo saca a cualquier otra. No hay contraseñas de admin en el archivo de configuración. Si te olvidás la contraseña: `sudo -u sudoku node /opt/sudoku-torneo/cuenta-admin.js` (pide una nueva y cierra todas las sesiones). Las sesiones vencen a los 30 días sin uso o a los 180 días, y desde el menú de la cuenta se puede cerrar sesión en todos lados.
 
-La agenda (versión vieja) usa `AGENDA_USER` y `AGENDA_PASSWORD` de `/etc/sudoku-torneo.env`; si no están, el usuario es `giorgio` y la contraseña es `ADMIN_PASSWORD`. Después de cambiarlas: `systemctl restart sudoku-torneo`.
+El emulador de Flash (Ruffle) no se carga de un CDN: `deploy/sync.sh` lo baja del registro de npm, verifica su hash y lo deja en `/vendor/ruffle-<versión>/`.
 
 El contador de calorías usa cuentas propias que se crean desde el panel de admin (sección "Calorías: cuentas"). Para "Describir" y "Leer etiqueta" hace falta `OPENROUTER_API_KEY` (modelo `deepseek/deepseek-v4.1-flash-1017`) o `ANTHROPIC_API_KEY` (modelo `claude-haiku-5-5`) en `/etc/sudoku-torneo.env`; el modelo se cambia con `CAL_AI_MODEL` y el límite es de 30 consultas por persona por día (`CAL_AI_DAILY`). Después: `systemctl restart sudoku-torneo`.
 

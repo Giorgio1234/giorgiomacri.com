@@ -19,7 +19,7 @@ module.exports = function install(d) {
   const { db, route, fail, readBody, rateLimited, sha, now, sessionFrom, validDate, DAY_MS, TZ_OFFSET_MIN, AGENDA_USER } = d;
   const KEY = () => process.env.OPENROUTER_API_KEY || '';
   const MODEL = () => process.env.CHAT_MODEL || process.env.CAL_AI_MODEL || 'deepseek/deepseek-v4.1-flash-1017';
-  const OWNER = () => (process.env.CHAT_OWNER || AGENDA_USER || 'giorgio').trim().toLowerCase();
+  const OWNER = () => AGENDA_USER;
   const DAILY = () => Math.max(1, parseInt(process.env.CHAT_DAILY || '150', 10) || 150);
   const GH_TOKEN = () => process.env.GITHUB_TOKEN || '';
   const GH_REPO = () => process.env.CHAT_GIT_REPO || 'Giorgio1234/giorgiomacri.com';
@@ -42,7 +42,7 @@ module.exports = function install(d) {
   /* ---------- Acceso: solo el dueño ---------- */
   function owner(req) {
     const s = sessionFrom(req);
-    if (s && (s.is_admin === 2 || (s.account && s.account.is_admin))) return true; // sesión vieja de la agenda o cuenta admin
+    if (s && s.account && s.account.is_admin) return true;
     fail(401, 'El asistente es solo para el admin. Entrá con tu cuenta.');
   }
   function calUid() {

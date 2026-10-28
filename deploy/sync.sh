@@ -60,6 +60,26 @@ if [ "$before" != "$after" ]; then
   echo "$after" > "$DEPLOYED"
 fi
 
+# Emulador de Flash (Ruffle) servido desde el sitio, no desde un CDN: se baja una vez y se verifica el hash
+RUFFLE_VER=0.7.1
+RUFFLE_SHA512='6ZWxx/cfX3RoNyQ1AVimECSae4gKqMxdPimOD+chiIcOFiJS0ATGKcjkretxNT03lqNUpiSyJjF55AuvvZ+QeA=='
+RUFFLE_DIR="$WEB/vendor/ruffle-$RUFFLE_VER"
+if [ ! -f "$RUFFLE_DIR/ruffle.js" ]; then
+  tmp=$(mktemp -d)
+  if curl -fsSL --max-time 120 -o "$tmp/r.tgz" "https://registry.npmjs.org/@ruffle-rs/ruffle/-/ruffle-$RUFFLE_VER.tgz"; then
+    got=$(node -e "process.stdout.write(require('crypto').createHash('sha512').update(require('fs').readFileSync(process.argv[1])).digest('base64'))" "$tmp/r.tgz")
+    if [ "$got" = "$RUFFLE_SHA512" ]; then
+      tar -xzf "$tmp/r.tgz" -C "$tmp" && mkdir -p "$RUFFLE_DIR" && cp -r "$tmp/package/." "$RUFFLE_DIR/" && chown -R "$WEB_OWNER" "$WEB/vendor"
+      echo "Ruffle $RUFFLE_VER instalado en $RUFFLE_DIR."
+    else
+      echo "Ruffle: el hash no coincide, no se instala (esperado $RUFFLE_SHA512, llegó $got)."
+    fi
+  else
+    echo "Ruffle: no se pudo descargar; reintento en la próxima pasada."
+  fi
+  rm -rf "$tmp"
+fi
+
 # Reinicio del torneo cuando no hay tableros corriendo (en pausa no cuentan)
 if [ -f "$PENDING" ]; then
   since=$(cat "$PENDING"); now=$(date +%s)

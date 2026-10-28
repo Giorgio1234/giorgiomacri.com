@@ -586,10 +586,18 @@ dialog { width: min(560px, calc(100vw - 32px)); }
       '<div class="gma-menu" role="menu" hidden><div class="hd"><b>' + esc(me.name) + '</b><small>' + esc(sub) + '</small></div>' +
       links().map(function (x) { return '<a role="menuitem" href="' + x[0] + '">' + esc(x[1]) + '</a>'; }).join('') +
       '<hr>' + (me.kind === 'account' ? '<button type="button" role="menuitem" data-pw>Cambiar contraseña</button>' : '') +
+      '<button type="button" role="menuitem" data-all>Cerrar sesión en todos lados</button>' +
       '<button type="button" role="menuitem" class="out" data-out>Salir</button></div>';
     var btn = slot.querySelector('.gma-me'), menu = slot.querySelector('.gma-menu');
     btn.onclick = function (e) { e.stopPropagation(); menuOpen = menu.hidden; menu.hidden = !menuOpen; btn.setAttribute('aria-expanded', String(menuOpen)); };
     menu.querySelector('[data-out]').onclick = function () { logout(); };
+    menu.querySelector('[data-all]').onclick = function () {
+      menu.hidden = true;
+      if (!confirm('Se cierra tu sesión en todos los dispositivos, incluido este. ¿Seguimos?')) return;
+      var t = token; clearAll();
+      var go = function () { location.reload(); };
+      fetch(API + '/logout-all', { method: 'POST', headers: { Authorization: 'Bearer ' + t } }).then(go, go);
+    };
     var pw = menu.querySelector('[data-pw]'); if (pw) pw.onclick = function () { menu.hidden = true; password(); };
   }
   document.addEventListener('click', function (e) { if (!slot) return; var m = slot.querySelector('.gma-menu'); if (m && !m.hidden && !slot.contains(e.target)) m.hidden = true; });
@@ -1102,9 +1110,8 @@ dialog { width: min(560px, calc(100vw - 32px)); }
           '<td>' + u.entries + ' reg.' + (u.last_entry ? ' · ' + u.last_entry.split('-').reverse().slice(0, 2).join('/') : '') + '</td><td>' + (u.ai_today || 0) + ' / ' + a.limit + (u.ai_today ? ' <button class="link" type="button" data-cai="' + u.id + '">Resetear</button>' : '') + '</td><td>' + dfmt(u.last_login) + '</td>' +
           '<td>' + (u.disabled ? '<span class="pill bad">deshabilitada</span>' : '<span class="pill ok">activa</span>') + '</td>' +
           '<td><div class="actions"><button class="btn small ghost" type="button" data-cpw="' + u.id + '">Contraseña</button>' +
-          '<button class="btn small ghost" type="button" data-cadm="' + u.id + '">' + (u.is_admin ? 'Quitar admin' : 'Hacer admin') + '</button>' +
-          '<button class="btn small ghost" type="button" data-cdis="' + u.id + '">' + (u.disabled ? 'Habilitar' : 'Deshabilitar') + '</button>' +
-          '<button class="btn small danger" type="button" data-cdel="' + u.id + '">Borrar</button></div></td></tr>';
+          (u.is_admin ? '' : '<button class="btn small ghost" type="button" data-cdis="' + u.id + '">' + (u.disabled ? 'Habilitar' : 'Deshabilitar') + '</button>' +
+          '<button class="btn small danger" type="button" data-cdel="' + u.id + '">Borrar</button>') + '</div></td></tr>';
       }).join('') || '<tr><td colspan="8" class="dim">Todavía no hay cuentas.</td></tr>') + '</tbody>';
   }
   $('calUsers').addEventListener('change', function (e) {

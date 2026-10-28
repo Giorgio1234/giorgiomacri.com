@@ -108,7 +108,7 @@ button { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-colo
 <script>
 (function () {
   'use strict';
-  var RUFFLE = 'https://unpkg.com/@ruffle-rs/ruffle@0.7.1/ruffle.js';
+  var RUFFLE = '/vendor/ruffle-0.7.1/ruffle.js'; // lo descarga y verifica el servidor al publicar (deploy/sync.sh)
   var GAMES = [
     { id: 'happy-wheels', name: 'Happy Wheels', w: 900, h: 500, color: '#fd9b65', by: 'Jim Bonacci', desc: 'Física bestial: llegá a la meta entero, si podés.' },
     { id: 'boxhead-2play', name: 'Boxhead 2Play', w: 640, h: 480, color: '#9ac8ae', by: 'Sean Cooper', desc: 'Zombis por oleadas. Solo o de a dos en el mismo teclado.' },
@@ -152,7 +152,7 @@ button { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-colo
     ruffleReady = new Promise(function (resolve, reject) {
       var s = document.createElement('script'); s.src = RUFFLE; s.async = true;
       s.onload = function () { resolve(window.RufflePlayer.newest()); };
-      s.onerror = function () { ruffleReady = null; reject(new Error('No se pudo cargar el emulador.')); };
+      s.onerror = function () { ruffleReady = null; reject(new Error('El emulador todavía no está instalado en el servidor. Probá en unos minutos.')); };
       document.head.appendChild(s);
     });
     return ruffleReady;

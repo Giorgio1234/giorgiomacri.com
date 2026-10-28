@@ -4,7 +4,7 @@
  * Node >= 22.13 (usa node:http y node:sqlite, sin dependencias externas).
  *
  * Variables de entorno:
- *   ADMIN_PASSWORD  (obligatoria, mínimo 8 caracteres)
+ *   OWNER_USER      la única cuenta admin del sitio (por defecto giorgio)
  *   INVITE_CODE     código inicial para unirse (después se cambia desde el dashboard)
  *   DB_PATH         ruta del archivo SQLite (por defecto ./torneo.db)
  *   PORT, HOST      por defecto 3001 y 127.0.0.1
@@ -14,6 +14,7 @@ const crypto = require('node:crypto');
 const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
 const { generate } = require('./lib/sudoku');
+const sesiones = require('./lib/sesiones');
 
 /* ---------- Reglas ---------- */
 const LIMIT_S = 30 * 60;      // tope por tablero
@@ -28,15 +29,11 @@ const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábad
 const PORT = +process.env.PORT || 3001;
 const HOST = process.env.HOST || '127.0.0.1';
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'torneo.db');
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
-// Agenda privada: usuario y contraseña propios (si no se configuran, usuario "giorgio" y la contraseña del admin)
-const AGENDA_USER = (process.env.AGENDA_USER || 'giorgio').trim().toLowerCase();
-const AGENDA_PASSWORD = process.env.AGENDA_PASSWORD || ADMIN_PASSWORD;
+// La única cuenta admin (panel, agenda, asistente). No hay contraseñas en el archivo de configuración: se entra con la cuenta.
+const OWNER_USER = (process.env.OWNER_USER || 'giorgio').trim().toLowerCase();
+const AGENDA_USER = OWNER_USER;
 const TEST_CLOCK = process.env.TEST_CLOCK === '1';
-if (ADMIN_PASSWORD.length < 8) {
-  console.error('Falta ADMIN_PASSWORD (mínimo 8 caracteres).');
-  process.exit(1);
-}
+if (process.env.ADMIN_PASSWORD || process.env.AGENDA_PASSWORD) console.warn('ADMIN_PASSWORD y AGENDA_PASSWORD ya no se usan: borralas de /etc/sudoku-torneo.env.');
 
 let clockOffset = 0;
 const now = () => Date.now() + clockOffset;
@@ -321,17 +318,17 @@ function sessionFrom(req) {
   if (!m) return null;
   const s = db.prepare('SELECT * FROM sessions WHERE token_hash = ?').get(sha(m[1]));
   if (!s) return accountSession(m[1]);
-  // is_admin: 1 = panel del torneo (7 días), 2 = agenda privada (60 días)
-  if (s.is_admin === 1 && Date.now() - s.created_at > 7 * DAY_MS) return null;
-  if (s.is_admin === 2 && Date.now() - s.created_at > 60 * DAY_MS) return null;
+  if (s.is_admin) return null; // sesiones viejas de "contraseña de admin" o de agenda: ya no valen
   return s;
 }
 
 // Cuenta del sitio (lib/cuentas.js): vale como jugador (si tiene uno unido) y como admin (si es admin)
 function accountSession(token) {
   let a;
-  try { a = db.prepare('SELECT u.*, s.created_at AS sc FROM cal_sessions s JOIN cal_users u ON u.id = s.user_id WHERE s.token_hash = ?').get(sha(token)); } catch (e) { return null; }
-  if (!a || a.disabled || Date.now() - a.sc > 90 * DAY_MS) return null;
+  const h = sha(token);
+  try { a = db.prepare('SELECT u.*, s.created_at AS sc, s.last_used AS lu FROM cal_sessions s JOIN cal_users u ON u.id = s.user_id WHERE s.token_hash = ?').get(h); } catch (e) { return null; }
+  if (!a || a.disabled || !sesiones.alive(db, h, a.sc, a.lu)) return null;
+  a.is_admin = a.is_admin && a.username === OWNER_USER ? 1 : 0; // admin solo el dueño, aunque alguien toque la base
   return { player_id: a.player_id || null, is_admin: a.is_admin ? 1 : 0, account: a, created_at: Date.now() };
 }
 
@@ -385,11 +382,11 @@ function requirePlayer(req) {
 }
 function requireAdmin(req) {
   const s = sessionFrom(req);
-  if (!s || s.is_admin !== 1) fail(401, 'Sesión de administrador vencida. Volvé a entrar.');
+  if (!s || !s.account || !s.account.is_admin) fail(401, 'Entrá con tu cuenta de admin.');
 }
 function requireAgenda(req) {
   const s = sessionFrom(req);
-  if (!s || !(s.is_admin === 2 || (s.account && s.account.is_admin))) fail(401, 'Tenés que entrar a la agenda.');
+  if (!s || !s.account || !s.account.is_admin) fail(401, 'Tenés que entrar con tu cuenta de admin.');
 }
 function requireViewer(req) {
   const s = sessionFrom(req);
@@ -493,15 +490,6 @@ function sameText(a, b) {
   return crypto.timingSafeEqual(x, y);
 }
 function getSettingJson(key, def) { const r = db.prepare('SELECT data FROM agenda_settings WHERE key = ?').get(key); try { return r ? JSON.parse(r.data) : def; } catch (e) { return def; } }
-
-route('POST', '/agenda/login', async (req) => {
-  if (rateLimited(req, 'agenda', 8)) fail(429, 'Demasiados intentos. Esperá unos minutos.');
-  const b = await readBody(req);
-  const okUser = sameText(String(b.user || '').trim().toLowerCase(), AGENDA_USER);
-  const okPass = sameText(String(b.password || ''), AGENDA_PASSWORD);
-  if (!okUser || !okPass) fail(401, 'Usuario o contraseña incorrectos.');
-  return { token: newSession(null, 2) };
-});
 
 route('GET', '/agenda/data', async (req, url) => {
   requireAgenda(req);
@@ -674,13 +662,6 @@ route('POST', '/boards/(\\d)/move', async (req, url, m) => {
 });
 
 /* Administración */
-route('POST', '/admin/login', async (req) => {
-  if (rateLimited(req, 'admin', 8)) fail(429, 'Demasiados intentos. Esperá unos minutos.');
-  const b = await readBody(req);
-  const a = sha(String(b.password || '')), e = sha(ADMIN_PASSWORD);
-  if (!crypto.timingSafeEqual(Buffer.from(a), Buffer.from(e))) fail(401, 'Contraseña incorrecta.');
-  return { token: newSession(null, true) };
-});
 
 route('GET', '/admin/overview', async (req, url) => {
   requireAdmin(req);
@@ -900,7 +881,7 @@ route('POST', '/admin/boards/regenerate', async (req) => {
 require('./lib/calorias')({ db, route, fail, readBody, rateLimited, hashPin, checkPin, sha, now, requireAdmin, validDate, DAY_MS, TZ_OFFSET_MIN, AGENDA_USER });
 /* Cuenta única */
 require('./lib/cuentas')({ db, route, fail, readBody, rateLimited, hashPin, checkPin, sha, now, logAccess,
-  OWNER: (process.env.CHAT_OWNER || AGENDA_USER || 'giorgio').trim().toLowerCase(), OWNER_PASSWORD: AGENDA_PASSWORD });
+  OWNER: OWNER_USER, DAY_MS });
 /* Asistente con herramientas */
 require('./lib/asistente')({ db, route, fail, readBody, rateLimited, sha, now, sessionFrom, validDate, DAY_MS, TZ_OFFSET_MIN, AGENDA_USER });
 

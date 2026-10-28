@@ -3,12 +3,12 @@
 // Rutas bajo /api/sudoku/cal/* y /api/sudoku/admin/cal/*.
 
 const crypto = require('node:crypto');
+const sesiones = require('./sesiones');
 
 const NUT = ['kcal', 'prot', 'carb', 'sug', 'fat', 'sat', 'fib', 'sod'];
 const MEALS = ['Desayuno', 'Almuerzo', 'Merienda', 'Cena', 'Colación'];
 const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const USER_RE = /^[a-z0-9._-]{3,24}$/;
-const SESSION_DAYS = 90;
 const AI_URL = 'https://api.anthropic.com/v1/messages';
 const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const IMG_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -99,7 +99,7 @@ module.exports = function install(d) {
     const m = /^Bearer (.+)$/.exec(req.headers.authorization || '');
     if (!m) fail(401, 'Tenés que entrar.');
     const s = db.prepare('SELECT * FROM cal_sessions WHERE token_hash = ?').get(sha(m[1]));
-    if (!s || Date.now() - s.created_at > SESSION_DAYS * DAY_MS) fail(401, 'Tu sesión venció. Volvé a entrar.');
+    if (!s || !sesiones.alive(db, s.token_hash, s.created_at, s.last_used)) fail(401, 'Tu sesión venció. Volvé a entrar.');
     const u = db.prepare('SELECT * FROM cal_users WHERE id = ?').get(s.user_id);
     if (!u) fail(401, 'Tu usuario ya no existe.');
     if (u.disabled) fail(403, 'Tu usuario está deshabilitado.');
@@ -385,6 +385,7 @@ Si la tabla tiene columna por 100 g o 100 ml, usá esa y basis "100"; si solo tr
         (SELECT MAX(date) FROM cal_entries e WHERE e.user_id = u.id) last_entry,
         (SELECT n FROM cal_ai_usage a WHERE a.user_id = u.id AND a.day = ?) ai_today
       FROM cal_users u ORDER BY u.username`).all(day);
+    users.forEach(x => { x.is_admin = x.username === AGENDA_USER ? 1 : 0; });
     const players = db.prepare('SELECT id, name FROM players ORDER BY name COLLATE NOCASE').all();
     return { users, players, ai: { enabled: !!AI_KEY(), provider: OR() ? 'OpenRouter' : 'Anthropic', model: AI_MODEL(), limit: AI_LIMIT() } };
   });
@@ -409,11 +410,7 @@ Si la tabla tiene columna por 100 g o 100 ml, usá esa y basis "100"; si solo tr
       db.prepare('UPDATE cal_users SET pass_hash = ? WHERE id = ?').run(hashPin(pw), u.id);
       db.prepare('DELETE FROM cal_sessions WHERE user_id = ?').run(u.id);
     }
-    const admins = () => db.prepare('SELECT COUNT(*) c FROM cal_users WHERE is_admin = 1 AND disabled = 0').get().c;
-    if (b.is_admin !== undefined) {
-      if (!b.is_admin && u.is_admin && admins() <= 1) fail(400, 'Tiene que quedar al menos una cuenta de admin.');
-      db.prepare('UPDATE cal_users SET is_admin = ? WHERE id = ?').run(b.is_admin ? 1 : 0, u.id);
-    }
+    if (b.is_admin !== undefined) fail(400, 'El admin es fijo: solo la cuenta del dueño.');
     if (b.player_id !== undefined) {
       const pid = b.player_id ? +b.player_id : null;
       if (pid) {
@@ -425,7 +422,7 @@ Si la tabla tiene columna por 100 g o 100 ml, usá esa y basis "100"; si solo tr
     }
     if (b.reset_ai) db.prepare('DELETE FROM cal_ai_usage WHERE user_id = ? AND day = ?').run(u.id, localDay());
     if (b.disabled !== undefined) {
-      if (b.disabled && u.is_admin && admins() <= 1) fail(400, 'No podés deshabilitar la única cuenta de admin.');
+      if (b.disabled && u.is_admin) fail(400, 'No podés deshabilitar la cuenta de admin.');
       db.prepare('UPDATE cal_users SET disabled = ? WHERE id = ?').run(b.disabled ? 1 : 0, u.id);
       if (b.disabled) db.prepare('DELETE FROM cal_sessions WHERE user_id = ?').run(u.id);
     }
@@ -435,7 +432,7 @@ Si la tabla tiene columna por 100 g o 100 ml, usá esa y basis "100"; si solo tr
     requireAdmin(req);
     const id = +m[1];
     const target = db.prepare('SELECT is_admin FROM cal_users WHERE id = ?').get(id);
-    if (target && target.is_admin && db.prepare('SELECT COUNT(*) c FROM cal_users WHERE is_admin = 1').get().c <= 1) fail(400, 'No podés borrar la única cuenta de admin.');
+    if (target && target.is_admin) fail(400, 'No podés borrar la cuenta de admin.');
     ['cal_sessions', 'cal_profile', 'cal_foods', 'cal_entries', 'cal_weights', 'cal_ai_usage'].forEach(t => db.prepare(`DELETE FROM ${t} WHERE user_id = ?`).run(id));
     db.prepare('DELETE FROM cal_users WHERE id = ?').run(id);
     return { ok: true };

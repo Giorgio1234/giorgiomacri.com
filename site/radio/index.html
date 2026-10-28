@@ -237,10 +237,18 @@ button.logo { border: 0; padding: 0; }
       '<div class="gma-menu" role="menu" hidden><div class="hd"><b>' + esc(me.name) + '</b><small>' + esc(sub) + '</small></div>' +
       links().map(function (x) { return '<a role="menuitem" href="' + x[0] + '">' + esc(x[1]) + '</a>'; }).join('') +
       '<hr>' + (me.kind === 'account' ? '<button type="button" role="menuitem" data-pw>Cambiar contraseña</button>' : '') +
+      '<button type="button" role="menuitem" data-all>Cerrar sesión en todos lados</button>' +
       '<button type="button" role="menuitem" class="out" data-out>Salir</button></div>';
     var btn = slot.querySelector('.gma-me'), menu = slot.querySelector('.gma-menu');
     btn.onclick = function (e) { e.stopPropagation(); menuOpen = menu.hidden; menu.hidden = !menuOpen; btn.setAttribute('aria-expanded', String(menuOpen)); };
     menu.querySelector('[data-out]').onclick = function () { logout(); };
+    menu.querySelector('[data-all]').onclick = function () {
+      menu.hidden = true;
+      if (!confirm('Se cierra tu sesión en todos los dispositivos, incluido este. ¿Seguimos?')) return;
+      var t = token; clearAll();
+      var go = function () { location.reload(); };
+      fetch(API + '/logout-all', { method: 'POST', headers: { Authorization: 'Bearer ' + t } }).then(go, go);
+    };
     var pw = menu.querySelector('[data-pw]'); if (pw) pw.onclick = function () { menu.hidden = true; password(); };
   }
   document.addEventListener('click', function (e) { if (!slot) return; var m = slot.querySelector('.gma-menu'); if (m && !m.hidden && !slot.contains(e.target)) m.hidden = true; });
