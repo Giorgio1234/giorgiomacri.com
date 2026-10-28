@@ -26,9 +26,15 @@ const PAGES = [
 function inline(src) {
   return src.replace(/\/\*@([\w./-]+)\*\//g, (_, f) => fs.readFileSync(path.join(SRC, f), 'utf8'));
 }
+// Íconos del sitio (src/static/). Si una página trae su propio apple-touch-icon, se respeta.
+function icons(html) {
+  let h = '<link rel="icon" href="/favicon.ico" sizes="any">\n<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">\n';
+  if (!html.includes('apple-touch-icon')) h += '<link rel="apple-touch-icon" href="/apple-touch-icon.png">\n';
+  return h;
+}
 function wrap(html) {
   const split = html.indexOf('</style>') + '</style>'.length;
-  return '<!doctype html>\n<html lang="es">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n' +
+  return '<!doctype html>\n<html lang="es">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n' + icons(html) +
     html.slice(0, split) + '\n</head>\n<body>\n' + html.slice(split).trim() + '\n</body>\n</html>\n';
 }
 
