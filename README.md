@@ -18,6 +18,7 @@ Sitio personal: un catálogo de herramientas y juegos que corren en el navegador
 ## Estructura
 
 - `src/` — páginas fuente. `src/shared/` tiene CSS y JS compartidos que se insertan con marcadores `/*@shared/archivo*/`.
+- `src/static/` — archivos que se copian tal cual a `site/` (íconos, imágenes), con la misma ruta.
 - `site/` — páginas listas para publicar. **Se generan con `node build.js`; no se editan a mano.**
 - `server/` — API del torneo (Node ≥ 22.13, sin dependencias, SQLite incorporado).
 - `deploy/` — servicio de systemd, Nginx, script de instalación y de sincronización.

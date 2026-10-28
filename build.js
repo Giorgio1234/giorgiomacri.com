@@ -42,4 +42,7 @@ for (const [src, dst] of PAGES) {
   fs.mkdirSync(PREVIEW, { recursive: true });
   fs.writeFileSync(path.join(PREVIEW, dst.replace(/\//g, '_')), body);
 }
+// Archivos tal cual (íconos, imágenes): src/static/ se copia a site/ con la misma estructura
+const STATIC = path.join(SRC, 'static');
+if (fs.existsSync(STATIC)) fs.cpSync(STATIC, SITE, { recursive: true });
 console.log('site/ listo:', PAGES.map(p => p[1]).join(', '));
