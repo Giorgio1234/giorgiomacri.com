@@ -48,6 +48,20 @@ h2{font-size:1.45rem;font-weight:700;margin:0 0 10px;line-height:1.1}
 .ghost{border:0;background:var(--card);border-radius:999px;padding:0 16px;height:42px;font-size:.92rem;font-weight:600}
 .status{font-size:.82rem;color:var(--muted);margin:4px 0 0}
 
+/* creatina */
+.cre{display:flex;align-items:center;gap:10px;width:100%;margin:10px 0 0;padding:9px 14px;
+  border:1.5px solid var(--line);background:var(--card);border-radius:999px;font-weight:600;font-size:.95rem;text-align:left}
+.cre .box{width:24px;height:24px;flex:none;border-radius:7px;border:1.5px solid var(--line);background:var(--bg);
+  display:grid;place-items:center;font-size:.85rem;font-weight:800;color:transparent;transition:background .15s,color .15s,border-color .15s}
+.cre[aria-pressed="true"] .box{background:var(--carb);border-color:var(--carb);color:var(--ink)}
+.cre .lbl{flex:1}
+.cre .st{font-size:.82rem;font-weight:600;color:var(--muted)}
+.cre[aria-pressed="true"] .st{color:var(--carb)}
+.cropt{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--line);border-radius:16px;
+  padding:10px 12px;margin:0 0 14px;font-size:.9rem;font-weight:600;cursor:pointer}
+.cropt input{width:20px;height:20px;min-height:0;flex:none;margin-top:1px;padding:0;accent-color:var(--carb)}
+.cropt small{display:block;font-weight:400;color:var(--muted);font-size:.82rem;margin-top:1px}
+
 /* hero rings */
 .hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:center;
   background:var(--card);border-radius:24px;padding:18px;margin:14px 0 18px}
@@ -285,6 +299,7 @@ dialog::backdrop{background:rgba(8,12,18,.55)}
     <button class="ghost" id="goalsBtn">Objetivos</button>
   </header>
   <p class="status" id="status">Cargando…</p>
+  <button class="cre" id="crBtn" aria-pressed="false" aria-label="Creatina del día" hidden><span class="box" aria-hidden="true">✓</span><span class="lbl">Creatina</span><span class="st"></span></button>
   <div class="card imphint" id="importHint" hidden><p>¿Tenés datos del Diario de macros? Importá el archivo exportado y aparece todo acá.</p><button class="ghost" id="importHintBtn">Importar archivo</button></div>
 
   <section class="hero" aria-label="Resumen del día">
@@ -388,6 +403,7 @@ dialog::backdrop{background:rgba(8,12,18,.55)}
   <div class="dlg-h"><h2 id="goalsH">Objetivos diarios</h2><button class="del" data-close aria-label="Cerrar">×</button></div>
   <p class="hint" style="margin-bottom:10px">Dejá vacío lo que no quieras seguir contra un objetivo. <button class="linkish" id="goalsCalc">Calcular con mis datos</button></p>
   <div class="nutgrid" id="goalNut"></div>
+  <label class="cropt" for="crOpt" style="margin-top:12px"><input type="checkbox" id="crOpt"><span>Llevar la creatina diaria<small>Aparece un check arriba del contador para marcarla cada día.</small></span></label>
   <div class="dlg-actions"><button class="ghost" data-close>Cancelar</button><button class="primary" id="saveGoals">Guardar objetivos</button></div>
 </dialog>
 
@@ -510,7 +526,7 @@ function extraOk(){return goalMode()==='gain'}
 let toastT;
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2600)}
 
-const state = {date: today(), foods: [], entries: [], goals: {}, weights: [], wRange: '30', profile: {}, weightGoal: null};
+const state = {date: today(), foods: [], entries: [], goals: {}, weights: [], wRange: '30', profile: {}, weightGoal: null, cr: false};
 
 /* ---------- servidor: cuenta propia en giorgiomacri.com ---------- */
 const API='/api/sudoku/cal', TK='gm-cal-token', CACHE='gm-cal-cache';
@@ -568,7 +584,8 @@ const Store = {
   }
 };
 function syncEntries(){state.entries=[...Store.entries.values()]}
-function syncProfile(){state.goals={...((state.profile&&state.profile.goals)||{})};state.weightGoal=(state.profile&&state.profile.weightGoal)||null}
+function syncProfile(){state.goals={...((state.profile&&state.profile.goals)||{})};state.weightGoal=(state.profile&&state.profile.weightGoal)||null;state.cr=!!state.goals.cr}
+function crDays(){return (state.profile&&state.profile.crDays)||{}}
 function applyState(r,s,e,fromCache){
   state.profile=r.profile||{goals:{}}; syncProfile();
   state.foods=r.foods||[]; state.weights=r.weights||[];
@@ -824,6 +841,14 @@ function renderHero(){
   });
 }
 
+function renderCr(){
+  const btn=$('#crBtn'), on=!!state.cr;
+  btn.hidden=!on; if(!on) return;
+  const done=!!crDays()[state.date];
+  btn.setAttribute('aria-pressed',done?'true':'false');
+  btn.querySelector('.st').textContent=done?'tomada':'marcar';
+}
+
 function weightMap(){const m={};state.weights.forEach(w=>{const v=num(w.kg);if(v>0)m[w.date]=v});return m}
 function avg7(m,end){let s=0,c=0;for(let i=0;i<7;i++){const v=m[addDays(end,-i)];if(v){s+=v;c++}}return c>=3?s/c:null}
 function fmtKg(v){return (Math.round(v*10)/10).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})}
@@ -968,7 +993,7 @@ $('#wSave').onclick=async()=>{
   try{await Store.saveWeight(state.date,kg);$('#wIn').blur();toast(kg?'Peso guardado':'Peso borrado')}catch(e){toast(errMsg(e,'No se pudo guardar.'))}
 };
 
-function render(){renderHeader();renderHero();renderLabel();renderMeals();renderWeight();renderWeek();renderFoods()}
+function render(){renderHeader();renderCr();renderHero();renderLabel();renderMeals();renderWeight();renderWeek();renderFoods()}
 
 function setDate(d){
   if(d>addDays(today(),7)) d=addDays(today(),7);
@@ -1044,13 +1069,22 @@ function renderAi(){
 }
 
 /* ---------- goals ---------- */
-function openGoals(){fillNut('g_',state.goals);$('#goalsDlg').showModal()}
+function openGoals(){fillNut('g_',state.goals);$('#crOpt').checked=!!state.cr;$('#goalsDlg').showModal()}
 $('#goalsCalc').onclick=()=>{$('#goalsDlg').close();openOnboarding()};
 $('#goalsBtn').onclick=openGoals;
 $('#saveGoals').onclick=async()=>{
   const raw=readNut('g_',true), g={};
   NUT.forEach(n=>{if(raw[n.k]!==null&&raw[n.k]>0)g[n.k]=raw[n.k]});
+  if($('#crOpt').checked) g.cr=1;
   try{await Store.setGoals(g);$('#goalsDlg').close();toast('Objetivos guardados')}catch(e){toast(errMsg(e,'No se pudieron guardar.'))}
+};
+
+$('#crBtn').onclick=async()=>{
+  const d=state.date, days={...crDays()};
+  if(days[d]) delete days[d]; else days[d]=1;
+  $('#crBtn').setAttribute('aria-pressed',days[d]?'true':'false');
+  try{await Store.saveProfile({...state.profile,crDays:days});toast(days[d]?'Creatina marcada':'Creatina desmarcada')}
+  catch(e){toast(errMsg(e,'No se pudo guardar.'))}
 };
 
 /* ---------- foods ---------- */
