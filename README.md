@@ -35,7 +35,7 @@ Sitio personal: un catálogo de herramientas y juegos que corren en el navegador
 El VPS revisa este repo cada minuto (`giorgiomacri-sync.timer`):
 
 - Cambios en `site/` se publican al instante en `/var/www/giorgiomacri.com`.
-- Cambios en `server/` se copian a `/opt/sudoku-torneo`, con backup previo de la base en `/var/lib/giorgiomacri-deploy/backups/` (últimos 30). El servicio se reinicia cuando no hay tableros en juego, o a los 45 minutos como máximo.
+- Cambios en `server/` se copian a `/opt/sudoku-torneo`, con backup previo de la base en `/var/lib/giorgiomacri-deploy/backups/` (últimos 30). El servicio se reinicia apenas llega el cambio (tarda un segundo; las partidas en curso no se pierden). Para esperar a que no haya tableros en juego, poné `Environment=MAX_WAIT_MIN=45` en el servicio `giorgiomacri-sync`.
 - Cambios en `deploy/` no se aplican solos (servicio de systemd y Nginx se tocan a mano).
 
 ## Cuentas

@@ -11,9 +11,14 @@ DB=${DB:-/var/lib/sudoku-torneo/torneo.db}
 STATE=${STATE:-/var/lib/giorgiomacri-deploy}
 WEB_OWNER=${WEB_OWNER:-www-data:www-data}
 PENDING=$STATE/restart-pending
-MAX_WAIT_MIN=45   # si hay gente jugando, espera como mucho esto antes de reiniciar igual
+MAX_WAIT_MIN=${MAX_WAIT_MIN:-0}   # minutos que espera si hay tableros en juego; 0 = reinicia apenas llega el cambio (el reinicio tarda ~1 s y las partidas no se pierden)
 
 mkdir -p "$STATE"
+# Correr desde una copia: este mismo archivo se actualiza con git reset más abajo
+if [ -z "${SYNC_FROM_COPY:-}" ]; then
+  cp "$0" "$STATE/sync-running.sh"
+  SYNC_FROM_COPY=1 exec bash "$STATE/sync-running.sh" "$@"
+fi
 cd "$REPO"
 
 DEPLOYED=$STATE/deployed-commit   # última versión publicada con éxito
