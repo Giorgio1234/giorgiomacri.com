@@ -20,7 +20,8 @@ const PAGES = [
   ['poker.html', 'poker/index.html'],
   ['agenda.html', 'agenda/index.html'],
   ['calorias.html', 'calorias/index.html'],
-  ['asistente.html', 'asistente/index.html']
+  ['asistente.html', 'asistente/index.html'],
+  ['radio.html', 'radio/index.html']
 ];
 
 function inline(src) {

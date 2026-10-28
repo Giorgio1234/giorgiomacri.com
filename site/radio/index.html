@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>Radio</title>
+<meta name="description" content="Radios en vivo de todo el mundo.">
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#0f0f14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap">
+<script>try{var t=localStorage.getItem('gm-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<style>
+/* Layout: arriba el buscador, el país y los géneros; abajo Favoritas, Recientes y Resultados en listas.
+   La radio que suena queda en una barra fija abajo (en celular ocupa todo el ancho). */
+:root {
+  --bg: #0f0f14; --card: #1b1b23; --card-2: #23232d; --line: #2a2a35; --fg: #f1efe9; --fg-2: #a3a1ad; --fg-3: #6d6b78;
+  --accent: #fd9b65; --on-accent: #1a0f08; --live: #ff6b5a; --field: #14141a;
+  --font: 'Inter Tight', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) { --bg: #f6f5f1; --card: #ffffff; --card-2: #f3f1ec; --line: #e2dfd7; --fg: #15141a; --fg-2: #5d5b66; --fg-3: #8d8a95; --accent: #c4501a; --on-accent: #fff; --live: #d93a2b; --field: #fff; color-scheme: light; }
+}
+:root[data-theme="light"] { --bg: #f6f5f1; --card: #ffffff; --card-2: #f3f1ec; --line: #e2dfd7; --fg: #15141a; --fg-2: #5d5b66; --fg-3: #8d8a95; --accent: #c4501a; --on-accent: #fff; --live: #d93a2b; --field: #fff; color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.4; -webkit-font-smoothing: antialiased; padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.wrap { max-width: 920px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+.top { border-bottom: 1px solid var(--line); }
+.top-in { display: flex; align-items: center; gap: 10px; min-height: 60px; }
+.mark { flex: 1; font-weight: 700; font-size: 18px; letter-spacing: -0.02em; text-decoration: none; color: var(--fg); }
+.mark span { color: #fd9b65; }
+.mark em { font-style: normal; font-weight: 500; color: var(--fg-2); }
+.icon-btn { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); display: grid; place-items: center; padding: 0; color: var(--fg-2); }
+.icon-btn:hover { color: var(--fg); }
+
+.hero { padding: 26px 0 8px; }
+.hero h1 { margin: 0; font-size: clamp(30px, 6vw, 44px); letter-spacing: -0.03em; line-height: 1.05; }
+.hero p { margin: 8px 0 0; color: var(--fg-2); }
+
+.controls { display: grid; grid-template-columns: 1fr 200px; gap: 8px; margin: 18px 0 10px; }
+.search { position: relative; }
+.search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--fg-3); pointer-events: none; }
+.f { height: 46px; width: 100%; border: 1px solid var(--line); border-radius: 12px; background: var(--field); padding: 0 12px; font-size: 16px; color: var(--fg); }
+.search .f { padding-left: 38px; }
+.f:focus { outline: none; border-color: var(--accent); }
+@media (max-width: 560px) { .controls { grid-template-columns: 1fr; } }
+
+.tags { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 10px; scrollbar-width: none; }
+.tags::-webkit-scrollbar { display: none; }
+.tag { flex: none; border: 1px solid var(--line); background: var(--card); color: var(--fg-2); border-radius: 999px; padding: 7px 13px; font-size: 14px; white-space: nowrap; }
+.tag[aria-pressed="true"] { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+
+section.block { margin-top: 18px; }
+.sec-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 0 0 8px; }
+.sec-h h2 { margin: 0; font-size: 18px; letter-spacing: -0.01em; }
+.sec-h small { color: var(--fg-3); font-size: 13px; }
+.list { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 8px; }
+.st { display: grid; grid-template-columns: 46px 1fr auto; gap: 10px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 8px 8px 8px 8px; text-align: left; width: 100%; min-width: 0; }
+.st:hover { border-color: var(--fg-3); }
+.st.on { border-color: var(--accent); }
+.logo { width: 46px; height: 46px; border-radius: 10px; background: var(--card-2); display: grid; place-items: center; overflow: hidden; color: var(--fg-3); font-weight: 700; font-size: 18px; }
+button.logo { border: 0; padding: 0; }
+.logo img { width: 100%; height: 100%; object-fit: cover; }
+.st .meta { min-width: 0; }
+.st b { display: block; font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st small { display: block; color: var(--fg-3); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fav { width: 36px; height: 36px; border: 0; border-radius: 10px; background: none; color: var(--fg-3); display: grid; place-items: center; padding: 0; }
+.fav:hover { background: var(--card-2); color: var(--fg); }
+.fav[aria-pressed="true"] { color: var(--accent); }
+.empty { color: var(--fg-3); font-size: 14px; margin: 0; padding: 6px 0; }
+.more { margin-top: 10px; height: 42px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); padding: 0 16px; color: var(--fg); }
+.skel { height: 64px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .5; } }
+.note { color: var(--fg-3); font-size: 12.5px; margin: 26px 0 0; }
+.note a { color: var(--fg-2); }
+
+/* Reproductor */
+.player { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: color-mix(in srgb, var(--card) 94%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--line); padding: 10px 0 calc(10px + env(safe-area-inset-bottom, 0px)); }
+.player .wrap { display: grid; grid-template-columns: 52px 1fr auto auto; gap: 12px; align-items: center; }
+.player .logo { width: 52px; height: 52px; }
+.np { min-width: 0; }
+.np b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.np small { display: flex; align-items: center; gap: 6px; color: var(--fg-2); font-size: 13px; overflow: hidden; white-space: nowrap; }
+.dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--fg-3); }
+.dot.live { background: var(--live); animation: pulse 1.6s ease-in-out infinite; }
+.dot.err { background: var(--live); animation: none; }
+.play { width: 52px; height: 52px; border-radius: 50%; border: 0; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; padding: 0; }
+.play:disabled { opacity: .45; cursor: default; }
+.vol { display: flex; align-items: center; gap: 6px; color: var(--fg-2); }
+.vol input { width: 110px; accent-color: var(--accent); }
+@media (max-width: 560px) { .vol { display: none; } .player .wrap { grid-template-columns: 52px 1fr auto; } }
+@media (prefers-reduced-motion: reduce) { .dot.live, .skel { animation: none; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="mark" href="/">giorgiomacri<span>/</span><em>radio</em></a>
+    <span id="gmAuth"></span>
+    <button class="icon-btn" type="button" id="themeBtn" aria-label="Cambiar tema"></button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <h1>Radio en vivo</h1>
+    <p>Miles de emisoras de todo el mundo. Buscá por nombre, país o género.</p>
+  </div>
+
+  <div class="controls">
+    <label class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input class="f" id="q" type="search" placeholder="Buscar una radio" autocomplete="off" aria-label="Buscar una radio">
+    </label>
+    <select class="f" id="country" aria-label="País"></select>
+  </div>
+  <div class="tags" id="tags" role="group" aria-label="Géneros"></div>
+
+  <section class="block" id="favBlock" hidden>
+    <div class="sec-h"><h2>Favoritas</h2><small id="favCount"></small></div>
+    <div class="list" id="favs"></div>
+  </section>
+  <section class="block" id="recBlock" hidden>
+    <div class="sec-h"><h2>Escuchadas hace poco</h2><button class="tag" type="button" id="clearRec">Borrar</button></div>
+    <div class="list" id="recent"></div>
+  </section>
+  <section class="block">
+    <div class="sec-h"><h2 id="resTitle">Más escuchadas</h2><small id="resInfo"></small></div>
+    <div class="list" id="results"></div>
+    <button class="more" type="button" id="more" hidden>Ver más</button>
+  </section>
+
+  <p class="note">Datos de <a href="https://www.radio-browser.info" target="_blank" rel="noopener">Radio Browser</a>, un directorio libre y comunitario. Solo se muestran radios que transmiten por HTTPS.</p>
+</main>
+
+<div class="player" id="player" hidden>
+  <div class="wrap">
+    <div class="logo" id="pLogo"></div>
+    <div class="np"><b id="pName"></b><small><span class="dot" id="pDot"></span><span id="pState"></span></small></div>
+    <div class="vol"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg><input type="range" id="vol" min="0" max="1" step="0.01" aria-label="Volumen"></div>
+    <button class="play" type="button" id="pBtn" aria-label="Reproducir"></button>
+  </div>
+</div>
+<audio id="audio" preload="none"></audio>
+
+<script>
+/* Cuenta única de giorgiomacri.com: botón "Entrar" / menú de la cuenta arriba a la derecha (en #gmAuth).
+ * Una sesión para todo: el token se copia a las claves que usan Sudoku, Calorías, Agenda y Asistente.
+ * window.GMAuth: { me(), token(), open(), logout(), ready }  ·  window.gmAccount: compatibilidad con Sudoku. */
+(function () {
+  'use strict';
+  if (window.GMAuth) return;
+  var API = '/api/sudoku/auth';
+  var K = { token: 'gm-token', me: 'gm-me', torneo: 'gm-torneo-token', torneoMe: 'gm-torneo-me', cal: 'gm-cal-token', agenda: 'gm-agenda-token' };
+  var EXTRA = ['gm-cal-cache', 'gm-agenda-cache', 'gm-chat-v1'];
+  var CSS = '' +
+    '.gma{--a-bg:#1b1b23;--a-card:#23232d;--a-line:#30303c;--a-fg:#f1efe9;--a-fg2:#a3a1ad;--a-acc:#fd9b65;--a-on:#1a0f08;--a-bad:#ff7a6b;' +
+    'font-family:"Inter Tight",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.35;position:relative;display:inline-flex;align-items:center;-webkit-font-smoothing:antialiased}' +
+    '@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .gma{--a-bg:#fff;--a-card:#f3f1ec;--a-line:#e2dfd7;--a-fg:#15141a;--a-fg2:#5d5b66;--a-acc:#c4501a;--a-on:#fff;--a-bad:#c8321f}}' +
+    ':root[data-theme="light"] .gma{--a-bg:#fff;--a-card:#f3f1ec;--a-line:#e2dfd7;--a-fg:#15141a;--a-fg2:#5d5b66;--a-acc:#c4501a;--a-on:#fff;--a-bad:#c8321f}' +
+    ':root[data-theme="dark"] .gma{--a-bg:#1b1b23;--a-card:#23232d;--a-line:#30303c;--a-fg:#f1efe9;--a-fg2:#a3a1ad;--a-acc:#fd9b65;--a-on:#1a0f08;--a-bad:#ff7a6b}' +
+    '.gma *{box-sizing:border-box}.gma button,.gma input{font:inherit}' +
+    '.gma-in{height:36px;border:0;border-radius:999px;padding:0 14px;background:var(--a-acc);color:var(--a-on);font-weight:600;cursor:pointer;white-space:nowrap}' +
+    '.gma-me{height:36px;border:1px solid var(--a-line);border-radius:999px;padding:0 10px 0 4px;background:var(--a-card);color:var(--a-fg);display:flex;align-items:center;gap:7px;cursor:pointer;max-width:12rem}' +
+    '.gma-me i{flex:none;width:28px;height:28px;border-radius:50%;background:var(--a-acc);color:var(--a-on);display:grid;place-items:center;font-style:normal;font-weight:700;font-size:13px;text-transform:uppercase}' +
+    '.gma-me span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}' +
+    '@media (max-width:520px){.gma-me{padding:0 4px}.gma-me span{display:none}}' +
+    '.gma-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:80;min-width:220px;background:var(--a-bg);color:var(--a-fg);border:1px solid var(--a-line);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);padding:6px}' +
+    '.gma-menu .hd{padding:8px 10px 10px;border-bottom:1px solid var(--a-line);margin-bottom:4px}.gma-menu .hd b{display:block;font-size:15px}.gma-menu .hd small{color:var(--a-fg2)}' +
+    '.gma-menu a,.gma-menu button{display:block;width:100%;text-align:left;border:0;background:none;color:var(--a-fg);padding:9px 10px;border-radius:9px;text-decoration:none;cursor:pointer;font-size:14px}' +
+    '.gma-menu a:hover,.gma-menu button:hover{background:var(--a-card)}.gma-menu .out{color:var(--a-bad)}.gma-menu hr{border:0;border-top:1px solid var(--a-line);margin:4px 0}' +
+    '.gma-dlg{border:0;border-radius:16px;padding:0;width:min(380px,calc(100vw - 32px));background:var(--a-bg);color:var(--a-fg);box-shadow:0 30px 80px rgba(0,0,0,.45)}' +
+    '.gma-dlg::backdrop{background:rgba(8,8,12,.55)}' +
+    '.gma-dlg form{padding:22px;display:flex;flex-direction:column;gap:12px}.gma-dlg h3{margin:0;font-size:21px;letter-spacing:-.01em}.gma-dlg p{margin:0;color:var(--a-fg2);font-size:13px}' +
+    '.gma-dlg label{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--a-fg2)}' +
+    '.gma-dlg input{height:44px;border:1px solid var(--a-line);border-radius:10px;background:var(--a-card);color:var(--a-fg);padding:0 12px;font-size:16px;outline:none}.gma-dlg input:focus{border-color:var(--a-acc)}' +
+    '.gma-dlg .err{color:var(--a-bad);min-height:1.2em;font-size:13px}' +
+    '.gma-dlg .row{display:flex;gap:8px;justify-content:flex-end}.gma-dlg .row button{height:42px;border:0;border-radius:10px;padding:0 16px;font-weight:600;cursor:pointer}' +
+    '.gma-dlg .ok{background:var(--a-acc);color:var(--a-on)}.gma-dlg .no{background:var(--a-card);color:var(--a-fg)}.gma-dlg .ok:disabled{opacity:.5}';
+
+  function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  var token = get(K.token), me = null;
+  try { me = JSON.parse(get(K.me) || 'null'); } catch (e) {}
+  if (!token) { token = get(K.cal) || get(K.torneo) || get(K.agenda) || null; me = null; }
+
+  // Copia la sesión a las claves de cada programa (así todos ven la misma cuenta)
+  function sync() {
+    set(K.token, token); set(K.me, me ? JSON.stringify(me) : null);
+    var acct = me && me.kind === 'account';
+    set(K.cal, acct ? token : null);
+    set(K.agenda, me && me.admin ? token : null);
+    set(K.torneo, me && me.player ? token : null);
+    set(K.torneoMe, me && me.player ? JSON.stringify(me.player) : null);
+  }
+  function clearAll() { token = null; me = null; sync(); EXTRA.forEach(function (k) { set(k, null); }); try { sessionStorage.removeItem('gm-torneo-admin'); } catch (e) {} }
+
+  function call(method, path, body, tok) {
+    var h = { 'Content-Type': 'application/json' }; if (tok) h.Authorization = 'Bearer ' + tok;
+    return fetch(API + path, { method: method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' })
+      .catch(function () { var e = new Error('Sin conexión con el servidor.'); e.net = true; throw e; })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) { var e = new Error(j.error || 'Algo falló.'); e.status = r.status; throw e; } return j; }); });
+  }
+
+  if (!document.getElementById('gma-css')) { var st = document.createElement('style'); st.id = 'gma-css'; st.textContent = CSS; document.head.appendChild(st); }
+  var slot = null, menuOpen = false;
+
+  function links() {
+    var l = [];
+    if (me && me.kind === 'account') l.push(['/calorias/', 'Calorías']);
+    if (me && me.admin) { l.push(['/agenda/', 'Agenda']); l.push(['/asistente/', 'Asistente']); }
+    if (me && me.player) l.push(['/sudoku/torneo/', 'Torneo de sudoku']);
+    if (me && me.admin) l.push(['/admin/', 'Panel de admin']);
+    return l;
+  }
+  function render() {
+    slot = slot || document.getElementById('gmAuth');
+    if (!slot) return;
+    slot.className = 'gma';
+    if (!token || !me) { slot.innerHTML = '<button class="gma-in" type="button">Entrar</button>'; slot.firstChild.onclick = open; return; }
+    var sub = me.admin ? 'Admin' : me.kind === 'player' ? 'Jugador del torneo' : 'Cuenta';
+    if (me.player && me.kind === 'account' && me.player.name.toLowerCase() !== me.name.toLowerCase()) sub += ' · en el torneo: ' + me.player.name;
+    slot.innerHTML = '<button class="gma-me" type="button" aria-haspopup="menu" aria-expanded="false"><i>' + esc(me.name.charAt(0)) + '</i><span>' + esc(me.name) + '</span></button>' +
+      '<div class="gma-menu" role="menu" hidden><div class="hd"><b>' + esc(me.name) + '</b><small>' + esc(sub) + '</small></div>' +
+      links().map(function (x) { return '<a role="menuitem" href="' + x[0] + '">' + esc(x[1]) + '</a>'; }).join('') +
+      '<hr>' + (me.kind === 'account' ? '<button type="button" role="menuitem" data-pw>Cambiar contraseña</button>' : '') +
+      '<button type="button" role="menuitem" class="out" data-out>Salir</button></div>';
+    var btn = slot.querySelector('.gma-me'), menu = slot.querySelector('.gma-menu');
+    btn.onclick = function (e) { e.stopPropagation(); menuOpen = menu.hidden; menu.hidden = !menuOpen; btn.setAttribute('aria-expanded', String(menuOpen)); };
+    menu.querySelector('[data-out]').onclick = function () { logout(); };
+    var pw = menu.querySelector('[data-pw]'); if (pw) pw.onclick = function () { menu.hidden = true; password(); };
+  }
+  document.addEventListener('click', function (e) { if (!slot) return; var m = slot.querySelector('.gma-menu'); if (m && !m.hidden && !slot.contains(e.target)) m.hidden = true; });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && slot) { var m = slot.querySelector('.gma-menu'); if (m) m.hidden = true; } });
+
+  function dialog(html, onSubmit) {
+    var d = document.createElement('dialog'); d.className = 'gma-dlg';
+    var wrap = document.createElement('div'); wrap.className = 'gma'; wrap.style.display = 'block';
+    d.innerHTML = '<form novalidate>' + html + '<p class="err" role="alert"></p><div class="row"><button class="no" type="button">Cancelar</button><button class="ok" type="submit">Entrar</button></div></form>';
+    wrap.appendChild(d); document.body.appendChild(wrap);
+    var f = d.querySelector('form'), err = d.querySelector('.err'), ok = d.querySelector('.ok');
+    d.querySelector('.no').onclick = function () { d.close(); };
+    d.addEventListener('close', function () { wrap.remove(); });
+    f.onsubmit = function (e) {
+      e.preventDefault(); err.textContent = ''; ok.disabled = true;
+      Promise.resolve(onSubmit(f)).then(function (close) { if (close !== false) d.close(); }, function (x) { err.textContent = x.message; }).then(function () { ok.disabled = false; });
+    };
+    d.showModal(); var first = d.querySelector('input'); if (first) first.focus();
+    return d;
+  }
+  function login(user, password) {
+    return call('POST', '/login', { user: user, password: password }).then(function (r) {
+      token = r.token; me = { kind: r.kind, name: r.name, admin: r.admin, player: r.player };
+      sync(); location.reload(); return me;
+    });
+  }
+  function open() {
+    var d = dialog('<h3>Entrar</h3><p>Una cuenta para todo el sitio. Si solo jugás al torneo, usá tu apodo y PIN.</p>' +
+      '<label>Usuario o apodo<input name="u" autocomplete="username" autocapitalize="none" spellcheck="false"></label>' +
+      '<label>Contraseña o PIN<input name="p" type="password" autocomplete="current-password"></label>', function (f) {
+      return login(f.u.value, f.p.value);
+    });
+    return d;
+  }
+  function password() {
+    var d = dialog('<h3>Cambiar contraseña</h3>' +
+      '<label>Contraseña actual<input name="c" type="password" autocomplete="current-password"></label>' +
+      '<label>Nueva (mínimo 8 caracteres)<input name="n" type="password" autocomplete="new-password"></label>' +
+      '<label>Repetila<input name="n2" type="password" autocomplete="new-password"></label>', function (f) {
+      if (f.n.value.length < 8) throw new Error('La nueva contraseña tiene que tener al menos 8 caracteres.');
+      if (f.n.value !== f.n2.value) throw new Error('Las contraseñas nuevas no coinciden.');
+      return call('POST', '/password', { current: f.c.value, next: f.n.value }, token).then(function () { toast('Contraseña cambiada'); });
+    });
+    d.querySelector('.ok').textContent = 'Guardar';
+  }
+  function toast(t) {
+    var el = document.createElement('div'); el.className = 'gma';
+    el.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:90;display:block';
+    el.innerHTML = '<div style="background:var(--a-fg);color:var(--a-bg);padding:10px 16px;border-radius:10px;font-size:14px">' + esc(t) + '</div>';
+    document.body.appendChild(el); setTimeout(function () { el.remove(); }, 2600);
+  }
+  function logout() {
+    var t = token; clearAll();
+    var go = function () { location.reload(); };
+    if (t) fetch(API + '/logout', { method: 'POST', headers: { Authorization: 'Bearer ' + t } }).then(go, go); else go();
+  }
+
+  // Validar la sesión con el servidor
+  var ready = !token ? Promise.resolve(null) : call('GET', '/me', null, token).then(function (r) {
+    var was = JSON.stringify(me); me = r; sync(); render();
+    if (was !== JSON.stringify(me) && was !== 'null') document.dispatchEvent(new CustomEvent('gm-auth', { detail: me }));
+    return me;
+  }, function (e) {
+    if (e.status === 401 || e.status === 403) { var had = !!me; clearAll(); render(); if (had) location.reload(); }
+    return me;
+  });
+  if (token && me) sync();
+
+  window.GMAuth = { me: function () { return token ? me : null; }, token: function () { return token; }, open: open, login: login, logout: logout, ready: ready };
+  window.gmAccount = { get: function () { return token && me && me.player ? { token: token, me: { id: me.player.id, name: me.player.name } } : null; } };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render); else render();
+})();
+
+</script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var KEY = 'gm-radio-v1';
+  var FALLBACK = ['de1.api.radio-browser.info', 'nl1.api.radio-browser.info', 'at1.api.radio-browser.info', 'fi1.api.radio-browser.info', 'de2.api.radio-browser.info'];
+  var PAGE = 40;
+  var COUNTRIES = [['AR', 'Argentina'], ['', 'Todo el mundo'], ['UY', 'Uruguay'], ['CL', 'Chile'], ['MX', 'México'], ['ES', 'España'], ['IT', 'Italia'], ['US', 'Estados Unidos'], ['GB', 'Reino Unido'], ['BR', 'Brasil'], ['CO', 'Colombia'], ['PE', 'Perú'], ['FR', 'Francia'], ['DE', 'Alemania']];
+  var TAGS = [['', 'Todas'], ['news', 'Noticias'], ['talk', 'Charla'], ['sports', 'Deportes'], ['pop', 'Pop'], ['rock', 'Rock'], ['cumbia', 'Cumbia'], ['tango', 'Tango'], ['folklore', 'Folklore'], ['electronic', 'Electrónica'], ['jazz', 'Jazz'], ['classical', 'Clásica'], ['latin', 'Latina'], ['80s', 'Años 80'], ['lofi', 'Lo-fi'], ['reggaeton', 'Reggaetón']];
+  var PLAY = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.2-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>';
+  var PAUSE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg>';
+  var STAR = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg>';
+  var STAR_ON = STAR.replace('fill="none"', 'fill="currentColor"');
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var store = { favs: [], recent: [], country: 'AR', tag: '', vol: 0.9 };
+  try { var s0 = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s0) store = Object.assign(store, s0); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+  // Lo justo para volver a sonar sin pedir nada al directorio
+  function slim(s) { return { stationuuid: s.stationuuid, name: s.name, url_resolved: s.url_resolved, url: s.url, favicon: s.favicon, tags: s.tags, countrycode: s.countrycode, state: s.state, codec: s.codec, bitrate: s.bitrate, hls: s.hls }; }
+
+  /* ---------- Directorio (Radio Browser) ---------- */
+  var servers = null, si = 0;
+  function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function discover() {
+    if (servers) return Promise.resolve(servers);
+    try { var c = JSON.parse(sessionStorage.getItem('gm-radio-servers') || 'null'); if (c && c.length) return Promise.resolve(servers = c); } catch (e) {}
+    return fetch('https://all.api.radio-browser.info/json/servers').then(function (r) { return r.json(); })
+      .then(function (list) { var n = list.map(function (x) { return x.name; }).filter(function (x, i, a) { return x && a.indexOf(x) === i; }); if (!n.length) throw 0; return n; })
+      .catch(function () { return FALLBACK.slice(); })
+      .then(function (n) { servers = shuffle(n); try { sessionStorage.setItem('gm-radio-servers', JSON.stringify(servers)); } catch (e) {} return servers; });
+  }
+  function api(path, tries) {
+    tries = tries || 0;
+    return discover().then(function (sv) {
+      var host = sv[si % sv.length];
+      return fetch('https://' + host + path).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .catch(function (e) { if (tries >= 2) throw e; si++; return api(path, tries + 1); });
+    });
+  }
+
+  /* ---------- Listas ---------- */
+  function card(s) {
+    var where = [s.state, s.countrycode].filter(Boolean).join(', ');
+    var tags = String(s.tags || '').split(',').map(function (t) { return t.trim(); }).filter(Boolean).slice(0, 3).join(' · ');
+    var sub = [where, tags].filter(Boolean).join(' — ') || (s.codec ? s.codec + (s.bitrate ? ' ' + s.bitrate + ' kbps' : '') : 'Radio');
+    var fav = isFav(s.stationuuid);
+    return '<div class="st' + (cur && cur.stationuuid === s.stationuuid ? ' on' : '') + '" data-id="' + esc(s.stationuuid) + '">' +
+      '<button type="button" class="logo" data-play aria-label="Escuchar ' + esc(s.name) + '">' + logo(s) + '</button>' +
+      '<button type="button" class="meta" data-play style="border:0;background:none;padding:0;text-align:left;min-width:0"><b>' + esc(s.name.trim() || 'Sin nombre') + '</b><small>' + esc(sub) + '</small></button>' +
+      '<button type="button" class="fav" data-fav aria-pressed="' + fav + '" aria-label="' + (fav ? 'Quitar de favoritas' : 'Agregar a favoritas') + '">' + (fav ? STAR_ON : STAR) + '</button></div>';
+  }
+  function logo(s) {
+    var letter = esc((s.name || '?').trim().charAt(0).toUpperCase() || '?');
+    if (s.favicon && /^https:\/\//.test(s.favicon)) return '<img src="' + esc(s.favicon) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode(\'' + letter.replace(/'/g, '') + '\'))">';
+    return letter;
+  }
+  var byId = {};
+  function remember(list) { list.forEach(function (s) { byId[s.stationuuid] = s; }); }
+  function renderList(el, list) { remember(list); el.innerHTML = list.map(card).join(''); }
+  function renderSaved() {
+    $('favBlock').hidden = !store.favs.length; renderList($('favs'), store.favs);
+    $('favCount').textContent = store.favs.length ? store.favs.length + (store.favs.length === 1 ? ' radio' : ' radios') : '';
+    $('recBlock').hidden = !store.recent.length; renderList($('recent'), store.recent);
+  }
+  function isFav(id) { return store.favs.some(function (s) { return s.stationuuid === id; }); }
+
+  var results = [], offset = 0, seq = 0, done = false;
+  function playable(s) {
+    var u = s.url_resolved || s.url || '';
+    if (!/^https:\/\//i.test(u)) return false;
+    if (s.hls && !audio.canPlayType('application/vnd.apple.mpegurl')) return false;
+    return true;
+  }
+  function query(more) {
+    var q = $('q').value.trim(), my = ++seq;
+    if (!more) { offset = 0; results = []; done = false; $('results').innerHTML = '<div class="skel"></div><div class="skel"></div><div class="skel"></div>'; }
+    var p = ['limit=' + PAGE, 'offset=' + offset, 'hidebroken=true', 'is_https=true', 'order=' + (q ? 'votes' : 'clickcount'), 'reverse=true'];
+    if (q) p.push('name=' + encodeURIComponent(q));
+    if (store.country) p.push('countrycode=' + store.country);
+    if (store.tag) p.push('tag=' + encodeURIComponent(store.tag));
+    var countryName = (COUNTRIES.filter(function (c) { return c[0] === store.country; })[0] || [0, ''])[1];
+    var tagName = (TAGS.filter(function (t) { return t[0] === store.tag; })[0] || [0, ''])[1];
+    $('resTitle').textContent = q ? 'Resultados' : 'Más escuchadas' + (store.tag ? ' · ' + tagName : '');
+    $('more').hidden = true;
+    api('/json/stations/search?' + p.join('&')).then(function (list) {
+      if (my !== seq) return;
+      offset += list.length; done = list.length < PAGE;
+      var seen = {}; results.forEach(function (s) { seen[s.stationuuid] = 1; });
+      results = results.concat(list.filter(function (s) { if (seen[s.stationuuid] || !playable(s)) return false; seen[s.stationuuid] = 1; return true; }));
+      renderList($('results'), results);
+      if (!results.length) $('results').innerHTML = '<p class="empty">No encontré radios' + (q ? ' con "' + esc(q) + '"' : '') + (store.country ? ' en ' + esc(countryName) : '') + '. Probá con otro país o género.</p>';
+      $('resInfo').textContent = results.length ? results.length + (done ? '' : '+') + ' radios' + (store.country ? ' · ' + countryName : '') : '';
+      $('more').hidden = done;
+    }).catch(function () {
+      if (my !== seq) return;
+      $('results').innerHTML = '<p class="empty">No pude conectar con el directorio de radios. Probá de nuevo en un rato.</p>';
+    });
+  }
+  var qt = null;
+  $('q').addEventListener('input', function () { clearTimeout(qt); qt = setTimeout(function () { query(false); }, 350); });
+  $('more').addEventListener('click', function () { query(true); });
+  $('country').innerHTML = COUNTRIES.map(function (c) { return '<option value="' + c[0] + '">' + c[1] + '</option>'; }).join('');
+  $('country').value = store.country;
+  $('country').addEventListener('change', function () { store.country = this.value; save(); query(false); });
+  function renderTags() {
+    $('tags').innerHTML = TAGS.map(function (t) { return '<button type="button" class="tag" data-tag="' + t[0] + '" aria-pressed="' + (store.tag === t[0]) + '">' + t[1] + '</button>'; }).join('');
+  }
+  $('tags').addEventListener('click', function (e) { var b = e.target.closest('[data-tag]'); if (!b) return; store.tag = b.dataset.tag; save(); renderTags(); query(false); });
+
+  document.addEventListener('click', function (e) {
+    var row = e.target.closest('.st[data-id]'); if (!row) return;
+    var s = byId[row.dataset.id]; if (!s) return;
+    if (e.target.closest('[data-fav]')) {
+      if (isFav(s.stationuuid)) store.favs = store.favs.filter(function (x) { return x.stationuuid !== s.stationuuid; });
+      else store.favs.unshift(slim(s));
+      store.favs = store.favs.slice(0, 60); save(); refreshAll(); return;
+    }
+    if (e.target.closest('[data-play]')) { if (cur && cur.stationuuid === s.stationuuid && !audio.paused) audio.pause(); else play(s); }
+  });
+  $('clearRec').addEventListener('click', function () { store.recent = []; save(); renderSaved(); });
+  function refreshAll() { renderSaved(); renderList($('results'), results.length ? results : []); if (!results.length) query(false); }
+
+  /* ---------- Reproductor ---------- */
+  var audio = $('audio'), cur = null, tryUrls = [], wantPlay = false;
+  audio.volume = Math.max(0, Math.min(1, +store.vol || 0.9));
+  $('vol').value = audio.volume;
+  $('vol').addEventListener('input', function () { audio.volume = +this.value; store.vol = audio.volume; save(); });
+  function setState(kind, text) {
+    $('pDot').className = 'dot' + (kind === 'live' ? ' live' : kind === 'err' ? ' err' : '');
+    $('pState').textContent = text;
+    var playing = kind === 'live' || kind === 'load';
+    $('pBtn').innerHTML = playing ? PAUSE : PLAY;
+    $('pBtn').setAttribute('aria-label', playing ? 'Pausar' : 'Reproducir');
+  }
+  function play(s) {
+    cur = slim(s);
+    $('player').hidden = false;
+    $('pName').textContent = s.name.trim();
+    $('pLogo').innerHTML = logo(s);
+    tryUrls = [s.url_resolved, s.url].filter(function (u, i, a) { return u && /^https:/i.test(u) && a.indexOf(u) === i; });
+    wantPlay = true;
+    next();
+    markOn();
+    // cuenta la escucha en el directorio (así las populares quedan arriba)
+    discover().then(function (sv) { fetch('https://' + sv[si % sv.length] + '/json/url/' + encodeURIComponent(s.stationuuid)).catch(function () {}); });
+    if ('mediaSession' in navigator) {
+      try {
+        navigator.mediaSession.metadata = new MediaMetadata({ title: s.name.trim(), artist: [s.state, s.countrycode].filter(Boolean).join(', ') || 'Radio en vivo', album: 'giorgiomacri.com/radio',
+          artwork: s.favicon && /^https:/.test(s.favicon) ? [{ src: s.favicon, sizes: '256x256' }] : [] });
+        navigator.mediaSession.setActionHandler('play', function () { resume(); });
+        navigator.mediaSession.setActionHandler('pause', function () { audio.pause(); });
+        navigator.mediaSession.setActionHandler('stop', function () { audio.pause(); });
+      } catch (e) {}
+    }
+  }
+  function next() {
+    var u = tryUrls.shift();
+    if (!u) { setState('err', 'No se pudo reproducir esta radio. Probá con otra.'); wantPlay = false; return; }
+    setState('load', 'Conectando…');
+    audio.src = u;
+    var p = audio.play(); if (p && p.catch) p.catch(function (e) { if (e && e.name === 'NotAllowedError') { setState('', 'Tocá play para escuchar'); wantPlay = false; } });
+  }
+  function resume() {
+    if (!cur) return;
+    wantPlay = true;
+    // una radio en vivo: al volver de pausa se reconecta para no arrancar con audio viejo
+    tryUrls = [cur.url_resolved, cur.url].filter(function (u, i, a) { return u && /^https:/i.test(u) && a.indexOf(u) === i; });
+    next();
+  }
+  function markOn() { document.querySelectorAll('.st[data-id]').forEach(function (el) { el.classList.toggle('on', !!cur && el.dataset.id === cur.stationuuid); }); }
+  var lastRec = null;
+  audio.addEventListener('playing', function () {
+    if (cur && lastRec !== cur.stationuuid) { // a Recientes solo cuando de verdad sonó
+      lastRec = cur.stationuuid;
+      store.recent = [cur].concat(store.recent.filter(function (x) { return x.stationuuid !== cur.stationuuid; })).slice(0, 12); save(); renderSaved(); markOn();
+    } setState('live', 'En vivo' + (cur && cur.codec ? ' · ' + cur.codec + (cur.bitrate ? ' ' + cur.bitrate + ' kbps' : '') : '')); });
+  audio.addEventListener('waiting', function () { if (wantPlay) setState('load', 'Cargando…'); });
+  audio.addEventListener('pause', function () { if (!audio.error) { wantPlay = false; setState('', 'En pausa'); } });
+  audio.addEventListener('error', function () { if (wantPlay) next(); });
+  $('pBtn').addEventListener('click', function () { if (!cur) return; if (!audio.paused && wantPlay) { audio.pause(); audio.removeAttribute('src'); audio.load(); wantPlay = false; setState('', 'En pausa'); } else resume(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && document.activeElement !== $('q')) { e.preventDefault(); $('q').focus(); }
+    if (e.code === 'Space' && cur && !/INPUT|SELECT|TEXTAREA|BUTTON/.test(document.activeElement.tagName)) { e.preventDefault(); $('pBtn').click(); }
+  });
+  if (store.recent[0]) { cur = store.recent[0]; $('player').hidden = false; $('pName').textContent = cur.name; $('pLogo').innerHTML = logo(cur); setState('', 'Tocá play para seguir escuchando'); }
+
+  /* ---------- Tema ---------- */
+  var root = document.documentElement, mq = window.matchMedia('(prefers-color-scheme: light)');
+  var MOON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
+  var SUN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg>';
+  function theme() { var t = root.getAttribute('data-theme'); return t === 'dark' || t === 'light' ? t : (mq.matches ? 'light' : 'dark'); }
+  function paint() { var d = theme() === 'dark'; $('themeBtn').innerHTML = d ? SUN : MOON; $('themeBtn').setAttribute('aria-label', d ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'); }
+  $('themeBtn').addEventListener('click', function () { var n = theme() === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', n); try { localStorage.setItem('gm-theme', n); } catch (e) {} paint(); });
+  if (mq.addEventListener) mq.addEventListener('change', paint);
+  paint();
+
+  renderTags(); renderSaved(); query(false);
+})();
+</script>
+</body>
+</html>

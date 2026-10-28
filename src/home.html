@@ -265,6 +265,7 @@ section.sec { margin-bottom: 46px; }
     { id: 'posiciones', name: 'Posiciones', url: '/sudoku/posiciones/', cat: 'juegos', tag: 'Sudoku', desc: 'La tabla del torneo, en vivo.', art: 'table', color: 'blush', featured: false, keywords: 'tabla ranking scoreboard campeones' },
     { id: 'pomodoro', name: 'Pomodoro', url: '/pomodoro/', cat: 'herramientas', tag: 'Herramienta', desc: 'Foco y descansos, con registro del día.', art: 'ring', color: 'sage', featured: true, keywords: 'timer temporizador estudio concentracion' },
     { id: 'poker', name: 'Deudas de poker', url: '/poker/', cat: 'herramientas', tag: 'Herramienta', desc: 'Quién le paga a quién al final de la noche.', art: 'cards', color: 'blue', featured: true, keywords: 'poker deudas cuentas fichas plata calculadora' },
+    { id: 'radio', name: 'Radio', url: '/radio/', cat: 'herramientas', tag: 'Música', desc: 'Miles de radios en vivo de todo el mundo.', art: 'radio', color: 'persimmon', featured: false, keywords: 'radio musica en vivo fm am emisoras escuchar noticias deportes' },
     { id: 'agenda', name: 'Agenda', url: '/agenda/', cat: 'herramientas', tag: 'Privada', desc: 'Mi día: bloques, prioridades, tareas y hábitos.', art: 'calendar', color: 'candle', featured: false, keywords: 'agenda planner diario calendario tareas habitos organizacion' },
     { id: 'calorias', name: 'Calorías', url: '/calorias/', cat: 'herramientas', tag: 'Con cuenta', desc: 'Comidas, macros y peso. Para bajar, mantener o subir.', art: 'macros', color: 'sage', featured: false, keywords: 'calorias macros dieta nutricion comida peso proteinas contador diario subir aumentar volumen ganar masa muscular superavit' },
     { id: 'asistente', name: 'Asistente', url: '/asistente/', cat: 'herramientas', tag: 'Privada', desc: 'Le pido cosas y las carga: comidas, agenda, el sitio.', art: 'chat', color: 'blush', featured: false, keywords: 'asistente chat ia bot inteligencia artificial ayuda' }
@@ -330,6 +331,14 @@ section.sec { margin-bottom: 46px; }
       s += '<rect x="96" y="88" width="120" height="12" rx="6" fill="#0f0f14" fill-opacity=".75"/><rect x="96" y="114" width="80" height="12" rx="6" fill="#0f0f14" fill-opacity=".35"/>';
       s += '<rect x="150" y="160" width="180" height="76" rx="22" fill="#fd9b65" stroke="#0f0f14" stroke-width="2"/><path d="M296 234l16 28-40-26z" fill="#fd9b65" stroke="#0f0f14" stroke-width="2" stroke-linejoin="round"/>';
       s += '<circle cx="204" cy="198" r="8" fill="#0f0f14"/><circle cx="240" cy="198" r="8" fill="#0f0f14"/><circle cx="276" cy="198" r="8" fill="#0f0f14"/>';
+    } else if (item.art === 'radio') {
+      // radio portátil: antena, parlante y dial
+      s += '<line x1="262" y1="92" x2="306" y2="36" stroke="#0f0f14" stroke-width="5" stroke-linecap="round"/><circle cx="306" cy="36" r="7" fill="#0f0f14"/>';
+      s += '<rect x="78" y="92" width="244" height="160" rx="22" fill="#f8f5d1" stroke="#0f0f14" stroke-width="2.5"/>';
+      s += '<circle cx="148" cy="172" r="46" fill="#0f0f14"/>';
+      for (var ry = -2; ry <= 2; ry++) for (var rx = -2; rx <= 2; rx++) if (rx * rx + ry * ry <= 5) s += '<circle cx="' + (148 + rx * 15) + '" cy="' + (172 + ry * 15) + '" r="4" fill="#f8f5d1" fill-opacity=".55"/>';
+      s += '<rect x="214" y="126" width="84" height="34" rx="8" fill="#0f0f14"/><rect x="222" y="134" width="68" height="18" rx="4" fill="#004b82"/><rect x="250" y="131" width="4" height="24" rx="2" fill="#fd9b65"/>';
+      s += '<circle cx="234" cy="206" r="16" fill="#0f0f14"/><circle cx="278" cy="206" r="16" fill="#0f0f14"/><circle cx="234" cy="196" r="3" fill="#f8f5d1"/><circle cx="286" cy="200" r="3" fill="#f8f5d1"/>';
     } else if (item.art === 'macros') {
       // anillo de calorías y tres barras de macros
       var C = 2 * Math.PI * 74;
