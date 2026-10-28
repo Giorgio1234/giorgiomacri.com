@@ -647,7 +647,7 @@ dialog { width: min(560px, calc(100vw - 32px)); }
         var sel = '<select class="cal-sel" data-cpl="' + u.id + '" aria-label="Jugador de sudoku de ' + esc(u.username) + '"><option value="">— sin jugador —</option>' +
           cal.players.map(function (p) { var mine = p.id === u.player_id, taken = used[p.id] && !mine; return '<option value="' + p.id + '"' + (mine ? ' selected' : '') + (taken ? ' disabled' : '') + '>' + esc(p.name) + (taken ? ' (' + esc(used[p.id]) + ')' : '') + '</option>'; }).join('') + '</select>';
         return '<tr><td><b>' + esc(u.username) + '</b></td><td>' + (u.is_admin ? '<span class="pill ok">admin</span>' : '<span class="dim">cuenta</span>') + '</td><td>' + sel + '</td>' +
-          '<td>' + u.entries + ' reg.' + (u.last_entry ? ' · ' + u.last_entry.split('-').reverse().slice(0, 2).join('/') : '') + '</td><td>' + (u.ai_today || 0) + ' / ' + a.limit + '</td><td>' + dfmt(u.last_login) + '</td>' +
+          '<td>' + u.entries + ' reg.' + (u.last_entry ? ' · ' + u.last_entry.split('-').reverse().slice(0, 2).join('/') : '') + '</td><td>' + (u.ai_today || 0) + ' / ' + a.limit + (u.ai_today ? ' <button class="link" type="button" data-cai="' + u.id + '">Resetear</button>' : '') + '</td><td>' + dfmt(u.last_login) + '</td>' +
           '<td>' + (u.disabled ? '<span class="pill bad">deshabilitada</span>' : '<span class="pill ok">activa</span>') + '</td>' +
           '<td><div class="actions"><button class="btn small ghost" type="button" data-cpw="' + u.id + '">Contraseña</button>' +
           '<button class="btn small ghost" type="button" data-cadm="' + u.id + '">' + (u.is_admin ? 'Quitar admin' : 'Hacer admin') + '</button>' +
@@ -677,6 +677,9 @@ dialog { width: min(560px, calc(100vw - 32px)); }
       dialog({ title: 'Nueva contraseña para ' + u.username, text: 'Cierra sus sesiones abiertas.', fields: [{ id: 'p', label: 'Contraseña (mínimo 8 caracteres)', type: 'text' }],
         ok: 'Guardar', run: function (v) { return call('POST', '/admin/cal/users/' + u.id, { password: v.p }); } })
         .then(function (v) { if (v) toast('Contraseña cambiada'); });
+    } else if (b.dataset.cai) {
+      var ui = calUser(+b.dataset.cai);
+      call('POST', '/admin/cal/users/' + ui.id, { reset_ai: true }).then(function () { toast('Listo: ' + ui.username + ' tiene ' + cal.ai.limit + ' consultas de nuevo'); loadCal(); }).catch(function (err) { toast(err.message); });
     } else if (b.dataset.cadm) {
       var ua = calUser(+b.dataset.cadm);
       call('POST', '/admin/cal/users/' + ua.id, { is_admin: !ua.is_admin }).then(function () { toast(ua.is_admin ? 'Ya no es admin' : 'Ahora es admin'); loadCal(); }).catch(function (err) { toast(err.message); });
