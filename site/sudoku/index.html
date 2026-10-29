@@ -329,14 +329,14 @@ button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; c
 
 <script>
 /* Cuenta única de giorgiomacri.com: botón "Entrar" / menú de la cuenta arriba a la derecha (en #gmAuth).
- * Una sesión para todo: el token se copia a las claves que usan Sudoku, Calorías, Agenda y Asistente.
+ * Una sesión para todo: el token se copia a las claves que usan Sudoku, Calorías, Agenda, Asistente y Estudio.
  * window.GMAuth: { me(), token(), open(), logout(), ready }  ·  window.gmAccount: compatibilidad con Sudoku. */
 (function () {
   'use strict';
   if (window.GMAuth) return;
   var API = '/api/sudoku/auth';
   var K = { token: 'gm-token', me: 'gm-me', torneo: 'gm-torneo-token', torneoMe: 'gm-torneo-me', cal: 'gm-cal-token', agenda: 'gm-agenda-token' };
-  var EXTRA = ['gm-cal-cache', 'gm-agenda-cache', 'gm-chat-v1'];
+  var EXTRA = ['gm-cal-cache', 'gm-agenda-cache', 'gm-chat-v1', 'gm-estudio-cache'];
   var CSS = '' +
     '.gma{--a-bg:#1b1b23;--a-card:#23232d;--a-line:#30303c;--a-fg:#f1efe9;--a-fg2:#a3a1ad;--a-acc:#fd9b65;--a-on:#1a0f08;--a-bad:#ff7a6b;' +
     'font-family:"Inter Tight",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.35;position:relative;display:inline-flex;align-items:center;-webkit-font-smoothing:antialiased}' +
@@ -393,7 +393,7 @@ button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; c
 
   function links() {
     var l = [];
-    if (me && me.kind === 'account') l.push(['/calorias/', 'Calorías']);
+    if (me && me.kind === 'account') { l.push(['/calorias/', 'Calorías']); l.push(['/estudio/', 'Estudio']); }
     if (me && me.admin) { l.push(['/agenda/', 'Agenda']); l.push(['/asistente/', 'Asistente']); }
     if (me && me.player) l.push(['/sudoku/torneo/', 'Torneo de sudoku']);
     if (me && me.admin) l.push(['/admin/', 'Panel de admin']);

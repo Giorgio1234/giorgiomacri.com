@@ -286,6 +286,7 @@ section.sec { margin-bottom: 46px; }
     { id: 'poker', name: 'Deudas de poker', url: '/poker/', cat: 'herramientas', tag: 'Herramienta', desc: 'Quién le paga a quién al final de la noche.', art: 'cards', color: 'blue', featured: true, keywords: 'poker deudas cuentas fichas plata calculadora' },
     { id: 'radio', name: 'Radio', url: '/radio/', cat: 'herramientas', tag: 'Música', desc: 'Miles de radios en vivo de todo el mundo.', art: 'radio', color: 'persimmon', featured: false, keywords: 'radio musica en vivo fm am emisoras escuchar noticias deportes' },
     { id: 'agenda', name: 'Agenda', url: '/agenda/', cat: 'herramientas', tag: 'Privada', desc: 'Mi día: bloques, prioridades, tareas y hábitos.', art: 'calendar', color: 'candle', featured: false, keywords: 'agenda planner diario calendario tareas habitos organizacion' },
+    { id: 'estudio', name: 'Estudio', url: '/estudio/', cat: 'herramientas', tag: 'Con cuenta', desc: 'Mi avance en las guías de cada materia, con el parcial en la mira.', art: 'study', color: 'persimmon', featured: false, keywords: 'estudio guias ejercicios materias facultad universidad parcial final progreso tracker dudas repasar' },
     { id: 'calorias', name: 'Calorías', url: '/calorias/', cat: 'herramientas', tag: 'Con cuenta', desc: 'Comidas, macros y peso. Para bajar, mantener o subir.', art: 'macros', color: 'sage', featured: false, keywords: 'calorias macros dieta nutricion comida peso proteinas contador diario subir aumentar volumen ganar masa muscular superavit' },
     { id: 'asistente', name: 'Asistente', url: '/asistente/', cat: 'herramientas', tag: 'Privada', desc: 'Le pido cosas y las carga: comidas, agenda, el sitio.', art: 'chat', color: 'blush', featured: false, keywords: 'asistente chat ia bot inteligencia artificial ayuda' }
   ];
@@ -376,6 +377,18 @@ section.sec { margin-bottom: 46px; }
         var y = 96 + k * 44;
         s += '<rect x="262" y="' + y + '" width="96" height="16" rx="8" fill="#0f0f14" fill-opacity=".12"/><rect x="262" y="' + y + '" width="' + (96 * b[1]) + '" height="16" rx="8" fill="' + b[0] + '" stroke="#0f0f14" stroke-width="1.5"/>';
       });
+    } else if (item.art === 'study') {
+      // hoja de guía: grilla de ejercicios marcados (hechos, duda, repasar) y barra de avance
+      s += '<rect x="92" y="34" width="216" height="232" rx="14" fill="#ffffff" stroke="#0f0f14" stroke-width="2"/>';
+      s += '<rect x="114" y="54" width="110" height="14" rx="7" fill="#0f0f14"/><rect x="114" y="76" width="70" height="9" rx="4.5" fill="#0f0f14" fill-opacity=".3"/>';
+      var st = '1111111211131110201000300000';
+      for (var q = 0; q < 28; q++) {
+        var qx = 114 + (q % 7) * 25, qy = 102 + Math.floor(q / 7) * 25, sc = st.charAt(q);
+        var fill = sc === '1' ? '#9ac8ae' : sc === '2' ? '#fd9b65' : sc === '3' ? '#004b82' : '#ffffff';
+        s += '<rect x="' + qx + '" y="' + qy + '" width="19" height="19" rx="4" fill="' + fill + '" stroke="#0f0f14" stroke-width="1.5"/>';
+      }
+      s += '<rect x="114" y="216" width="172" height="14" rx="7" fill="#0f0f14" fill-opacity=".12"/><rect x="114" y="216" width="104" height="14" rx="7" fill="#9ac8ae" stroke="#0f0f14" stroke-width="1.5"/>';
+      s += '<text x="286" y="252" text-anchor="end" font-family="Inter Tight, sans-serif" font-size="16" font-weight="700" fill="#0f0f14">60 %</text>';
     } else if (item.art === 'cards') {
       // dos cartas en abanico y una pila de fichas
       var card = function (x, y, rot, label, suit, red) {

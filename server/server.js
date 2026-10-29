@@ -884,6 +884,8 @@ require('./lib/cuentas')({ db, route, fail, readBody, rateLimited, hashPin, chec
   OWNER: OWNER_USER, DAY_MS });
 /* Asistente con herramientas */
 require('./lib/asistente')({ db, route, fail, readBody, rateLimited, sha, now, sessionFrom, validDate, DAY_MS, TZ_OFFSET_MIN, AGENDA_USER });
+// Tracker de estudio (materias, guías y ejercicios por cuenta)
+require('./lib/estudio')({ db, route, fail, readBody, sessionFrom, now, validDate });
 
 if (TEST_CLOCK) {
   route('POST', '/__clock', async (req) => { const b = await readBody(req); clockOffset = Number(b.offsetMs) || 0; return { now: now() }; });

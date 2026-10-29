@@ -22,7 +22,8 @@ const PAGES = [
   ['calorias.html', 'calorias/index.html'],
   ['asistente.html', 'asistente/index.html'],
   ['radio.html', 'radio/index.html'],
-  ['flash.html', 'flash/index.html']
+  ['flash.html', 'flash/index.html'],
+  ['estudio.html', 'estudio/index.html']
 ];
 
 function inline(src) {
