@@ -78,6 +78,29 @@ textarea.f { height: auto; min-height: 76px; padding: 10px 12px; resize: vertica
 .head h1 { margin: 0; font-size: clamp(30px, 5vw, 48px); line-height: 1; letter-spacing: -0.035em; font-weight: 700; }
 .head h1 small { display: block; font-size: 15px; letter-spacing: 0; font-weight: 500; color: var(--fg-2); margin-bottom: 6px; }
 .hacts { display: flex; gap: 8px; }
+/* Exámenes */
+.exams { display: flex; flex-direction: column; gap: 8px; }
+.exam { width: 100%; display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; color: var(--fg); }
+.exam:hover { border-color: var(--line-2); }
+.exam.next { box-shadow: inset 4px 0 0 var(--c); }
+.exam.off { opacity: .55; }
+.exam .when { text-align: center; line-height: 1.05; }
+.exam .when b { display: block; font-size: 21px; letter-spacing: -0.02em; }
+.exam .when small { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--fg-3); }
+.exam .einfo { display: flex; flex-direction: column; min-width: 0; }
+.exam .ename { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.exam .esub { font-size: 13px; color: var(--fg-2); }
+.exam .eright { text-align: right; font-size: 13px; color: var(--fg-2); white-space: nowrap; line-height: 1.35; }
+.exam .eright b { color: var(--fg); }
+.exam .ebar { grid-column: 2 / -1; }
+.ghead { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--fg-3); font-weight: 600; margin: 10px 2px 0; }
+.ghead:first-child { margin-top: 0; }
+.checks { display: flex; flex-direction: column; max-height: 230px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; padding: 4px 12px; background: var(--field); }
+.checks label { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 15px; color: var(--fg); border-top: 1px solid var(--line); }
+.checks label:first-child { border-top: 0; }
+.checks small { margin-left: auto; color: var(--fg-3); font-size: 12.5px; white-space: nowrap; }
+.checks input, .check input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
+.checks .none { color: var(--fg-3); font-size: 14px; padding: 8px 0; }
 .sec { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 26px 0 12px; }
 .sec h2 { margin: 0; font-size: 18px; letter-spacing: -0.01em; }
 .sec small { color: var(--fg-3); font-size: 13px; font-weight: 500; }
@@ -247,6 +270,9 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
       </div>
       <div class="over" id="sOver"></div>
 
+      <div class="sec"><h2>Exámenes</h2><button class="btn ghost sm" type="button" id="eAdd">+ Examen</button></div>
+      <div class="exams" id="exams"></div>
+
       <div class="modes" id="modes">
         <span>Al tocar un ejercicio:</span>
         <div class="seg" role="group" aria-label="Qué marca un toque">
@@ -272,16 +298,34 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
     <h3 id="subjDlgTitle">Nueva materia</h3>
     <label class="field">Nombre<input class="f" id="mName" maxlength="60" placeholder="Análisis Matemático II" autocomplete="off"></label>
     <div class="field">Color<div class="colors" id="mColors"></div></div>
-    <div class="row2">
-      <label class="field">Próximo parcial<input class="f" id="mExam" type="date"></label>
-      <label class="field">Cuál<input class="f" id="mExamLabel" maxlength="40" placeholder="1er parcial" autocomplete="off"></label>
-    </div>
-    <p class="hint">Con la fecha del parcial te calcula cuántos ejercicios por día te faltan.</p>
+    <p class="hint">Los parciales, recuperatorios y el final se cargan adentro de la materia, en Exámenes.</p>
     <p class="err-msg" id="mErr" role="alert"></p>
     <div class="extra" id="mExtra">
       <button class="btn ghost sm" type="button" id="mArch">Archivar</button>
       <button class="btn danger sm" type="button" id="mDel">Borrar materia</button>
     </div>
+    <div class="actions">
+      <button class="btn ghost" type="button" data-close>Cancelar</button>
+      <button class="btn" type="submit">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Examen: alta y edición -->
+<dialog id="examDlg">
+  <form method="dialog" id="examForm" novalidate>
+    <h3 id="examDlgTitle">Nuevo examen</h3>
+    <div class="row2">
+      <label class="field">Tipo<select class="f" id="eKind"><option value="parcial">Parcial</option><option value="recuperatorio">Recuperatorio</option><option value="final">Final</option></select></label>
+      <label class="field">Fecha<input class="f" id="eDate" type="date"></label>
+    </div>
+    <label class="field">Nombre<input class="f" id="eName" maxlength="40" autocomplete="off"></label>
+    <label class="field" id="eOfWrap">Recupera a<select class="f" id="eOf"></select></label>
+    <div class="field" id="eGuidesWrap">Guías que entran<div class="checks" id="eGuides"></div></div>
+    <p class="hint" id="eHint"></p>
+    <label class="check" id="ePassedWrap"><input type="checkbox" id="ePassed"> Ya lo aprobé</label>
+    <p class="err-msg" id="eErr" role="alert"></p>
+    <div class="extra" id="eExtra"><button class="btn danger sm" type="button" id="eDel">Borrar examen</button></div>
     <div class="actions">
       <button class="btn ghost" type="button" data-close>Cancelar</button>
       <button class="btn" type="submit">Guardar</button>
@@ -297,6 +341,7 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
       <label class="field">Nombre<input class="f" id="gName" maxlength="80" placeholder="Guía 3: Integrales" autocomplete="off"></label>
       <label class="field">Ejercicios<input class="f" id="gN" type="number" inputmode="numeric" min="1" max="300" placeholder="25"></label>
     </div>
+    <label class="field" id="gExamWrap">Entra en<select class="f" id="gExam"></select></label>
     <label class="field">Notas<textarea class="f" id="gNote" maxlength="2000" placeholder="Ej. 7 y 12 entran en el parcial. Teoría: pág. 40–52."></textarea></label>
     <p class="err-msg" id="gErr" role="alert"></p>
     <div class="extra" id="gExtra">
@@ -345,27 +390,68 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
 
   /* ---------- Cuentas de progreso ---------- */
   function countStr(s) { var c = { 0: 0, 1: 0, 2: 0, 3: 0 }; for (var i = 0; i < s.length; i++) c[s[i]]++; return c; }
-  function stats(m) {
+  function statsOf(guides) {
     var t = { total: 0, done: 0, doubt: 0, review: 0 };
-    m.guides.forEach(function (g) { var c = countStr(g.s); t.total += g.n; t.done += c[1]; t.doubt += c[2]; t.review += c[3]; });
+    guides.forEach(function (g) { var c = countStr(g.s); t.total += g.n; t.done += c[1]; t.doubt += c[2]; t.review += c[3]; });
     t.touched = t.done + t.doubt + t.review;
     return t;
   }
+  function stats(m) { return statsOf(m.guides); }
   function barHtml(t, lg) {
     if (!t.total) return '<div class="bar' + (lg ? ' lg' : '') + '"></div>';
     var w = function (n) { return (n / t.total * 100).toFixed(2) + '%'; };
     return '<div class="bar' + (lg ? ' lg' : '') + '" role="img" aria-label="' + pct(t.touched, t.total) + ' % hecho">' +
       '<i class="d" style="width:' + w(t.done) + '"></i><i class="r" style="width:' + w(t.review) + '"></i><i class="q" style="width:' + w(t.doubt) + '"></i></div>';
   }
-  function examInfo(m, t) {
-    if (!m.exam) return null;
-    var left = daysBetween(todayIso(), m.exam), rem = t.total - t.touched;
-    var name = m.examLabel || 'Parcial';
-    if (left < 0) return { past: true, text: name + ' pasado' };
-    var when = left === 0 ? 'hoy' : left === 1 ? 'mañana' : 'en ' + left + ' días';
-    var per = rem > 0 ? Math.ceil(rem / Math.max(1, left)) : 0;
-    return { left: left, rem: rem, per: per, hot: left <= 7, text: name + ' ' + when };
+
+  /* ---------- Exámenes ----------
+     Cada materia tiene exámenes: parcial, recuperatorio (de un parcial) o final.
+     Cada guía entra en un parcial (g.exam). Un recuperatorio cubre las guías de su parcial; el final, todas.
+     Un parcial sin guías asignadas cubre las guías que no tienen parcial. Si el parcial está aprobado, su recuperatorio no cuenta. */
+  var KINDS = { parcial: 'Parcial', recuperatorio: 'Recuperatorio', final: 'Final' };
+  var MON3 = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  function byDate(a, b) { var x = a.date || '9999', y = b.date || '9999'; return x < y ? -1 : x > y ? 1 : 0; }
+  function examsOf(m) { return m.exams.slice().sort(byDate); }
+  function examById(m, id) { return id ? m.exams.filter(function (e) { return e.id === id; })[0] || null : null; }
+  function parciales(m) { return examsOf(m).filter(function (e) { return e.kind === 'parcial'; }); }
+  function unassigned(m) { return m.guides.filter(function (g) { var e = examById(m, g.exam); return !e || e.kind !== 'parcial'; }); }
+  function coverage(m, e) {
+    if (e.kind === 'final') return m.guides;
+    var p = e.kind === 'recuperatorio' ? examById(m, e.of) : e;
+    if (!p) return m.guides;
+    var gs = m.guides.filter(function (g) { return g.exam === p.id; });
+    return gs.length ? gs : unassigned(m);
   }
+  function examName(m, e) {
+    if (e.name) return e.name;
+    if (e.kind === 'recuperatorio') { var p = examById(m, e.of); return 'Recuperatorio' + (p ? ' del ' + examName(m, p) : ''); }
+    return KINDS[e.kind];
+  }
+  function examOff(m, e) { // aprobado, o recuperatorio de un parcial aprobado
+    if (e.passed) return 'Aprobado';
+    if (e.kind === 'recuperatorio') { var p = examById(m, e.of); if (p && p.passed) return 'No hace falta'; }
+    return '';
+  }
+  function examInfo(m, e) {
+    var gs = coverage(m, e), t = statsOf(gs), name = examName(m, e), off = examOff(m, e);
+    var x = { e: e, gs: gs, t: t, name: name, off: off, rem: t.total - t.touched };
+    if (!e.date) { x.nodate = true; x.when = 'sin fecha'; }
+    else {
+      x.left = daysBetween(todayIso(), e.date); x.past = x.left < 0;
+      x.when = x.past ? 'pasado' : x.left === 0 ? 'hoy' : x.left === 1 ? 'mañana' : 'en ' + x.left + ' días';
+      x.per = !x.past && x.rem > 0 ? Math.ceil(x.rem / Math.max(1, x.left)) : 0;
+      x.hot = !x.past && x.left <= 7;
+    }
+    x.text = name + ' ' + x.when;
+    return x;
+  }
+  function nextExam(m) {
+    var today = todayIso();
+    var e = examsOf(m).filter(function (x) { return x.date && x.date >= today && !examOff(m, x); })[0];
+    return e ? examInfo(m, e) : null;
+  }
+  function fmtDay(iso) { var d = new Date(iso + 'T00:00:00Z'); return { d: d.getUTCDate(), m: MON3[d.getUTCMonth()], dow: DOW[d.getUTCDay()] }; }
+
   function streak() {
     var d = todayIso(), n = 0;
     if (!state.log[d]) d = addDays(d, -1);
@@ -394,68 +480,98 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
       '<div class="chart"><small>Últimos 14 días</small><div class="bars" role="img" aria-label="Ejercicios por día en los últimos 14 días">' + bars + '</div></div>';
 
     var act = state.subjects.filter(function (m) { return !m.archived; }), arch = state.subjects.filter(function (m) { return m.archived; });
-    // Primero las que tienen parcial más cerca
-    act.sort(function (a, b) {
-      var ea = a.exam && a.exam >= today ? a.exam : '9999', eb = b.exam && b.exam >= today ? b.exam : '9999';
-      return ea < eb ? -1 : ea > eb ? 1 : 0;
-    });
+    // Primero las que tienen el próximo examen más cerca
+    var nx = {}; act.forEach(function (m) { var n = nextExam(m); nx[m.id] = n ? n.e.date : '9999'; });
+    act.sort(function (a, b) { return nx[a.id] < nx[b.id] ? -1 : nx[a.id] > nx[b.id] ? 1 : 0; });
     $('sCount').textContent = act.length ? plural(act.length, 'materia', 'materias') : '';
     var html = act.map(card).join('');
-    if (!state.subjects.length) html = '<div class="empty"><b>Empezá sumando una materia.</b><br>Después le cargás las guías con la cantidad de ejercicios, y vas tocando cada uno a medida que lo hacés.</div>';
+    if (!state.subjects.length) html = '<div class="empty"><b>Empezá sumando una materia.</b><br>Después le cargás las guías con la cantidad de ejercicios y los parciales, y vas tocando cada ejercicio a medida que lo hacés.</div>';
     $('subjects').innerHTML = html + '<button class="add-card" type="button" data-add>+ Materia</button>';
     $('archWrap').hidden = !arch.length;
     $('archSum').textContent = 'Archivadas (' + arch.length + ')';
     $('archived').innerHTML = arch.map(card).join('');
   }
   function card(m) {
-    var t = stats(m), ex = examInfo(m, t);
+    var t = stats(m), ex = m.archived ? null : nextExam(m);
     var chips = '';
-    if (ex) chips += '<span class="chip' + (ex.hot && !ex.past ? ' hot' : '') + '">' + esc(ex.text) + '</span>';
-    if (ex && !ex.past && ex.per) chips += '<span class="chip">~' + ex.per + ' por día</span>';
+    if (ex) {
+      chips += '<span class="chip' + (ex.hot ? ' hot' : '') + '">' + esc(ex.text) + '</span>';
+      if (ex.per) chips += '<span class="chip">~' + ex.per + ' por día</span>';
+      else if (ex.t.total) chips += '<span class="chip">listo para rendir</span>';
+    }
     if (t.doubt) chips += '<span class="chip"><i></i>' + plural(t.doubt, 'duda', 'dudas') + '</span>';
     return '<button class="subj" type="button" data-open="' + esc(m.id) + '" style="--c:var(--c-' + m.color + ')">' +
       '<h3>' + esc(m.name) + '</h3>' + barHtml(t) +
       '<div class="row"><span><b>' + t.touched + '</b> de ' + t.total + ' ejercicios</span><span>' + pct(t.touched, t.total) + ' %</span></div>' +
-      '<div class="row"><span>' + plural(m.guides.length, 'guía', 'guías') + '</span></div>' +
+      '<div class="row"><span>' + plural(m.guides.length, 'guía', 'guías') + (m.exams.length ? ' · ' + plural(m.exams.length, 'examen', 'exámenes') : '') + '</span></div>' +
       (chips ? '<div class="meta">' + chips + '</div>' : '') + '</button>';
   }
 
   function current() { return state.subjects.filter(function (m) { return m.id === curId; })[0] || null; }
+  var PEN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>';
+  function guideHtml(g) {
+    var c = countStr(g.s), done = c[1] + c[2] + c[3];
+    var open = openGuides[g.id] != null ? openGuides[g.id] : done < g.n;
+    var cells = '';
+    for (var i = 0; i < g.n; i++) cells += '<button class="cell" type="button" data-g="' + esc(g.id) + '" data-i="' + i + '" data-s="' + g.s[i] + '" aria-label="Ejercicio ' + (i + 1) + ': ' + ['sin hacer', 'hecho', 'con duda', 'para repasar'][+g.s[i]] + '">' + (i + 1) + '</button>';
+    return '<details class="guide" data-guide="' + esc(g.id) + '"' + (open ? ' open' : '') + '>' +
+      '<summary><span class="gname">' + CHEV + esc(g.name) + '</span><span class="gnum' + (done === g.n ? ' full' : '') + '">' + done + '/' + g.n + '</span>' +
+      '<button class="icon-btn" type="button" data-edit="' + esc(g.id) + '" aria-label="Editar ' + esc(g.name) + '">' + PEN + '</button>' +
+      '<span class="gbar">' + barHtml({ total: g.n, done: c[1], doubt: c[2], review: c[3], touched: done }) + '</span></summary>' +
+      '<div class="gbody"><div class="cells">' + cells + '</div>' + (g.note ? '<p class="gnote">' + esc(g.note) + '</p>' : '') + '</div></details>';
+  }
   function renderSubj() {
     var m = current();
     if (!m) { go(null); return; }
-    var t = stats(m), ex = examInfo(m, t);
+    var t = stats(m), ex = nextExam(m);
     $('subjView').style.setProperty('--c', 'var(--c-' + m.color + ')');
     $('sTitle').innerHTML = '<span class="dot"></span>' + esc(m.name);
-    var pace = '';
-    if (ex && ex.past) pace = '<p class="pace">' + esc(ex.text) + '. Cambiá la fecha en "Editar materia" cuando sepas la del próximo.</p>';
-    else if (ex && ex.rem > 0) pace = '<p class="pace"><b>' + esc(ex.text) + '</b> · te faltan ' + plural(ex.rem, 'ejercicio', 'ejercicios') + ': <b>~' + ex.per + ' por día</b>' + (ex.left === 0 ? ' (es hoy)' : '') + '.</p>';
-    else if (ex) pace = '<p class="pace"><b>' + esc(ex.text) + '</b> · tenés todo hecho' + (t.doubt + t.review ? ', repasá lo marcado' : '') + '.</p>';
-    else pace = '<p class="pace">Sumá la fecha del parcial en "Editar materia" para ver cuánto hacer por día.</p>';
+    var pace;
+    if (ex && ex.rem > 0) pace = '<p class="pace">Próximo: <b>' + esc(ex.text) + '</b> · ' + (ex.gs.length === m.guides.length ? 'entran todas las guías' : 'entran ' + plural(ex.gs.length, 'guía', 'guías')) + '; te faltan ' + plural(ex.rem, 'ejercicio', 'ejercicios') + ': <b>~' + ex.per + ' por día</b>.</p>';
+    else if (ex) pace = '<p class="pace">Próximo: <b>' + esc(ex.text) + '</b> · tenés hecho todo lo que entra' + (ex.t.doubt + ex.t.review ? '; repasá lo marcado' : '') + '.</p>';
+    else if (m.exams.length) pace = '<p class="pace">No hay exámenes por venir. Sumá el próximo en Exámenes cuando sepas la fecha.</p>';
+    else pace = '<p class="pace">Sumá los parciales en Exámenes para ver cuánto hacer por día.</p>';
     $('sOver').innerHTML =
       '<div class="big"><b>' + pct(t.touched, t.total) + ' %</b><span>' + t.touched + ' de ' + plural(t.total, 'ejercicio', 'ejercicios') + ' · ' + plural(m.guides.length, 'guía', 'guías') + '</span></div>' +
       barHtml(t, true) +
       '<div class="legend"><span><i style="background:var(--st-done)"></i>Hechos ' + t.done + '</span><span><i style="background:var(--st-review)"></i>Para repasar ' + t.review + '</span><span><i style="background:var(--st-doubt)"></i>Con dudas ' + t.doubt + '</span><span><i style="background:var(--card-2);border:1px solid var(--line-2)"></i>Sin hacer ' + (t.total - t.touched) + '</span></div>' + pace;
 
-    if (!m.guides.length) $('guides').innerHTML = '<div class="empty"><b>Todavía no hay guías.</b><br>Tocá "+ Guía" y poné cuántos ejercicios tiene.</div>';
-    else $('guides').innerHTML = m.guides.map(function (g) {
-      var c = countStr(g.s), done = c[1] + c[2] + c[3];
-      var open = openGuides[g.id] != null ? openGuides[g.id] : done < g.n;
-      var cells = '';
-      for (var i = 0; i < g.n; i++) cells += '<button class="cell" type="button" data-g="' + esc(g.id) + '" data-i="' + i + '" data-s="' + g.s[i] + '" aria-label="Ejercicio ' + (i + 1) + ': ' + ['sin hacer', 'hecho', 'con duda', 'para repasar'][+g.s[i]] + '">' + (i + 1) + '</button>';
-      return '<details class="guide" data-guide="' + esc(g.id) + '"' + (open ? ' open' : '') + '>' +
-        '<summary><span class="gname">' + CHEV + esc(g.name) + '</span><span class="gnum' + (done === g.n ? ' full' : '') + '">' + done + '/' + g.n + '</span>' +
-        '<button class="icon-btn" type="button" data-edit="' + esc(g.id) + '" aria-label="Editar ' + esc(g.name) + '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg></button>' +
-        '<span class="gbar">' + barHtml({ total: g.n, done: c[1], doubt: c[2], review: c[3], touched: done }) + '</span></summary>' +
-        '<div class="gbody"><div class="cells">' + cells + '</div>' + (g.note ? '<p class="gnote">' + esc(g.note) + '</p>' : '') + '</div></details>';
-    }).join('');
+    // Exámenes, por fecha
+    var list = examsOf(m);
+    $('exams').innerHTML = list.length ? list.map(function (e) {
+      var x = examInfo(m, e), dd = e.date ? fmtDay(e.date) : null, isNext = ex && ex.e === e;
+      var right = x.off ? x.off : x.past ? 'Pasado' : x.nodate ? 'Sin fecha' : x.when.charAt(0).toUpperCase() + x.when.slice(1);
+      var sub = e.kind === 'final' ? 'Entran todas las guías' : e.kind === 'recuperatorio' ? (examById(m, e.of) ? 'Mismas guías que el ' + examName(m, examById(m, e.of)) : 'Entran todas las guías') :
+        (m.guides.some(function (g) { return g.exam === e.id; }) ? plural(x.gs.length, 'guía', 'guías') : x.gs.length ? 'Sin guías asignadas: cuento las ' + x.gs.length + ' sin parcial' : 'Sin guías asignadas');
+      return '<button class="exam' + (x.off || x.past ? ' off' : '') + (isNext ? ' next' : '') + '" type="button" data-exam="' + esc(e.id) + '">' +
+        '<span class="when">' + (dd ? '<b>' + dd.d + '</b><small>' + dd.m + '</small>' : '<small>—</small>') + '</span>' +
+        '<span class="einfo"><span class="ename">' + esc(x.name) + '</span><span class="esub">' + esc(sub) + '</span></span>' +
+        '<span class="eright">' + esc(right) + (x.per && !x.off ? '<br><b>~' + x.per + ' por día</b>' : '') + '<br>' + x.t.touched + '/' + x.t.total + '</span>' +
+        '<span class="ebar">' + barHtml(x.t) + '</span></button>';
+    }).join('') : '<div class="empty">Cargá los parciales, recuperatorios y el final con su fecha. Después asignás cada guía a su parcial.</div>';
+
+    // Guías agrupadas por parcial
+    var ps = parciales(m), html = '';
+    if (!m.guides.length) html = '<div class="empty"><b>Todavía no hay guías.</b><br>Tocá "+ Guía" y poné cuántos ejercicios tiene.</div>';
+    else if (!ps.length) html = m.guides.map(guideHtml).join('');
+    else {
+      ps.forEach(function (p) {
+        var gs = m.guides.filter(function (g) { return g.exam === p.id; });
+        if (!gs.length) return;
+        var st = statsOf(gs);
+        html += '<div class="ghead"><span>' + esc(examName(m, p)) + (p.passed ? ' · aprobado' : '') + '</span><span>' + st.touched + '/' + st.total + '</span></div>' + gs.map(guideHtml).join('');
+      });
+      var un = unassigned(m);
+      if (un.length) html += '<div class="ghead"><span>Sin parcial asignado</span><span>' + plural(un.length, 'guía', 'guías') + '</span></div>' + un.map(guideHtml).join('');
+    }
+    $('guides').innerHTML = html;
 
     var lines = [], nd = 0;
     m.guides.forEach(function (g) {
-      var list = [];
-      for (var i = 0; i < g.n; i++) if (g.s[i] === '2') list.push(i + 1);
-      nd += list.length;
-      if (list.length) lines.push('<li><b>' + esc(g.name) + '</b><span>' + list.join(', ') + '</span></li>');
+      var l = [];
+      for (var i = 0; i < g.n; i++) if (g.s[i] === '2') l.push(i + 1);
+      nd += l.length;
+      if (l.length) lines.push('<li><b>' + esc(g.name) + '</b><span>' + l.join(', ') + '</span></li>');
     });
     $('dCount').textContent = nd ? plural(nd, 'ejercicio', 'ejercicios') : '';
     $('doubts').innerHTML = lines.length ? '<ul>' + lines.join('') + '</ul>' : '<p class="none">Sin dudas marcadas. Elegí "Duda" arriba y tocá los ejercicios que quieras llevar a consulta.</p>';
@@ -524,8 +640,6 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
     editSubj = m;
     $('subjDlgTitle').textContent = m ? 'Editar materia' : 'Nueva materia';
     $('mName').value = m ? m.name : '';
-    $('mExam').value = m ? m.exam : '';
-    $('mExamLabel').value = m ? m.examLabel : '';
     var used = state.subjects.map(function (x) { return x.color; });
     var col = m ? m.color : COLORS.filter(function (c) { return used.indexOf(c) < 0; })[0] || COLORS[state.subjects.length % COLORS.length];
     [].forEach.call(document.getElementsByName('mColor'), function (r) { r.checked = r.value === col; });
@@ -541,10 +655,10 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
     if (!name) { $('mErr').textContent = 'Ponele un nombre.'; $('mName').focus(); return; }
     var col = (document.querySelector('input[name="mColor"]:checked') || {}).value || 'persimmon';
     if (editSubj) {
-      editSubj.name = name; editSubj.color = col; editSubj.exam = $('mExam').value; editSubj.examLabel = $('mExamLabel').value.trim();
+      editSubj.name = name; editSubj.color = col;
     } else {
       if (state.subjects.length >= 40) { $('mErr').textContent = 'Llegaste al máximo de 40 materias. Borrá alguna archivada.'; return; }
-      var m = { id: uid(), name: name, color: col, exam: $('mExam').value, examLabel: $('mExamLabel').value.trim(), archived: false, guides: [] };
+      var m = { id: uid(), name: name, color: col, archived: false, exams: [], guides: [] };
       state.subjects.push(m);
       $('subjDlg').close(); save(); go(m.id); return;
     }
@@ -573,6 +687,12 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
     $('gName').value = g ? g.name : 'Guía ' + (m.guides.length + 1);
     $('gN').value = g ? g.n : '';
     $('gNote').value = g ? g.note : '';
+    var ps = parciales(m);
+    $('gExamWrap').hidden = !ps.length;
+    $('gExam').innerHTML = '<option value="">Sin parcial asignado</option>' + ps.map(function (e) { return '<option value="' + esc(e.id) + '">' + esc(examName(m, e)) + '</option>'; }).join('');
+    // Guía nueva: por defecto, el parcial de la última guía cargada
+    var last = m.guides[m.guides.length - 1];
+    $('gExam').value = g ? (examById(m, g.exam) ? g.exam : '') : (last && examById(m, last.exam) ? last.exam : '');
     $('gExtra').hidden = !g;
     $('gErr').textContent = '';
     $('guideDlg').showModal();
@@ -589,12 +709,12 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
         var lost = countStr(editGuide.s.slice(n)); lost = lost[1] + lost[2] + lost[3];
         if (lost && !confirm('Vas a sacar ' + plural(lost, 'ejercicio marcado', 'ejercicios marcados') + ' del final. ¿Seguís?')) return;
       }
-      editGuide.name = name; editGuide.note = $('gNote').value.trim();
+      editGuide.name = name; editGuide.note = $('gNote').value.trim(); editGuide.exam = $('gExam').value;
       editGuide.s = n < editGuide.n ? editGuide.s.slice(0, n) : editGuide.s + new Array(n - editGuide.n + 1).join('0');
       editGuide.n = n;
     } else {
       if (m.guides.length >= 60) { $('gErr').textContent = 'Llegaste al máximo de 60 guías por materia.'; return; }
-      var g = { id: uid(), name: name, n: n, s: new Array(n + 1).join('0'), note: $('gNote').value.trim() };
+      var g = { id: uid(), name: name, n: n, s: new Array(n + 1).join('0'), note: $('gNote').value.trim(), exam: $('gExam').value };
       m.guides.push(g); openGuides[g.id] = true;
     }
     $('guideDlg').close(); renderSubj(); save();
@@ -616,6 +736,86 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
     m.guides.splice(idx, 1);
     $('guideDlg').close(); renderSubj(); save();
     toast('Guía borrada', function () { m.guides.splice(idx, 0, g); renderSubj(); save(); });
+  });
+
+  /* Diálogo de examen */
+  var editExam = null;
+  $('eAdd').addEventListener('click', function () { openExam(null); });
+  $('exams').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-exam]'); if (!b) return;
+    openExam(examById(current(), b.dataset.exam));
+  });
+  function ordinal(n) { return ['1er', '2do', '3er', '4to', '5to', '6to'][n - 1] || n + '°'; }
+  // Nombre sugerido según el tipo (se reemplaza mientras no lo hayas escrito vos)
+  function suggestName() {
+    var m = current(), k = $('eKind').value;
+    if (k === 'parcial') { var n = parciales(m).filter(function (x) { return x !== editExam; }).length; return ordinal(n + 1) + ' parcial'; }
+    if (k === 'recuperatorio') { var p = examById(m, $('eOf').value); return p ? 'Recuperatorio del ' + examName(m, p) : 'Recuperatorio'; }
+    return 'Final';
+  }
+  var autoName = true;
+  function paintExamDlg() {
+    var m = current(), k = $('eKind').value;
+    $('eOfWrap').hidden = k !== 'recuperatorio';
+    $('eGuidesWrap').hidden = k !== 'parcial';
+    $('eHint').textContent = k === 'final' ? 'En el final entran todas las guías de la materia.' :
+      k === 'recuperatorio' ? 'Entran las mismas guías que en el parcial que recupera. Si marcás ese parcial como aprobado, el recuperatorio deja de contar.' :
+      'Tocá las guías que entran. Una guía entra en un solo parcial: si la marcás acá, sale del otro.';
+    if (autoName) $('eName').value = suggestName();
+  }
+  function openExam(e) {
+    var m = current(); editExam = e;
+    $('examDlgTitle').textContent = e ? 'Editar examen' : 'Nuevo examen';
+    var ps = parciales(m).filter(function (x) { return x !== e; });
+    $('eKind').value = e ? e.kind : 'parcial';
+    $('eDate').value = e ? e.date : '';
+    $('eOf').innerHTML = ps.length ? ps.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(examName(m, x)) + '</option>'; }).join('') : '<option value="">(no hay parciales cargados)</option>';
+    // Recuperatorio nuevo: por defecto, el último parcial que ya pasó
+    var past = ps.filter(function (x) { return x.date && x.date <= todayIso(); });
+    $('eOf').value = e && e.of ? e.of : (past.length ? past[past.length - 1].id : ps.length ? ps[0].id : '');
+    $('ePassed').checked = !!(e && e.passed);
+    $('eGuides').innerHTML = m.guides.length ? m.guides.map(function (g) {
+      var other = examById(m, g.exam), mine = e && g.exam === e.id;
+      return '<label><input type="checkbox" value="' + esc(g.id) + '"' + (mine ? ' checked' : '') + '>' + esc(g.name) +
+        (other && !mine && other.kind === 'parcial' ? '<small>en ' + esc(examName(m, other)) + '</small>' : '') + '</label>';
+    }).join('') : '<p class="none">Todavía no hay guías en esta materia.</p>';
+    autoName = !e;
+    $('eName').value = e ? examName(m, e) : '';
+    $('eExtra').hidden = !e; $('eErr').textContent = '';
+    paintExamDlg();
+    $('examDlg').showModal();
+  }
+  $('eKind').addEventListener('change', paintExamDlg);
+  $('eOf').addEventListener('change', paintExamDlg);
+  $('eName').addEventListener('input', function () { autoName = !$('eName').value.trim(); });
+  $('examForm').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var m = current(), k = $('eKind').value;
+    if (k === 'recuperatorio' && !$('eOf').value) { $('eErr').textContent = 'Primero cargá el parcial que recupera.'; return; }
+    if (!editExam && m.exams.length >= 12) { $('eErr').textContent = 'Llegaste al máximo de 12 exámenes por materia.'; return; }
+    var e = editExam || { id: uid() };
+    e.kind = k; e.date = $('eDate').value; e.of = k === 'recuperatorio' ? $('eOf').value : '';
+    e.passed = $('ePassed').checked;
+    e.name = ($('eName').value.trim() || suggestName()).slice(0, 40);
+    if (!editExam) m.exams.push(e);
+    if (k === 'parcial') {
+      [].forEach.call($('eGuides').querySelectorAll('input'), function (c) {
+        var g = m.guides.filter(function (x) { return x.id === c.value; })[0]; if (!g) return;
+        if (c.checked) g.exam = e.id; else if (g.exam === e.id) g.exam = '';
+      });
+    } else m.guides.forEach(function (g) { if (g.exam === e.id) g.exam = ''; });
+    // Un recuperatorio no puede apuntar a algo que dejó de ser parcial
+    m.exams.forEach(function (x) { if (x.kind === 'recuperatorio' && x.of && (!examById(m, x.of) || examById(m, x.of).kind !== 'parcial')) x.of = ''; });
+    $('examDlg').close(); renderSubj(); save();
+  });
+  $('eDel').addEventListener('click', function () {
+    var m = current(), e = editExam; if (!m || !e) return;
+    var snap = JSON.stringify(m);
+    m.exams = m.exams.filter(function (x) { return x !== e; });
+    m.guides.forEach(function (g) { if (g.exam === e.id) g.exam = ''; });
+    m.exams.forEach(function (x) { if (x.of === e.id) x.of = ''; });
+    $('examDlg').close(); renderSubj(); save();
+    toast('Examen borrado', function () { var o = JSON.parse(snap); m.exams = o.exams; m.guides.forEach(function (g) { var og = o.guides.filter(function (x) { return x.id === g.id; })[0]; if (og) g.exam = og.exam; }); renderSubj(); save(); });
   });
   [].forEach.call(document.querySelectorAll('[data-close]'), function (b) { b.addEventListener('click', function () { b.closest('dialog').close(); }); });
 
@@ -665,14 +865,29 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
       if (!quiet) setStatus(e.offline ? 'Sin conexión: mostrando lo guardado acá' : e.message, true);
     });
   }
+  // Formato de una materia; también pasa las materias viejas (un solo "exam"/"examLabel") a la lista de exámenes
+  function migrate(m) {
+    var exams = (Array.isArray(m.exams) ? m.exams : []).filter(function (e) { return e && e.id; }).map(function (e) {
+      return { id: String(e.id), kind: KINDS[e.kind] ? e.kind : 'parcial', name: String(e.name || '').slice(0, 40), date: /^\d{4}-\d{2}-\d{2}$/.test(e.date || '') ? e.date : '', of: String(e.of || ''), passed: !!e.passed };
+    });
+    if (!Array.isArray(m.exams) && /^\d{4}-\d{2}-\d{2}$/.test(m.exam || '')) exams.push({ id: uid(), kind: 'parcial', name: String(m.examLabel || 'Parcial').slice(0, 40), date: m.exam, of: '', passed: false });
+    m.exams = exams;
+    delete m.exam; delete m.examLabel;
+    m.guides = Array.isArray(m.guides) ? m.guides : [];
+    m.guides.forEach(function (g) { g.exam = typeof g.exam === 'string' ? g.exam : ''; });
+    return m;
+  }
   function normalize(d) {
     d = d && typeof d === 'object' ? d : {};
-    return { subjects: Array.isArray(d.subjects) ? d.subjects : [], log: d.log && typeof d.log === 'object' ? d.log : {} };
+    var subjects = Array.isArray(d.subjects) ? d.subjects.filter(function (m) { return m && typeof m === 'object'; }) : [];
+    subjects.forEach(migrate);
+    return { subjects: subjects, log: d.log && typeof d.log === 'object' ? d.log : {} };
   }
+
 
   /* ---------- Importar y exportar ----------
      Exportar baja todo (materias y registro diario). Importar suma materias de un archivo
-     (exportado acá o armado a mano: { "subjects": [ { name, color, exam, examLabel, guides: [ { name, n, note } ] } ] })
+     (exportado acá o armado a mano: { "subjects": [ { name, color, exams: [ { id, kind, name, date, of } ], guides: [ { name, n, note, exam } ] } ] })
      sin tocar las que ya están. */
   $('expBtn').addEventListener('click', function () {
     var blob = new Blob([JSON.stringify({ tipo: 'gm-estudio', version: 1, exportado: new Date().toISOString(), data: state }, null, 2)], { type: 'application/json' });
@@ -689,17 +904,21 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
       if (!list || !list.length) { toast('No encontré materias en el archivo.'); return; }
       var used = {}; state.subjects.forEach(function (m) { used[m.id] = 1; });
       var add = [];
-      list.forEach(function (m) {
-        if (!m || typeof m !== 'object' || !String(m.name || '').trim()) return;
-        var guides = (Array.isArray(m.guides) ? m.guides : []).map(function (g) {
+      list.forEach(function (raw) {
+        if (!raw || typeof raw !== 'object' || !String(raw.name || '').trim()) return;
+        var m = migrate(JSON.parse(JSON.stringify(raw)));
+        // ids nuevos para exámenes y guías, manteniendo las referencias entre ellos
+        var map = {};
+        var exams = m.exams.slice(0, 12).map(function (e) { var id = uid(); map[e.id] = id; return Object.assign({}, e, { id: id }); });
+        exams.forEach(function (e) { e.of = map[e.of] || ''; });
+        var guides = m.guides.map(function (g) {
           var n = Math.round(Number(g && g.n)); if (!g || !String(g.name || '').trim() || !(n >= 1 && n <= 300)) return null;
           var st = String(g.s || '').replace(/[^0-3]/g, '0').slice(0, n); while (st.length < n) st += '0';
-          return { id: uid(), name: String(g.name).trim().slice(0, 80), n: n, s: st, note: String(g.note || '').slice(0, 2000) };
+          return { id: uid(), name: String(g.name).trim().slice(0, 80), n: n, s: st, note: String(g.note || '').slice(0, 2000), exam: map[g.exam] || '' };
         }).filter(Boolean).slice(0, 60);
-        var exam = /^\d{4}-\d{2}-\d{2}$/.test(m.exam || '') ? m.exam : '';
         add.push({ id: m.id && !used[m.id] && /^[A-Za-z0-9_-]{1,32}$/.test(m.id) ? m.id : uid(), name: String(m.name).trim().slice(0, 60),
           color: COLORS.indexOf(m.color) >= 0 ? m.color : COLORS[(state.subjects.length + add.length) % COLORS.length],
-          exam: exam, examLabel: String(m.examLabel || '').slice(0, 40), archived: !!m.archived, guides: guides });
+          archived: !!m.archived, exams: exams, guides: guides });
         used[add[add.length - 1].id] = 1;
       });
       if (!add.length) { toast('No encontré materias válidas en el archivo.'); return; }

@@ -6,7 +6,8 @@
 const ID_RE = /^[A-Za-z0-9_-]{1,32}$/;
 const COLORS = ['persimmon', 'sage', 'blue', 'blush', 'candle'];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const MAX_SUBJECTS = 40, MAX_GUIDES = 60, MAX_EX = 300, MAX_LOG = 1000;
+const MAX_SUBJECTS = 40, MAX_GUIDES = 60, MAX_EX = 300, MAX_LOG = 1000, MAX_EXAMS = 12;
+const KINDS = ['parcial', 'recuperatorio', 'final'];
 
 module.exports = function install(d) {
   const { db, route, fail, readBody, sessionFrom, now, validDate } = d;
@@ -35,7 +36,7 @@ module.exports = function install(d) {
     const n = int(g.n, 1, MAX_EX);
     let s = String(g.s || '').replace(/[^0-3]/g, '0').slice(0, n);
     s = s.padEnd(n, '0');
-    return { id: gid, name, n, s, note: str(g.note, 2000) };
+    return { id: gid, name, n, s, note: str(g.note, 2000), exam: id(g.exam) || '' };
   }
   function cleanSubject(m) {
     if (!m || typeof m !== 'object') return null;
@@ -44,8 +45,19 @@ module.exports = function install(d) {
     const seen = new Set();
     const guides = (Array.isArray(m.guides) ? m.guides : []).map(cleanGuide)
       .filter(g => g && !seen.has(g.id) && seen.add(g.id)).slice(0, MAX_GUIDES);
-    const exam = typeof m.exam === 'string' && DATE_RE.test(m.exam) && validDate(m.exam) ? m.exam : '';
-    return { id: mid, name, color: COLORS.includes(m.color) ? m.color : 'persimmon', exam, examLabel: str(m.examLabel, 40), archived: !!m.archived, guides };
+    const date = v => (typeof v === 'string' && DATE_RE.test(v) && validDate(v) ? v : '');
+    // Exámenes: parcial, recuperatorio (de un parcial) o final. Las materias viejas tenían un solo exam/examLabel.
+    const eseen = new Set();
+    let exams = (Array.isArray(m.exams) ? m.exams : []).map(e => {
+      if (!e || typeof e !== 'object') return null;
+      const eid = id(e.id); if (!eid || eseen.has(eid)) return null; eseen.add(eid);
+      return { id: eid, kind: KINDS.includes(e.kind) ? e.kind : 'parcial', name: str(e.name, 40), date: date(e.date), of: id(e.of) || '', passed: !!e.passed };
+    }).filter(Boolean).slice(0, MAX_EXAMS);
+    if (!Array.isArray(m.exams) && date(m.exam)) exams = [{ id: 'x' + mid.slice(0, 30), kind: 'parcial', name: str(m.examLabel, 40) || 'Parcial', date: date(m.exam), of: '', passed: false }];
+    const isParcial = x => exams.some(e => e.id === x && e.kind === 'parcial');
+    exams.forEach(e => { if (e.kind !== 'recuperatorio' || !isParcial(e.of)) e.of = ''; });
+    guides.forEach(g => { if (g.exam && !isParcial(g.exam)) g.exam = ''; });
+    return { id: mid, name, color: COLORS.includes(m.color) ? m.color : 'persimmon', archived: !!m.archived, exams, guides };
   }
   function clean(data) {
     if (!data || typeof data !== 'object') fail(400, 'Faltan los datos.');
