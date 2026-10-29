@@ -85,7 +85,12 @@ textarea.f { height: auto; min-height: 76px; padding: 10px 12px; resize: vertica
 .head { padding-block: 26px 16px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; }
 .head h1 { margin: 0; font-size: clamp(30px, 5vw, 48px); line-height: 1; letter-spacing: -0.035em; font-weight: 700; }
 .head h1 small { display: block; font-size: 15px; letter-spacing: 0; font-weight: 500; color: var(--fg-2); margin-bottom: 6px; }
-.hacts { display: flex; gap: 8px; }
+.hacts { display: flex; gap: 8px; flex-wrap: wrap; }
+dialog.wide { width: min(620px, calc(100vw - 24px)); }
+.steps { margin: 0; padding-left: 20px; color: var(--fg-2); font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
+textarea.f.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.45; min-height: 0; }
+#aiPrompt { background: var(--card-2); color: var(--fg-2); }
+.row-btns { display: flex; justify-content: flex-end; margin-top: -6px; }
 /* Exámenes */
 .exams { display: flex; flex-direction: column; gap: 8px; }
 .exam { width: 100%; display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; color: var(--fg); }
@@ -258,6 +263,7 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
       <div class="head">
         <h1><small id="hDate"></small>Estudio</h1>
         <div class="hacts">
+          <button class="btn ghost sm" type="button" id="aiBtn">Armar con IA</button>
           <button class="btn ghost sm" type="button" id="impBtn">Importar</button>
           <button class="btn ghost sm" type="button" id="expBtn">Exportar</button>
           <input type="file" id="impFile" accept=".json,application/json" hidden>
@@ -316,6 +322,29 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
     <div class="actions">
       <button class="btn ghost" type="button" data-close>Cancelar</button>
       <button class="btn" type="submit">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Armar una materia con otro chat de IA -->
+<dialog id="aiDlg" class="wide">
+  <form method="dialog" id="aiForm" novalidate>
+    <h3>Armar una materia con IA</h3>
+    <ol class="steps">
+      <li>Copiá el prompt y pegalo en ChatGPT, Claude, Gemini o el que uses.</li>
+      <li>Adjuntale las guías de ejercicios (PDF), el cronograma y las fechas de examen. Completá tu comisión.</li>
+      <li>Copiá el bloque de código que te devuelve y pegalo acá abajo.</li>
+    </ol>
+    <div class="field">Prompt
+      <textarea class="f mono" id="aiPrompt" rows="9" readonly></textarea>
+    </div>
+    <div class="row-btns"><button class="btn ghost sm" type="button" id="aiCopy">Copiar prompt</button></div>
+    <label class="field">Respuesta del chat<textarea class="f mono" id="aiPaste" rows="6" placeholder='Pegá acá el JSON: { "tipo": "gm-estudio", ... }' spellcheck="false" autocapitalize="off"></textarea></label>
+    <p class="hint">Revisá lo que te avisa el chat sobre lo que supuso: después podés corregir todo desde la materia.</p>
+    <p class="err-msg" id="aiErr" role="alert"></p>
+    <div class="actions">
+      <button class="btn ghost" type="button" data-close>Cerrar</button>
+      <button class="btn" type="submit">Importar</button>
     </div>
   </form>
 </dialog>
@@ -1089,10 +1118,17 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
   $('impFile').addEventListener('change', function () {
     var f = this.files && this.files[0]; if (!f) return;
     if (f.size > 1024 * 1024) { toast('El archivo es demasiado grande.'); return; }
-    f.text().then(function (txt) {
-      var j; try { j = JSON.parse(txt); } catch (e) { toast('El archivo no es un JSON válido.'); return; }
-      var list = j && j.data && Array.isArray(j.data.subjects) ? j.data.subjects : j && Array.isArray(j.subjects) ? j.subjects : null;
-      if (!list || !list.length) { toast('No encontré materias en el archivo.'); return; }
+    f.text().then(function (txt) { importText(txt, toast); });
+  });
+  // Suma las materias de un JSON (archivo o texto pegado). Devuelve true si importó.
+  // Acepta el JSON suelto o dentro de un bloque de código, con texto antes o después (como lo devuelve un chat).
+  function importText(txt, onErr) {
+    txt = String(txt || '');
+    var a = txt.indexOf('{'), b = txt.lastIndexOf('}');
+    var j = null; try { j = JSON.parse(a >= 0 && b > a ? txt.slice(a, b + 1) : txt); } catch (e) {}
+    if (!j) { onErr('No es un JSON válido. Copiá el bloque de código completo que te devolvió el chat.'); return false; }
+    var list = j && j.data && Array.isArray(j.data.subjects) ? j.data.subjects : j && Array.isArray(j.subjects) ? j.subjects : null;
+    if (!list || !list.length) { onErr('No encontré materias en el JSON (falta "subjects").'); return false; }
       var used = {}; state.subjects.forEach(function (m) { used[m.id] = 1; });
       var add = [];
       list.forEach(function (raw) {
@@ -1115,17 +1151,76 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
           archived: !!m.archived, exams: exams, guides: guides });
         used[add[add.length - 1].id] = 1;
       });
-      if (!add.length) { toast('No encontré materias válidas en el archivo.'); return; }
-      if (state.subjects.length + add.length > 40) { toast('Con esto pasarías el máximo de 40 materias.'); return; }
+      if (!add.length) { onErr('No encontré materias válidas: cada una necesita "name" y guías con "name" y "n".'); return false; }
+      if (state.subjects.length + add.length > 40) { onErr('Con esto pasarías el máximo de 40 materias.'); return false; }
       var names = add.map(function (m) { return m.name + ' (' + plural(m.guides.length, 'guía', 'guías') + ')'; }).join(', ');
       var same = add.filter(function (m) { return state.subjects.some(function (x) { return x.name.toLowerCase() === m.name.toLowerCase(); }); });
-      if (!confirm('¿Agregar ' + names + '?' + (same.length ? '\n\nOjo: ya tenés una materia con el nombre ' + same.map(function (m) { return '"' + m.name + '"'; }).join(', ') + '; se agrega aparte.' : ''))) return;
+      if (!confirm('¿Agregar ' + names + '?' + (same.length ? '\n\nOjo: ya tenés una materia con el nombre ' + same.map(function (m) { return '"' + m.name + '"'; }).join(', ') + '; se agrega aparte.' : ''))) return false;
       add.forEach(function (m) { state.subjects.push(m); });
       save(); renderHome();
       toast(add.length === 1 ? 'Agregué ' + add[0].name : 'Agregué ' + add.length + ' materias', function () {
         state.subjects = state.subjects.filter(function (m) { return add.indexOf(m) < 0; }); save(); renderHome();
       });
-    });
+      return true;
+  }
+
+
+  /* ---------- Armar con IA ----------
+     Prompt para otro chat: le explica el formato de importación. La respuesta se pega acá y entra por importText. */
+  var AI_PROMPT = [
+    'Armame un JSON para importar una materia en mi tracker de estudio. Te adjunto las guías de ejercicios, el cronograma y las fechas de examen.',
+    '',
+    'Mi comisión: [COMPLETAR, o "única" si no hay comisiones]',
+    '',
+    'Devolvé el JSON en un solo bloque de código y, debajo, en pocas líneas, qué supusiste o no encontraste.',
+    '',
+    'Formato:',
+    '{',
+    '  "tipo": "gm-estudio",',
+    '  "version": 3,',
+    '  "subjects": [{',
+    '    "name": "Nombre de la materia",',
+    '    "color": "persimmon",',
+    '    "exams": [',
+    '      { "id": "p1", "kind": "parcial", "name": "1er parcial", "date": "2026-09-30" },',
+    '      { "id": "q1", "kind": "parcialito", "name": "Parcialito #1", "date": "2026-09-03", "guides": ["g1", "g2"] },',
+    '      { "id": "r1", "kind": "recuperatorio", "name": "Recuperatorio del 1er parcial", "date": "2026-11-25", "of": "p1" },',
+    '      { "id": "f1", "kind": "final", "name": "Final", "date": "" }',
+    '    ],',
+    '    "guides": [',
+    '      { "id": "g1", "name": "Guía 1: Tema", "n": 12, "exam": "p1", "note": "" }',
+    '    ]',
+    '  }]',
+    '}',
+    '',
+    'Reglas:',
+    '- "guides": una por guía, práctica o unidad, en orden. "n" es la cantidad de ejercicios principales (Ejercicio 1, 2, 3...; los incisos a), b) no cuentan aparte). Entre 1 y 300. Nombre de hasta 80 caracteres.',
+    '- Los ejercicios se marcan con botones numerados del 1 al n. Si la numeración de la guía no es seguida (faltan números, hay ejercicios "ED", opcionales, etc.), explicá en "note" qué ejercicio es cada botón. Usá "note" también para separar prácticos de teóricos u obligatorios, si la guía lo indica.',
+    '- "exam" de cada guía: el id del parcial (kind "parcial") en el que entra, o "" si no entra en ninguno. Cada guía entra en un solo parcial.',
+    '- "parcialito": examen corto con su propia lista "guides" (ids de guías). Puede repetir guías de un parcial.',
+    '- "recuperatorio": "of" es el id del parcial que recupera. No lleva lista de guías.',
+    '- "final": entran todas las guías. No lleva lista de guías.',
+    '- "kind" solo puede ser "parcial", "parcialito", "recuperatorio" o "final". Nombres de examen de hasta 40 caracteres.',
+    '- Fechas en formato AAAA-MM-DD. Si no se sabe la fecha, "". Si las fechas cambian por comisión, usá las de mi comisión.',
+    '- "color": uno de persimmon, sage, blue, blush o candle.',
+    '- Ids: cortos, sin espacios (p1, q1, r1, f1, g1, g2...). Los "of", "exam" y "guides" tienen que usar esos mismos ids.',
+    '- Máximo 60 guías y 12 exámenes. JSON válido: comillas dobles, sin comentarios ni comas de más.',
+    '- No inventes datos. Si algo no está en el material (qué guías entran en un examen, una fecha), dejalo vacío y avisame abajo.'
+  ].join('\n');
+  $('aiBtn').addEventListener('click', function () {
+    $('aiPrompt').value = AI_PROMPT; $('aiErr').textContent = '';
+    $('aiDlg').showModal();
+    $('aiPrompt').scrollTop = 0; $('aiCopy').focus();
+  });
+  $('aiCopy').addEventListener('click', function () {
+    var done = function () { $('aiCopy').textContent = 'Copiado'; setTimeout(function () { $('aiCopy').textContent = 'Copiar prompt'; }, 2000); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(AI_PROMPT).then(done, function () { $('aiPrompt').select(); });
+    else { $('aiPrompt').select(); try { document.execCommand('copy'); done(); } catch (e) {} }
+  });
+  $('aiForm').addEventListener('submit', function (e) {
+    e.preventDefault(); $('aiErr').textContent = '';
+    if (!$('aiPaste').value.trim()) { $('aiErr').textContent = 'Pegá la respuesta del chat.'; $('aiPaste').focus(); return; }
+    if (importText($('aiPaste').value, function (m) { $('aiErr').textContent = m; })) { $('aiPaste').value = ''; $('aiDlg').close(); }
   });
 
   /* ---------- Avisos ---------- */
