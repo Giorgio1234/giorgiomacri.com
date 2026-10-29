@@ -7,7 +7,7 @@ const ID_RE = /^[A-Za-z0-9_-]{1,32}$/;
 const COLORS = ['persimmon', 'sage', 'blue', 'blush', 'candle'];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_SUBJECTS = 40, MAX_GUIDES = 60, MAX_EX = 300, MAX_LOG = 1000, MAX_EXAMS = 12;
-const KINDS = ['parcial', 'recuperatorio', 'final'];
+const KINDS = ['parcial', 'parcialito', 'recuperatorio', 'final'];
 
 module.exports = function install(d) {
   const { db, route, fail, readBody, sessionFrom, now, validDate } = d;
@@ -51,7 +51,11 @@ module.exports = function install(d) {
     let exams = (Array.isArray(m.exams) ? m.exams : []).map(e => {
       if (!e || typeof e !== 'object') return null;
       const eid = id(e.id); if (!eid || eseen.has(eid)) return null; eseen.add(eid);
-      return { id: eid, kind: KINDS.includes(e.kind) ? e.kind : 'parcial', name: str(e.name, 40), date: date(e.date), of: id(e.of) || '', passed: !!e.passed };
+      const kind = KINDS.includes(e.kind) ? e.kind : 'parcial';
+      const out = { id: eid, kind, name: str(e.name, 40), date: date(e.date), of: id(e.of) || '', passed: !!e.passed };
+      // El parcialito tiene su propia lista de guías (pueden repetirse con las de un parcial)
+      if (kind === 'parcialito') out.guides = [...new Set((Array.isArray(e.guides) ? e.guides : []).map(id).filter(x => x && seen.has(x)))];
+      return out;
     }).filter(Boolean).slice(0, MAX_EXAMS);
     if (!Array.isArray(m.exams) && date(m.exam)) exams = [{ id: 'x' + mid.slice(0, 30), kind: 'parcial', name: str(m.examLabel, 40) || 'Parcial', date: date(m.exam), of: '', passed: false }];
     const isParcial = x => exams.some(e => e.id === x && e.kind === 'parcial');

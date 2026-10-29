@@ -325,7 +325,7 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
   <form method="dialog" id="examForm" novalidate>
     <h3 id="examDlgTitle">Nuevo examen</h3>
     <div class="row2">
-      <label class="field">Tipo<select class="f" id="eKind"><option value="parcial">Parcial</option><option value="recuperatorio">Recuperatorio</option><option value="final">Final</option></select></label>
+      <label class="field">Tipo<select class="f" id="eKind"><option value="parcial">Parcial</option><option value="parcialito">Parcialito</option><option value="recuperatorio">Recuperatorio</option><option value="final">Final</option></select></label>
       <label class="field">Fecha<input class="f" id="eDate" type="date"></label>
     </div>
     <label class="field">Nombre<input class="f" id="eName" maxlength="40" autocomplete="off"></label>
@@ -583,7 +583,7 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
      Cada materia tiene exámenes: parcial, recuperatorio (de un parcial) o final.
      Cada guía entra en un parcial (g.exam). Un recuperatorio cubre las guías de su parcial; el final, todas.
      Un parcial sin guías asignadas cubre las guías que no tienen parcial. Si el parcial está aprobado, su recuperatorio no cuenta. */
-  var KINDS = { parcial: 'Parcial', recuperatorio: 'Recuperatorio', final: 'Final' };
+  var KINDS = { parcial: 'Parcial', parcialito: 'Parcialito', recuperatorio: 'Recuperatorio', final: 'Final' };
   var MON3 = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
   function byDate(a, b) { var x = a.date || '9999', y = b.date || '9999'; return x < y ? -1 : x > y ? 1 : 0; }
   function examsOf(m) { return m.exams.slice().sort(byDate); }
@@ -592,6 +592,8 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
   function unassigned(m) { return m.guides.filter(function (g) { var e = examById(m, g.exam); return !e || e.kind !== 'parcial'; }); }
   function coverage(m, e) {
     if (e.kind === 'final') return m.guides;
+    // El parcialito elige sus guías aparte: pueden repetirse con las de un parcial
+    if (e.kind === 'parcialito') { var ids = e.guides || []; return m.guides.filter(function (g) { return ids.indexOf(g.id) >= 0; }); }
     var p = e.kind === 'recuperatorio' ? examById(m, e.of) : e;
     if (!p) return m.guides;
     var gs = m.guides.filter(function (g) { return g.exam === p.id; });
@@ -716,7 +718,7 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
     $('exams').innerHTML = list.length ? list.map(function (e) {
       var x = examInfo(m, e), dd = e.date ? fmtDay(e.date) : null, isNext = ex && ex.e === e;
       var right = x.off ? x.off : x.past ? 'Pasado' : x.nodate ? 'Sin fecha' : x.when.charAt(0).toUpperCase() + x.when.slice(1);
-      var sub = e.kind === 'final' ? 'Entran todas las guías' : e.kind === 'recuperatorio' ? (examById(m, e.of) ? 'Mismas guías que el ' + examName(m, examById(m, e.of)) : 'Entran todas las guías') :
+      var sub = e.kind === 'final' ? 'Entran todas las guías' : e.kind === 'parcialito' ? (x.gs.length ? plural(x.gs.length, 'guía', 'guías') : 'Sin guías elegidas') : e.kind === 'recuperatorio' ? (examById(m, e.of) ? 'Mismas guías que el ' + examName(m, examById(m, e.of)) : 'Entran todas las guías') :
         (m.guides.some(function (g) { return g.exam === e.id; }) ? plural(x.gs.length, 'guía', 'guías') : x.gs.length ? 'Sin guías asignadas: cuento las ' + x.gs.length + ' sin parcial' : 'Sin guías asignadas');
       return '<button class="exam' + (x.off || x.past ? ' off' : '') + (isNext ? ' next' : '') + '" type="button" data-exam="' + esc(e.id) + '">' +
         '<span class="when">' + (dd ? '<b>' + dd.d + '</b><small>' + dd.m + '</small>' : '<small>—</small>') + '</span>' +
@@ -925,6 +927,7 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
   function suggestName() {
     var m = current(), k = $('eKind').value;
     if (k === 'parcial') { var n = parciales(m).filter(function (x) { return x !== editExam; }).length; return ordinal(n + 1) + ' parcial'; }
+    if (k === 'parcialito') { var q = m.exams.filter(function (x) { return x.kind === 'parcialito' && x !== editExam; }).length; return 'Parcialito #' + (q + 1); }
     if (k === 'recuperatorio') { var p = examById(m, $('eOf').value); return p ? 'Recuperatorio del ' + examName(m, p) : 'Recuperatorio'; }
     return 'Final';
   }
@@ -932,14 +935,16 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
   function paintExamDlg() {
     var m = current(), k = $('eKind').value;
     $('eOfWrap').hidden = k !== 'recuperatorio';
-    $('eGuidesWrap').hidden = k !== 'parcial';
+    $('eGuidesWrap').hidden = k !== 'parcial' && k !== 'parcialito';
+    paintChecks();
     $('eHint').textContent = k === 'final' ? 'En el final entran todas las guías de la materia.' :
+      k === 'parcialito' ? 'Tocá las guías que entran. Pueden repetirse con las de un parcial; las guías no cambian de grupo.' :
       k === 'recuperatorio' ? 'Entran las mismas guías que en el parcial que recupera. Si marcás ese parcial como aprobado, el recuperatorio deja de contar.' :
       'Tocá las guías que entran. Una guía entra en un solo parcial: si la marcás acá, sale del otro.';
     if (autoName) $('eName').value = suggestName();
   }
   function openExam(e) {
-    var m = current(); editExam = e;
+    var m = current(); editExam = e; checksKind = null;
     $('examDlgTitle').textContent = e ? 'Editar examen' : 'Nuevo examen';
     var ps = parciales(m).filter(function (x) { return x !== e; });
     $('eKind').value = e ? e.kind : 'parcial';
@@ -949,16 +954,25 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
     var past = ps.filter(function (x) { return x.date && x.date <= todayIso(); });
     $('eOf').value = e && e.of ? e.of : (past.length ? past[past.length - 1].id : ps.length ? ps[0].id : '');
     $('ePassed').checked = !!(e && e.passed);
-    $('eGuides').innerHTML = m.guides.length ? m.guides.map(function (g) {
-      var other = examById(m, g.exam), mine = e && g.exam === e.id;
-      return '<label><input type="checkbox" value="' + esc(g.id) + '"' + (mine ? ' checked' : '') + '>' + esc(g.name) +
-        (other && !mine && other.kind === 'parcial' ? '<small>en ' + esc(examName(m, other)) + '</small>' : '') + '</label>';
-    }).join('') : '<p class="none">Todavía no hay guías en esta materia.</p>';
     autoName = !e;
     $('eName').value = e ? examName(m, e) : '';
     $('eExtra').hidden = !e; $('eErr').textContent = '';
     paintExamDlg();
     $('examDlg').showModal();
+  }
+  // Lista de guías del diálogo: un parcial usa g.exam; un parcialito, su propia lista
+  var checksKind = null;
+  function paintChecks() {
+    var m = current(), e = editExam, k = $('eKind').value;
+    if (checksKind === k && $('eGuides').dataset.for === (e ? e.id : 'new')) return;
+    checksKind = k; $('eGuides').dataset.for = e ? e.id : 'new';
+    var mineIds = e && e.kind === 'parcialito' ? (e.guides || []) : [];
+    $('eGuides').innerHTML = m.guides.length ? m.guides.map(function (g) {
+      var other = examById(m, g.exam);
+      var mine = k === 'parcialito' ? mineIds.indexOf(g.id) >= 0 : !!(e && g.exam === e.id);
+      return '<label><input type="checkbox" value="' + esc(g.id) + '"' + (mine ? ' checked' : '') + '>' + esc(g.name) +
+        (other && other.kind === 'parcial' && (k === 'parcialito' || !mine) ? '<small>' + esc(examName(m, other)) + '</small>' : '') + '</label>';
+    }).join('') : '<p class="none">Todavía no hay guías en esta materia.</p>';
   }
   $('eKind').addEventListener('change', paintExamDlg);
   $('eOf').addEventListener('change', paintExamDlg);
@@ -979,6 +993,8 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
         if (c.checked) g.exam = e.id; else if (g.exam === e.id) g.exam = '';
       });
     } else m.guides.forEach(function (g) { if (g.exam === e.id) g.exam = ''; });
+    if (k === 'parcialito') e.guides = [].filter.call($('eGuides').querySelectorAll('input'), function (c) { return c.checked; }).map(function (c) { return c.value; });
+    else delete e.guides;
     // Un recuperatorio no puede apuntar a algo que dejó de ser parcial
     m.exams.forEach(function (x) { if (x.kind === 'recuperatorio' && x.of && (!examById(m, x.of) || examById(m, x.of).kind !== 'parcial')) x.of = ''; });
     $('examDlg').close(); renderSubj(); save();
@@ -1043,7 +1059,7 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
   // Formato de una materia; también pasa las materias viejas (un solo "exam"/"examLabel") a la lista de exámenes
   function migrate(m) {
     var exams = (Array.isArray(m.exams) ? m.exams : []).filter(function (e) { return e && e.id; }).map(function (e) {
-      return { id: String(e.id), kind: KINDS[e.kind] ? e.kind : 'parcial', name: String(e.name || '').slice(0, 40), date: /^\d{4}-\d{2}-\d{2}$/.test(e.date || '') ? e.date : '', of: String(e.of || ''), passed: !!e.passed };
+      return { id: String(e.id), kind: KINDS[e.kind] ? e.kind : 'parcial', name: String(e.name || '').slice(0, 40), date: /^\d{4}-\d{2}-\d{2}$/.test(e.date || '') ? e.date : '', of: String(e.of || ''), passed: !!e.passed, guides: Array.isArray(e.guides) ? e.guides.map(String) : undefined };
     });
     if (!Array.isArray(m.exams) && /^\d{4}-\d{2}-\d{2}$/.test(m.exam || '')) exams.push({ id: uid(), kind: 'parcial', name: String(m.examLabel || 'Parcial').slice(0, 40), date: m.exam, of: '', passed: false });
     m.exams = exams;
@@ -1086,11 +1102,14 @@ dialog .extra { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid 
         var map = {};
         var exams = m.exams.slice(0, 12).map(function (e) { var id = uid(); map[e.id] = id; return Object.assign({}, e, { id: id }); });
         exams.forEach(function (e) { e.of = map[e.of] || ''; });
+        var gmap = {};
         var guides = m.guides.map(function (g) {
           var n = Math.round(Number(g && g.n)); if (!g || !String(g.name || '').trim() || !(n >= 1 && n <= 300)) return null;
           var st = String(g.s || '').replace(/[^0-3]/g, '0').slice(0, n); while (st.length < n) st += '0';
-          return { id: uid(), name: String(g.name).trim().slice(0, 80), n: n, s: st, note: String(g.note || '').slice(0, 2000), exam: map[g.exam] || '' };
+          var nid = uid(); if (g.id) gmap[g.id] = nid;
+          return { id: nid, name: String(g.name).trim().slice(0, 80), n: n, s: st, note: String(g.note || '').slice(0, 2000), exam: map[g.exam] || '' };
         }).filter(Boolean).slice(0, 60);
+        exams.forEach(function (e) { if (e.kind === 'parcialito') e.guides = (e.guides || []).map(function (x) { return gmap[x]; }).filter(Boolean); else delete e.guides; });
         add.push({ id: m.id && !used[m.id] && /^[A-Za-z0-9_-]{1,32}$/.test(m.id) ? m.id : uid(), name: String(m.name).trim().slice(0, 60),
           color: COLORS.indexOf(m.color) >= 0 ? m.color : COLORS[(state.subjects.length + add.length) % COLORS.length],
           archived: !!m.archived, exams: exams, guides: guides });
