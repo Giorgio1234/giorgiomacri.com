@@ -288,6 +288,7 @@ section.sec { margin-bottom: 46px; }
     { id: 'agenda', name: 'Agenda', url: '/agenda/', cat: 'herramientas', tag: 'Privada', desc: 'Mi día: bloques, prioridades, tareas y hábitos.', art: 'calendar', color: 'candle', featured: false, keywords: 'agenda planner diario calendario tareas habitos organizacion' },
     { id: 'estudio', name: 'Estudio', url: '/estudio/', cat: 'herramientas', tag: 'Con cuenta', desc: 'Mi avance en las guías de cada materia, con el parcial en la mira.', art: 'study', color: 'persimmon', featured: false, keywords: 'estudio guias ejercicios materias facultad universidad parcial final progreso tracker dudas repasar' },
     { id: 'calorias', name: 'Calorías', url: '/calorias/', cat: 'herramientas', tag: 'Con cuenta', desc: 'Comidas, macros y peso. Para bajar, mantener o subir.', art: 'macros', color: 'sage', featured: false, keywords: 'calorias macros dieta nutricion comida peso proteinas contador diario subir aumentar volumen ganar masa muscular superavit' },
+    { id: 'awards', name: 'Awards', url: '/awards/ideas/', cat: 'herramientas', tag: 'Formulario', desc: 'Proponé un premio: el título y, si querés, una explicación.', art: 'medal', color: 'candle', featured: false, keywords: 'awards premios ideas formulario propuestas votacion premiacion amigos' },
     { id: 'asistente', name: 'Asistente', url: '/asistente/', cat: 'herramientas', tag: 'Privada', desc: 'Le pido cosas y las carga: comidas, agenda, el sitio.', art: 'chat', color: 'blush', featured: false, keywords: 'asistente chat ia bot inteligencia artificial ayuda' }
   ];
   var PALETTE = { persimmon: '#fd9b65', sage: '#9ac8ae', candle: '#f8f5d1', blush: '#e9d1c7', blue: '#004b82', ink: '#0f0f14' };
@@ -389,6 +390,15 @@ section.sec { margin-bottom: 46px; }
       }
       s += '<rect x="114" y="216" width="172" height="14" rx="7" fill="#0f0f14" fill-opacity=".12"/><rect x="114" y="216" width="104" height="14" rx="7" fill="#9ac8ae" stroke="#0f0f14" stroke-width="1.5"/>';
       s += '<text x="286" y="252" text-anchor="end" font-family="Inter Tight, sans-serif" font-size="16" font-weight="700" fill="#0f0f14">60 %</text>';
+    } else if (item.art === 'medal') {
+      // medalla con cinta y una tarjeta de idea al costado
+      s += '<path d="M150 34 L188 34 L214 128 L186 136 Z" fill="#004b82" stroke="#0f0f14" stroke-width="2"/>';
+      s += '<path d="M250 34 L212 34 L186 128 L214 136 Z" fill="#fd9b65" stroke="#0f0f14" stroke-width="2"/>';
+      s += '<circle cx="200" cy="186" r="70" fill="#f8f5d1" stroke="#0f0f14" stroke-width="2.5"/>';
+      s += '<circle cx="200" cy="186" r="52" fill="none" stroke="#0f0f14" stroke-width="2" stroke-dasharray="5 6"/>';
+      s += '<path d="M200 154 l9.4 19 21 3-15.2 14.8 3.6 20.9L200 201.8l-18.8 9.9 3.6-20.9L169.6 176l21-3z" fill="#0f0f14"/>';
+      s += '<g transform="rotate(8 320 214)"><rect x="276" y="176" width="92" height="74" rx="10" fill="#ffffff" stroke="#0f0f14" stroke-width="2"/>';
+      s += '<rect x="290" y="194" width="54" height="9" rx="4.5" fill="#0f0f14"/><rect x="290" y="212" width="64" height="7" rx="3.5" fill="#0f0f14" fill-opacity=".3"/><rect x="290" y="226" width="40" height="7" rx="3.5" fill="#0f0f14" fill-opacity=".3"/></g>';
     } else if (item.art === 'cards') {
       // dos cartas en abanico y una pila de fichas
       var card = function (x, y, rot, label, suit, red) {

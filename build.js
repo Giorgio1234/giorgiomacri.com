@@ -23,7 +23,9 @@ const PAGES = [
   ['asistente.html', 'asistente/index.html'],
   ['radio.html', 'radio/index.html'],
   ['flash.html', 'flash/index.html'],
-  ['estudio.html', 'estudio/index.html']
+  ['estudio.html', 'estudio/index.html'],
+  ['awards-ideas.html', 'awards/ideas/index.html'],
+  ['awards-redirect.html', 'awards/index.html']
 ];
 
 function inline(src) {
