@@ -79,7 +79,6 @@ textarea { min-height: 130px; resize: vertical; line-height: 1.45; }
 .inbox-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 .inbox h2 { margin: 0; font-size: 20px; letter-spacing: -0.01em; }
 .inbox-head > span { color: var(--fg-3); font-size: 14px; }
-.inbox-head a { color: var(--accent); }
 .ideas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .idea { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 14px 12px 16px; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; }
 .idea b { font-weight: 600; overflow-wrap: anywhere; }
@@ -132,7 +131,7 @@ textarea { min-height: 130px; resize: vertical; line-height: 1.45; }
   </div>
 
   <section class="inbox" id="inbox" hidden>
-    <div class="inbox-head"><h2>Ideas recibidas</h2><span><span id="inboxCount"></span> · <a href="/awards/votacion/">Votación</a></span></div>
+    <div class="inbox-head"><h2>Ideas recibidas</h2><span id="inboxCount"></span></div>
     <ul class="ideas" id="ideas"></ul>
   </section>
 </main>
