@@ -1,0 +1,257 @@
+<title>Awards · Votación</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0f0f14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap">
+<script>try{var t=localStorage.getItem('gm-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<style>
+/* Awards · votación de los organizadores. Link oculto (no está en la portada), sin cuenta:
+   cada uno pone su nombre, la página lo recuerda en este navegador y marca las ideas que le gustan. */
+:root {
+  --bg: #0f0f14; --card: #1b1b23; --card-2: #23232d; --line: #2a2a35; --line-2: #383845;
+  --fg: #f1efe9; --fg-2: #a3a1ad; --fg-3: #6d6b78;
+  --accent: #fd9b65; --on-accent: #1a0f08; --bad: #ff7a6b; --ok: #9ac8ae; --field: #14141a;
+  --font: 'Inter Tight', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f6f5f1; --card: #ffffff; --card-2: #f3f1ec; --line: #e2dfd7; --line-2: #d3cfc5; --fg: #15141a; --fg-2: #5d5b66; --fg-3: #8d8a95;
+    --accent: #c4501a; --on-accent: #ffffff; --bad: #c8321f; --ok: #2f8f5b; --field: #ffffff;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f6f5f1; --card: #ffffff; --card-2: #f3f1ec; --line: #e2dfd7; --line-2: #d3cfc5; --fg: #15141a; --fg-2: #5d5b66; --fg-3: #8d8a95;
+  --accent: #c4501a; --on-accent: #ffffff; --bad: #c8321f; --ok: #2f8f5b; --field: #ffffff;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.wrap { max-width: 680px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* Barra */
+.top { border-bottom: 1px solid var(--line); }
+.top-in { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 58px; }
+.mark { font-weight: 700; font-size: 18px; letter-spacing: -0.02em; text-decoration: none; color: var(--fg); }
+.mark span { color: #fd9b65; }
+.top-r { display: flex; align-items: center; gap: 8px; }
+.icon-btn { width: 38px; height: 38px; flex: none; border-radius: 10px; border: 1px solid var(--line); background: var(--card); display: grid; place-items: center; padding: 0; color: var(--fg-2); }
+.icon-btn:hover { color: var(--fg); }
+
+
+main { padding-block: 32px 64px; }
+.eyebrow { margin: 0 0 6px; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+.lead { margin: 8px 0 24px; color: var(--fg-2); }
+.btn { height: 46px; border: 0; border-radius: 10px; padding: 0 20px; background: var(--accent); color: var(--on-accent); font-weight: 600; font-size: 16px; }
+.btn:hover { filter: brightness(1.06); }
+.btn:disabled { opacity: .55; cursor: default; filter: none; }
+.link { border: 0; background: none; padding: 0; color: var(--accent); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }
+.who { margin: -12px 0 20px; font-size: 15px; color: var(--fg-2); }
+.who b { color: var(--fg); font-weight: 600; }
+.err { color: var(--bad); font-size: 14px; min-height: 1.2em; margin: 8px 0 0; }
+
+/* Nombre */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+.who-form label { display: block; font-weight: 600; margin-bottom: 8px; }
+.who-row { display: flex; gap: 8px; }
+.who-row input { flex: 1; min-width: 0; border: 1px solid var(--line-2); border-radius: 10px; background: var(--field); padding: 0 14px; height: 46px; font-size: 16px; outline: none; }
+.who-row input:focus { border-color: var(--accent); }
+.known { margin-top: 16px; }
+.known p { margin: 0 0 8px; font-size: 14px; color: var(--fg-3); }
+.known div { display: flex; flex-wrap: wrap; gap: 6px; }
+.known button { border: 1px solid var(--line-2); background: var(--card-2); border-radius: 999px; padding: 7px 14px; font-size: 14px; }
+.known button:hover { border-color: var(--accent); }
+
+/* Barra de la lista */
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 14px; }
+.stats { font-size: 14px; color: var(--fg-2); }
+.stats b { color: var(--fg); font-weight: 600; }
+.seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+.seg button { border: 0; background: none; border-radius: 7px; padding: 6px 12px; font-size: 14px; color: var(--fg-2); }
+.seg button[aria-pressed="true"] { background: var(--card-2); color: var(--fg); font-weight: 600; }
+
+/* Ideas */
+.ideas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.idea { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; grid-template-columns: 1fr auto; gap: 6px 14px; align-items: start; }
+.idea.mine { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+.idea h3 { margin: 2px 0 0; font-size: 17px; font-weight: 600; overflow-wrap: anywhere; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.idea p { grid-column: 1; margin: 0; color: var(--fg-2); white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; }
+.all { font-size: 12px; font-weight: 600; color: var(--bg); background: var(--ok); border-radius: 999px; padding: 2px 8px; }
+.likes { grid-column: 1; display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
+.likes span { font-size: 13px; background: var(--card-2); color: var(--fg-2); border-radius: 999px; padding: 3px 9px; }
+.likes span.me { color: var(--accent); }
+.likes em { font-style: normal; font-size: 13px; color: var(--fg-3); }
+.heart { grid-column: 2; grid-row: 1 / span 3; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 56px; padding: 8px 6px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--card-2); color: var(--fg-2); font-weight: 600; font-size: 14px; }
+.heart svg { width: 24px; height: 24px; }
+.heart:hover { border-color: var(--accent); color: var(--fg); }
+.heart[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.heart[aria-pressed="true"] svg path { fill: currentColor; }
+.heart:disabled { opacity: .6; }
+.empty { color: var(--fg-3); padding: 24px 0; text-align: center; }
+.foot { margin-top: 22px; font-size: 13px; color: var(--fg-3); }
+@media (max-width: 480px) { h1 { font-size: 26px; } .idea { padding: 12px; } }
+</style>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="mark" href="/">giorgiomacri<span>/</span></a>
+    <div class="top-r">
+      <button class="icon-btn" type="button" id="themeBtn" aria-label="Cambiar tema"></button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="eyebrow">Awards</p>
+  <h1>Votación de premios</h1>
+  <p class="lead" id="lead">Marcá las ideas que te gustan. Podés cambiar tus votos cuando quieras.</p>
+
+  <!-- Paso 1: nombre -->
+  <section class="card" id="nameView" hidden>
+    <form class="who-form" id="nameForm" novalidate>
+      <label for="name">¿Quién sos?</label>
+      <div class="who-row">
+        <input type="text" id="name" maxlength="30" autocomplete="given-name" placeholder="Tu nombre">
+        <button class="btn" type="submit">Entrar</button>
+      </div>
+      <p class="err" id="nameErr" role="alert"></p>
+    </form>
+    <div class="known" id="known" hidden><p>¿Ya votaste desde otro lado? Tocá tu nombre:</p><div id="knownList"></div></div>
+  </section>
+
+  <!-- Paso 2: votar -->
+  <section id="voteView" hidden>
+    <p class="who" id="who"></p>
+    <div class="bar">
+      <div class="stats" id="stats"></div>
+      <div class="seg" role="group" aria-label="Ordenar">
+        <button type="button" data-sort="top" aria-pressed="true">Más votadas</button>
+        <button type="button" data-sort="new" aria-pressed="false">Más nuevas</button>
+      </div>
+    </div>
+    <ul class="ideas" id="ideas"><li class="empty">Cargando ideas…</li></ul>
+    <p class="err" id="err" role="alert"></p>
+    <p class="foot">Las ideas nuevas llegan desde <a href="/awards/ideas/" style="color:inherit">giorgiomacri.com/awards/ideas</a>.</p>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var API = '/api/sudoku/awards/votacion', KEY = 'gm-awards-voter', SORT_KEY = 'gm-awards-sort';
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
+  function clean(n) { return String(n || '').replace(/\s+/g, ' ').trim().slice(0, 30); }
+  function keyOf(n) { return clean(n).toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+  function call(method, body) {
+    return fetch(API, { method: method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' })
+      .catch(function () { throw new Error('Sin conexión. Probá de nuevo.'); })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.error || 'Algo falló. Probá de nuevo.'); return j; }); });
+  }
+
+  var me = clean(get(KEY)), data = { ideas: [], voters: [] }, sort = get(SORT_KEY) === 'new' ? 'new' : 'top', busy = {};
+  var HEART = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.6 7.6 3.9 4 7.4 4c2 0 3.5 1.1 4.6 2.7C13.1 5.1 14.6 4 16.6 4c3.5 0 5.8 3.6 4.6 7.1-1.7 4.8-9.2 9.4-9.2 9.4z"/></svg>';
+
+  /* ---------- Nombre ---------- */
+  function showName() {
+    $('voteView').hidden = true; $('nameView').hidden = false;
+    $('name').value = me; setTimeout(function () { $('name').focus(); }, 0);
+    renderKnown();
+  }
+  function renderKnown() {
+    var list = data.voters || [];
+    $('known').hidden = !list.length;
+    $('knownList').innerHTML = list.map(function (n) { return '<button type="button" data-n="' + esc(n) + '">' + esc(n) + '</button>'; }).join('');
+  }
+  function enter(n) {
+    n = clean(n);
+    if (!n) { $('nameErr').textContent = 'Poné tu nombre.'; $('name').focus(); return; }
+    // Si ya votó con otra forma de escribirlo, usar el mismo nombre
+    var same = (data.voters || []).filter(function (v) { return keyOf(v) === keyOf(n); })[0];
+    me = same || n; set(KEY, me); $('nameErr').textContent = '';
+    showVote();
+  }
+  $('nameForm').addEventListener('submit', function (e) { e.preventDefault(); enter($('name').value); });
+  $('knownList').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) enter(b.getAttribute('data-n')); });
+  $('who').addEventListener('click', function (e) { if (e.target.closest('.link')) showName(); });
+
+  /* ---------- Votar ---------- */
+  function showVote() {
+    $('nameView').hidden = true; $('voteView').hidden = false;
+    $('who').innerHTML = 'Votás como <b>' + esc(me) + '</b> · <button class="link" type="button">Cambiar</button>';
+    render();
+  }
+  function mine(i) { var k = keyOf(me); return i.likes.some(function (n) { return keyOf(n) === k; }); }
+  function render() {
+    if ($('voteView').hidden) return;
+    var ideas = data.ideas.slice();
+    if (sort === 'top') ideas.sort(function (a, b) { return b.likes.length - a.likes.length || b.id - a.id; });
+    else ideas.sort(function (a, b) { return b.id - a.id; });
+    var voters = data.voters.length, liked = ideas.filter(mine).length;
+    $('stats').innerHTML = '<b>' + ideas.length + '</b> ' + (ideas.length === 1 ? 'idea' : 'ideas') + ' · te ' + (liked === 1 ? 'gusta' : 'gustan') + ' <b>' + liked + '</b>' +
+      (voters ? ' · ' + (voters === 1 ? '1 persona votó' : voters + ' personas votaron') : '');
+    document.querySelectorAll('.seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-sort') === sort)); });
+    if (!ideas.length) { $('ideas').innerHTML = '<li class="empty">Todavía no hay ideas para votar.</li>'; return; }
+    var k = keyOf(me);
+    $('ideas').innerHTML = ideas.map(function (i) {
+      var on = mine(i), n = i.likes.length, everyone = voters >= 2 && n === voters;
+      return '<li class="idea' + (on ? ' mine' : '') + '">' +
+        '<h3>' + esc(i.title) + (everyone ? '<span class="all">Les gusta a todos</span>' : '') + '</h3>' +
+        '<button class="heart" type="button" data-id="' + i.id + '" aria-pressed="' + on + '"' + (busy[i.id] ? ' disabled' : '') +
+          ' aria-label="' + (on ? 'Quitar me gusta de' : 'Me gusta') + ' «' + esc(i.title) + '»">' + HEART + '<span>' + n + '</span></button>' +
+        (i.description ? '<p>' + esc(i.description) + '</p>' : '') +
+        '<div class="likes">' + (n ? i.likes.map(function (x) { return '<span' + (keyOf(x) === k ? ' class="me"' : '') + '>' + esc(x) + '</span>'; }).join('') : '<em>Nadie todavía</em>') + '</div>' +
+        '</li>';
+    }).join('');
+  }
+  $('ideas').addEventListener('click', function (e) {
+    var b = e.target.closest('.heart'); if (!b) return;
+    var id = Number(b.getAttribute('data-id')), idea = data.ideas.filter(function (i) { return i.id === id; })[0];
+    if (!idea || busy[id]) return;
+    var like = !mine(idea), k = keyOf(me);
+    // Respuesta inmediata; el servidor confirma con la lista completa
+    idea.likes = like ? idea.likes.concat([me]) : idea.likes.filter(function (n) { return keyOf(n) !== k; });
+    if (like && data.voters.every(function (v) { return keyOf(v) !== k; })) data.voters = data.voters.concat([me]);
+    busy[id] = true; $('err').textContent = ''; render();
+    call('POST', { voter: me, id: id, like: like })
+      .then(function (r) { data = r; }, function (x) { $('err').textContent = x.message; return load(); })
+      .then(function () { delete busy[id]; render(); });
+  });
+  document.querySelector('.seg').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    sort = b.getAttribute('data-sort'); set(SORT_KEY, sort); render();
+  });
+
+  function load() {
+    return call('GET').then(function (r) {
+      if (Object.keys(busy).length) return; // no pisar un voto en curso
+      data = r; if ($('nameView').hidden) render(); else renderKnown();
+    }, function (x) { if (!$('voteView').hidden) $('err').textContent = x.message; });
+  }
+  // Se actualiza solo mientras la página está abierta (para ver los votos de los demás)
+  setInterval(function () { if (!document.hidden) load(); }, 15000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
+
+  /* ---------- Tema ---------- */
+  var root = document.documentElement, mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+  var MOON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
+  var SUN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg>';
+  function theme() { var t = root.getAttribute('data-theme'); return t === 'dark' || t === 'light' ? t : (mq && mq.matches ? 'light' : 'dark'); }
+  function paintTheme() { var d = theme() === 'dark'; $('themeBtn').innerHTML = d ? SUN : MOON; $('themeBtn').setAttribute('aria-label', d ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'); }
+  $('themeBtn').addEventListener('click', function () { var n = theme() === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', n); try { localStorage.setItem('gm-theme', n); } catch (e) {} paintTheme(); });
+  if (mq && mq.addEventListener) mq.addEventListener('change', paintTheme);
+  paintTheme();
+
+  if (me) showVote(); else showName();
+  load();
+})();
+</script>
