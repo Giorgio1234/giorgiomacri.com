@@ -53,7 +53,7 @@ main { flex: 1; min-height: 0; width: 100%; max-width: 760px; margin: 0 auto; di
 <main>
   <form class="login" id="loginView" hidden novalidate>
     <h1>Asistente</h1>
-    <p>Solo para la cuenta de admin.</p>
+    <p>Entrá con tu cuenta del sitio.</p>
     <label class="field">Usuario<input class="f" id="lUser" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
     <label class="field">Contraseña<input class="f" id="lPass" type="password" autocomplete="current-password"></label>
     <p class="err" id="lErr" role="alert"></p>
@@ -71,7 +71,7 @@ main { flex: 1; min-height: 0; width: 100%; max-width: 760px; margin: 0 auto; di
 <script>
 (function () {
   'use strict';
-  var KEY = 'gm-agenda-token';
+  var KEY = 'gm-cal-token'; // cualquier cuenta del sitio (no el apodo del torneo)
   var $ = function (id) { return document.getElementById(id); };
   var token = null, chat = null;
   try { token = localStorage.getItem(KEY); } catch (e) {}
@@ -92,7 +92,7 @@ main { flex: 1; min-height: 0; width: 100%; max-width: 760px; margin: 0 auto; di
   $('loginView').addEventListener('submit', function (e) {
     e.preventDefault(); $('lErr').textContent = ''; $('lBtn').disabled = true;
     GMAuth.login($('lUser').value, $('lPass').value)
-      .then(function (r) { if (!r.admin) throw new Error('El asistente es solo para la cuenta de admin.'); })
+      .then(function (r) { if (r.kind !== 'account') throw new Error('El asistente necesita una cuenta del sitio (no alcanza con el apodo del torneo).'); })
       .catch(function (err) { $('lErr').textContent = err.message === 'Failed to fetch' ? 'Sin conexión.' : err.message; })
       .then(function () { $('lBtn').disabled = false; });
   });
@@ -107,6 +107,6 @@ main { flex: 1; min-height: 0; width: 100%; max-width: 760px; margin: 0 auto; di
   paint();
 
   show(!!token);
-  var gm = window.GMAuth && GMAuth.me(); if (!token && gm && !gm.admin) $('lErr').textContent = 'El asistente es solo para la cuenta de admin.';
+  var gm = window.GMAuth && GMAuth.me(); if (!token && gm && gm.kind !== 'account') $('lErr').textContent = 'Entraste con el apodo del torneo. El asistente necesita una cuenta del sitio.';
 })();
 </script>

@@ -154,7 +154,7 @@ module.exports = function install(d) {
     const foods = db.prepare('SELECT id, data FROM cal_foods WHERE user_id = ?').all(u.id).map(r => Object.assign({ id: r.id }, parse(r.data)));
     const entries = db.prepare('SELECT id, data FROM cal_entries WHERE user_id = ? AND date >= ? AND date <= ?').all(u.id, from, to).map(r => Object.assign({ id: r.id }, parse(r.data)));
     const weights = db.prepare('SELECT date, kg FROM cal_weights WHERE user_id = ? ORDER BY date').all(u.id).map(r => ({ id: r.date, date: r.date, kg: r.kg }));
-    return { user: u.username, chat: !!u.is_admin && !!process.env.OPENROUTER_API_KEY, profile: (p && parse(p.data)) || { goals: {} }, foods, entries, weights, ai: aiInfo(u.id) };
+    return { user: u.username, chat: !!process.env.OPENROUTER_API_KEY && (!!u.is_admin || (parseInt(process.env.CHAT_USER_DAILY || '30', 10) || 0) > 0), profile: (p && parse(p.data)) || { goals: {} }, foods, entries, weights, ai: aiInfo(u.id) };
   });
 
   route('PUT', '/cal/profile', async (req) => {
@@ -383,11 +383,13 @@ Si la tabla tiene columna por 100 g o 100 ml, usá esa y basis "100"; si solo tr
         (SELECT name FROM players p WHERE p.id = u.player_id) player_name,
         (SELECT COUNT(*) FROM cal_entries e WHERE e.user_id = u.id) entries,
         (SELECT MAX(date) FROM cal_entries e WHERE e.user_id = u.id) last_entry,
-        (SELECT n FROM cal_ai_usage a WHERE a.user_id = u.id AND a.day = ?) ai_today
-      FROM cal_users u ORDER BY u.username`).all(day);
+        (SELECT n FROM cal_ai_usage a WHERE a.user_id = u.id AND a.day = ?) ai_today,
+        (SELECT n FROM chat_usage_user c WHERE c.user_id = u.id AND c.day = ?) chat_today
+      FROM cal_users u ORDER BY u.username`).all(day, day);
     users.forEach(x => { x.is_admin = x.username === AGENDA_USER ? 1 : 0; });
     const players = db.prepare('SELECT id, name FROM players ORDER BY name COLLATE NOCASE').all();
-    return { users, players, ai: { enabled: !!AI_KEY(), provider: OR() ? 'OpenRouter' : 'Anthropic', model: AI_MODEL(), limit: AI_LIMIT() } };
+    const chatLimit = { admin: Math.max(1, parseInt(process.env.CHAT_DAILY || '150', 10) || 150), user: Math.max(0, parseInt(process.env.CHAT_USER_DAILY || '30', 10) || 0) };
+    return { users, players, chatLimit, ai: { enabled: !!AI_KEY(), provider: OR() ? 'OpenRouter' : 'Anthropic', model: AI_MODEL(), limit: AI_LIMIT() } };
   });
   route('POST', '/admin/cal/users', async (req) => {
     requireAdmin(req);
@@ -420,7 +422,10 @@ Si la tabla tiene columna por 100 g o 100 ml, usá esa y basis "100"; si solo tr
       }
       db.prepare('UPDATE cal_users SET player_id = ? WHERE id = ?').run(pid, u.id);
     }
-    if (b.reset_ai) db.prepare('DELETE FROM cal_ai_usage WHERE user_id = ? AND day = ?').run(u.id, localDay());
+    if (b.reset_ai) {
+      db.prepare('DELETE FROM cal_ai_usage WHERE user_id = ? AND day = ?').run(u.id, localDay());
+      try { db.prepare('DELETE FROM chat_usage_user WHERE user_id = ? AND day = ?').run(u.id, localDay()); } catch (e) {}
+    }
     if (b.disabled !== undefined) {
       if (b.disabled && u.is_admin) fail(400, 'No podés deshabilitar la cuenta de admin.');
       db.prepare('UPDATE cal_users SET disabled = ? WHERE id = ?').run(b.disabled ? 1 : 0, u.id);

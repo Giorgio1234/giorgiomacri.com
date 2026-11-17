@@ -48,7 +48,7 @@ El emulador de Flash (Ruffle) no se carga de un CDN: `deploy/sync.sh` lo baja de
 
 El contador de calorías usa cuentas propias que se crean desde el panel de admin (sección "Calorías: cuentas"). Para "Describir" y "Leer etiqueta" hace falta `OPENROUTER_API_KEY` (modelo `deepseek/deepseek-v4.1-flash-1017`) o `ANTHROPIC_API_KEY` (modelo `claude-haiku-5-5`) en `/etc/sudoku-torneo.env`; el modelo se cambia con `CAL_AI_MODEL` y el límite es de 30 consultas por persona por día (`CAL_AI_DAILY`). Después: `systemctl restart sudoku-torneo`.
 
-El asistente (`server/lib/asistente.js`) usa OpenRouter con herramientas. Entra con el usuario de la agenda (o tu cuenta de calorías si se llama igual) y tiene un botón flotante en Calorías y Agenda. Para tocar código necesita `GITHUB_TOKEN`: trabaja en un clon aparte (`/var/lib/sudoku-torneo/site-work`), solo puede editar `src/` y registrar páginas en `build.js`, y no publica nada hasta que tocás "Publicar" (commit "Asistente: …" en `main`; "Deshacer" lo revierte). No puede tocar `server/` ni `deploy/`.
+El asistente (`server/lib/asistente.js`) usa OpenRouter con herramientas. Cualquier cuenta lo puede usar para SUS calorías (30 mensajes por día, `CHAT_USER_DAILY`); agenda y código son solo del admin. Entra con el usuario de la agenda (o tu cuenta de calorías si se llama igual) y tiene un botón flotante en Calorías y Agenda. Para tocar código necesita `GITHUB_TOKEN`: trabaja en un clon aparte (`/var/lib/sudoku-torneo/site-work`), solo puede editar `src/` y registrar páginas en `build.js`, y no publica nada hasta que tocás "Publicar" (commit "Asistente: …" en `main`; "Deshacer" lo revierte). No puede tocar `server/` ni `deploy/`.
 
 Instalación única: `bash deploy/install.sh` como root en el VPS.
 

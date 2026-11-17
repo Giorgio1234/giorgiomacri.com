@@ -569,8 +569,8 @@ dialog { width: min(560px, calc(100vw - 32px)); }
 
   function links() {
     var l = [];
-    if (me && me.kind === 'account') { l.push(['/calorias/', 'Calorías']); l.push(['/estudio/', 'Estudio']); }
-    if (me && me.admin) { l.push(['/agenda/', 'Agenda']); l.push(['/asistente/', 'Asistente']); }
+    if (me && me.kind === 'account') { l.push(['/calorias/', 'Calorías']); l.push(['/estudio/', 'Estudio']); l.push(['/asistente/', 'Asistente']); }
+    if (me && me.admin) l.push(['/agenda/', 'Agenda']);
     if (me && me.player) l.push(['/sudoku/torneo/', 'Torneo de sudoku']);
     if (me && me.admin) l.push(['/admin/', 'Panel de admin']);
     return l;
@@ -1102,17 +1102,17 @@ dialog { width: min(560px, calc(100vw - 32px)); }
     $('calInfo').innerHTML = 'Una cuenta para todo el sitio: calorías, el torneo (si tiene un jugador unido) y, si es admin, este panel, la agenda y el asistente. ' +
       (a.enabled ? 'IA de calorías: ' + esc(a.provider) + ' · <span class="mono">' + esc(a.model) + '</span>, ' + a.limit + ' por persona por día.' : '<span class="tag bad">IA sin configurar</span> falta OPENROUTER_API_KEY en el servidor.');
     var used = {}; cal.users.forEach(function (u) { if (u.player_id) used[u.player_id] = u.username; });
-    $('calUsers').innerHTML = '<thead><tr><th>Usuario</th><th>Rol</th><th>Jugador de sudoku</th><th>Calorías</th><th>IA hoy</th><th>Último ingreso</th><th>Estado</th><th></th></tr></thead><tbody>' +
+    $('calUsers').innerHTML = '<thead><tr><th>Usuario</th><th>Rol</th><th>Jugador de sudoku</th><th>Calorías</th><th>IA hoy</th><th>Asistente hoy</th><th>Último ingreso</th><th>Estado</th><th></th></tr></thead><tbody>' +
       (cal.users.map(function (u) {
         var sel = '<select class="cal-sel" data-cpl="' + u.id + '" aria-label="Jugador de sudoku de ' + esc(u.username) + '"><option value="">— sin jugador —</option>' +
           cal.players.map(function (p) { var mine = p.id === u.player_id, taken = used[p.id] && !mine; return '<option value="' + p.id + '"' + (mine ? ' selected' : '') + (taken ? ' disabled' : '') + '>' + esc(p.name) + (taken ? ' (' + esc(used[p.id]) + ')' : '') + '</option>'; }).join('') + '</select>';
         return '<tr><td><b>' + esc(u.username) + '</b></td><td>' + (u.is_admin ? '<span class="pill ok">admin</span>' : '<span class="dim">cuenta</span>') + '</td><td>' + sel + '</td>' +
-          '<td>' + u.entries + ' reg.' + (u.last_entry ? ' · ' + u.last_entry.split('-').reverse().slice(0, 2).join('/') : '') + '</td><td>' + (u.ai_today || 0) + ' / ' + a.limit + (u.ai_today ? ' <button class="link" type="button" data-cai="' + u.id + '">Resetear</button>' : '') + '</td><td>' + dfmt(u.last_login) + '</td>' +
+          '<td>' + u.entries + ' reg.' + (u.last_entry ? ' · ' + u.last_entry.split('-').reverse().slice(0, 2).join('/') : '') + '</td><td>' + (u.ai_today || 0) + ' / ' + a.limit + ((u.ai_today || u.chat_today) ? ' <button class="link" type="button" data-cai="' + u.id + '">Resetear</button>' : '') + '</td><td>' + (u.chat_today || 0) + ' / ' + (u.is_admin ? cal.chatLimit.admin : cal.chatLimit.user) + '</td><td>' + dfmt(u.last_login) + '</td>' +
           '<td>' + (u.disabled ? '<span class="pill bad">deshabilitada</span>' : '<span class="pill ok">activa</span>') + '</td>' +
           '<td><div class="actions"><button class="btn small ghost" type="button" data-cpw="' + u.id + '">Contraseña</button>' +
           (u.is_admin ? '' : '<button class="btn small ghost" type="button" data-cdis="' + u.id + '">' + (u.disabled ? 'Habilitar' : 'Deshabilitar') + '</button>' +
           '<button class="btn small danger" type="button" data-cdel="' + u.id + '">Borrar</button>') + '</div></td></tr>';
-      }).join('') || '<tr><td colspan="8" class="dim">Todavía no hay cuentas.</td></tr>') + '</tbody>';
+      }).join('') || '<tr><td colspan="9" class="dim">Todavía no hay cuentas.</td></tr>') + '</tbody>';
   }
   $('calUsers').addEventListener('change', function (e) {
     var s2 = e.target.closest('select[data-cpl]'); if (!s2) return;
@@ -1138,7 +1138,7 @@ dialog { width: min(560px, calc(100vw - 32px)); }
         .then(function (v) { if (v) toast('Contraseña cambiada'); });
     } else if (b.dataset.cai) {
       var ui = calUser(+b.dataset.cai);
-      call('POST', '/admin/cal/users/' + ui.id, { reset_ai: true }).then(function () { toast('Listo: ' + ui.username + ' tiene ' + cal.ai.limit + ' consultas de nuevo'); loadCal(); }).catch(function (err) { toast(err.message); });
+      call('POST', '/admin/cal/users/' + ui.id, { reset_ai: true }).then(function () { toast('Listo: ' + ui.username + ' tiene sus consultas de IA y del asistente de nuevo'); loadCal(); }).catch(function (err) { toast(err.message); });
     } else if (b.dataset.cadm) {
       var ua = calUser(+b.dataset.cadm);
       call('POST', '/admin/cal/users/' + ua.id, { is_admin: !ua.is_admin }).then(function () { toast(ua.is_admin ? 'Ya no es admin' : 'Ahora es admin'); loadCal(); }).catch(function (err) { toast(err.message); });

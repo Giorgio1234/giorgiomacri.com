@@ -352,8 +352,8 @@ dialog::backdrop { background: rgba(0, 0, 0, .5); }
 
   function links() {
     var l = [];
-    if (me && me.kind === 'account') { l.push(['/calorias/', 'Calorías']); l.push(['/estudio/', 'Estudio']); }
-    if (me && me.admin) { l.push(['/agenda/', 'Agenda']); l.push(['/asistente/', 'Asistente']); }
+    if (me && me.kind === 'account') { l.push(['/calorias/', 'Calorías']); l.push(['/estudio/', 'Estudio']); l.push(['/asistente/', 'Asistente']); }
+    if (me && me.admin) l.push(['/agenda/', 'Agenda']);
     if (me && me.player) l.push(['/sudoku/torneo/', 'Torneo de sudoku']);
     if (me && me.admin) l.push(['/admin/', 'Panel de admin']);
     return l;
@@ -552,8 +552,9 @@ dialog::backdrop { background: rgba(0, 0, 0, .5); }
     function render(step) {
       var h = '';
       if (!history.length && !step) {
-        var sg = SUGS[o.page] || SUGS.asistente;
-        h = '<div class="gmc-empty"><b>¿Qué hacemos?</b>Cargo comidas, armo tu agenda o cambio cosas del sitio.<div class="gmc-sugs">' +
+        var adm = info ? info.admin : !!o.admin;
+        var sg = adm ? (SUGS[o.page] || SUGS.asistente) : SUGS['calorías'];
+        h = '<div class="gmc-empty"><b>¿Qué hacemos?</b>' + (adm ? 'Cargo comidas, armo tu agenda o cambio cosas del sitio.' : 'Cargo tus comidas, anoto tu peso y te digo cómo venís con tus objetivos.') + '<div class="gmc-sugs">' +
           sg.map(function (s) { return '<button type="button" data-sug="' + esc(s) + '">' + esc(s) + '</button>'; }).join('') + '</div></div>';
       }
       history.forEach(function (m) {
@@ -561,7 +562,7 @@ dialog::backdrop { background: rgba(0, 0, 0, .5); }
           (m.actions && m.actions.length ? '<div class="gmc-acts">' + m.actions.map(function (a) { return '<span>' + esc(a.text) + '</span>'; }).join('') + '</div>' : '') + '</div>';
       });
       if (step) h += '<div class="gmc-step"><i></i>' + esc(step) + '</div>';
-      if (site && site.pending) {
+      if (site && site.pending && (!info || info.admin)) {
         var diff = String(site.diff || '').split('\n').map(function (l) {
           var c = /^\+(?!\+\+)/.test(l) ? 'a' : /^-(?!--)/.test(l) ? 'd' : /^(@@|diff |index |\+\+\+|---)/.test(l) ? 'h' : '';
           return '<span' + (c ? ' class="' + c + '"' : '') + '>' + (esc(l) || ' ') + '</span>';
@@ -579,7 +580,7 @@ dialog::backdrop { background: rgba(0, 0, 0, .5); }
       return call('GET', '/status').then(function (r) {
         info = r; usage();
         if (r.site && r.site.pending) site = r.site; else if (site && site.pending) site = null;
-        if (!r.enabled) { history.length || (log.innerHTML = '<div class="gmc-empty"><b>Falta la clave</b>Hay que cargar OPENROUTER_API_KEY en el servidor.</div>'); }
+        if (!r.enabled) { history.length || (log.innerHTML = r.admin ? '<div class="gmc-empty"><b>Falta la clave</b>Hay que cargar OPENROUTER_API_KEY en el servidor.</div>' : '<div class="gmc-empty"><b>No disponible</b>El asistente no está habilitado por ahora.</div>'); }
         else if (!busy) render();
       }).catch(function (e) {
         if (e.status === 401) { log.innerHTML = '<div class="gmc-empty"><b>Entrá primero</b>' + esc(e.message) + '</div>'; if (o.onAuth) o.onAuth(); }

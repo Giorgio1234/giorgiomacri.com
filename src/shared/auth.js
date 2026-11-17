@@ -63,8 +63,8 @@
 
   function links() {
     var l = [];
-    if (me && me.kind === 'account') { l.push(['/calorias/', 'Calorías']); l.push(['/estudio/', 'Estudio']); }
-    if (me && me.admin) { l.push(['/agenda/', 'Agenda']); l.push(['/asistente/', 'Asistente']); }
+    if (me && me.kind === 'account') { l.push(['/calorias/', 'Calorías']); l.push(['/estudio/', 'Estudio']); l.push(['/asistente/', 'Asistente']); }
+    if (me && me.admin) l.push(['/agenda/', 'Agenda']);
     if (me && me.player) l.push(['/sudoku/torneo/', 'Torneo de sudoku']);
     if (me && me.admin) l.push(['/admin/', 'Panel de admin']);
     return l;
