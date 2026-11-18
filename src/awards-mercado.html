@@ -1,0 +1,769 @@
+<title>Awards · Mercado de predicciones</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0f0f14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap">
+<script>try{var t=localStorage.getItem('gm-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<style>
+/* Awards · Mercado: "polymarket" de mentira para los premios. Link oculto (no está en la portada).
+   Cada apostador entra con nombre + PIN, apuesta puntos y los precios (probabilidades) se mueven en vivo.
+   Con la cuenta de admin del sitio aparece la pestaña Admin para cargar participantes, premios y mercados. */
+:root {
+  --bg: #0f0f14; --card: #1b1b23; --card-2: #23232d; --line: #2a2a35; --line-2: #383845;
+  --fg: #f1efe9; --fg-2: #a3a1ad; --fg-3: #6d6b78;
+  --accent: #fd9b65; --on-accent: #1a0f08; --up: #6fd39b; --down: #ff7a6b; --bad: #ff7a6b; --ok: #9ac8ae; --field: #14141a;
+  --c1: #fd9b65; --c2: #9ac8ae; --c3: #7fb2e5; --c4: #e9d1c7; --c5: #f8f5d1;
+  --font: 'Inter Tight', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f6f5f1; --card: #ffffff; --card-2: #f3f1ec; --line: #e2dfd7; --line-2: #d3cfc5; --fg: #15141a; --fg-2: #5d5b66; --fg-3: #8d8a95;
+    --accent: #c4501a; --on-accent: #ffffff; --up: #1f8a4c; --down: #c8321f; --bad: #c8321f; --ok: #2f8f5b; --field: #ffffff;
+    --c1: #d9622a; --c2: #2f8f5b; --c3: #004b82; --c4: #a8687a; --c5: #a08a1f;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f6f5f1; --card: #ffffff; --card-2: #f3f1ec; --line: #e2dfd7; --line-2: #d3cfc5; --fg: #15141a; --fg-2: #5d5b66; --fg-3: #8d8a95;
+  --accent: #c4501a; --on-accent: #ffffff; --up: #1f8a4c; --down: #c8321f; --bad: #c8321f; --ok: #2f8f5b; --field: #ffffff;
+  --c1: #d9622a; --c2: #2f8f5b; --c3: #004b82; --c4: #a8687a; --c5: #a08a1f;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+body.lock { overflow: hidden; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* Barra */
+.top { border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.top-in { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 58px; }
+.mark { font-weight: 700; font-size: 18px; letter-spacing: -0.02em; text-decoration: none; color: var(--fg); white-space: nowrap; }
+.mark span { color: #fd9b65; }
+.top-r { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.icon-btn { width: 38px; height: 38px; flex: none; border-radius: 10px; border: 1px solid var(--line); background: var(--card); display: grid; place-items: center; padding: 0; color: var(--fg-2); }
+.icon-btn:hover { color: var(--fg); }
+.bal { display: flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); font-size: 14px; font-weight: 600; white-space: nowrap; }
+.bal small { color: var(--fg-3); font-weight: 500; }
+
+/* Encabezado */
+main { padding-block: 28px 80px; }
+.eyebrow { margin: 0 0 6px; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+.live { display: inline-flex; align-items: center; gap: 6px; color: var(--up); letter-spacing: .04em; }
+.live i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pulse 1.6s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--up) 60%, transparent); } 70% { box-shadow: 0 0 0 7px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+h1 { margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+.lead { margin: 8px 0 22px; color: var(--fg-2); max-width: 640px; }
+.how { margin: -10px 0 20px; font-size: 15px; color: var(--fg-2); max-width: 680px; }
+.how summary { cursor: pointer; color: var(--accent); font-weight: 600; width: fit-content; }
+.how p { margin: 8px 0 0; }
+.how b { color: var(--fg); }
+.mult { font-size: 13px; color: var(--fg-3); font-weight: 500; }
+.debt { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; font-size: 16px; }
+.debt .arrow { color: var(--fg-3); margin: 0 4px; }
+.debt b.amt { font-size: 18px; }
+.banner { border: 1px solid var(--line-2); background: var(--card-2); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: 15px; }
+
+/* Botones y campos */
+.btn { height: 44px; border: 0; border-radius: 10px; padding: 0 18px; background: var(--accent); color: var(--on-accent); font-weight: 600; font-size: 15px; white-space: nowrap; }
+.btn:hover { filter: brightness(1.06); }
+.btn:disabled { opacity: .5; cursor: default; filter: none; }
+.btn.ghost { background: var(--card-2); color: var(--fg); border: 1px solid var(--line-2); }
+.btn.sm { height: 34px; padding: 0 12px; font-size: 14px; border-radius: 8px; }
+.btn.danger { background: transparent; color: var(--bad); border: 1px solid color-mix(in srgb, var(--bad) 40%, var(--line)); }
+.link { border: 0; background: none; padding: 0; color: var(--accent); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }
+input[type="text"], input[type="number"], input[type="password"], textarea, select { border: 1px solid var(--line-2); border-radius: 10px; background: var(--field); padding: 0 12px; height: 44px; font-size: 16px; outline: none; min-width: 0; }
+textarea { padding: 10px 12px; height: auto; min-height: 80px; resize: vertical; width: 100%; }
+input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+.err { color: var(--bad); font-size: 14px; margin: 8px 0 0; min-height: 1.2em; }
+.muted { color: var(--fg-3); }
+
+/* Entrar */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+.login h2 { margin: 0 0 4px; font-size: 18px; }
+.login p { margin: 0 0 14px; color: var(--fg-2); font-size: 15px; }
+.login-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.login-row input:first-child { flex: 2 1 180px; }
+.login-row input.pin { flex: 1 1 110px; letter-spacing: .2em; }
+.mebar { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; }
+.stat small { display: block; font-size: 12px; color: var(--fg-3); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+.stat b { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+.stat b.up { color: var(--up); } .stat b.down { color: var(--down); }
+.mebar .who { margin-left: auto; font-size: 14px; color: var(--fg-2); }
+.mebar .who b { color: var(--fg); }
+
+/* Pestañas */
+.tabs { display: flex; gap: 4px; margin: 22px 0 16px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { border: 0; background: none; padding: 10px 12px; font-size: 15px; font-weight: 600; color: var(--fg-3); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-color: var(--accent); }
+.tabs button .count { font-size: 12px; color: var(--fg-3); font-weight: 500; margin-left: 4px; }
+
+/* Mercados */
+.sec { margin: 0 0 26px; }
+.sec h3 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--fg-3); font-weight: 600; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; }
+.mk { text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; color: var(--fg); transition: border-color .15s, transform .15s; }
+.mk:hover { border-color: var(--line-2); transform: translateY(-1px); }
+.mk-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.mk h4 { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.big { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; text-align: right; flex: none; }
+.big small { display: block; font-size: 11px; font-weight: 500; color: var(--fg-3); margin-top: 3px; letter-spacing: 0; }
+.rows { display: flex; flex-direction: column; gap: 7px; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 10px; align-items: center; font-size: 14px; }
+.row span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row b { font-weight: 600; }
+.bar { grid-column: 1 / -1; height: 5px; border-radius: 3px; background: var(--card-2); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 3px; transition: width .5s ease; }
+.mk-foot { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--fg-3); margin-top: auto; }
+.tag { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--card-2); color: var(--fg-2); white-space: nowrap; }
+.tag.closed { color: var(--fg-2); }
+.tag.resolved { background: color-mix(in srgb, var(--ok) 22%, transparent); color: var(--ok); }
+.won { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
+.won svg { color: var(--ok); flex: none; }
+.flash-up { animation: fu 1.2s; } .flash-down { animation: fd 1.2s; }
+@keyframes fu { 0%, 40% { color: var(--up); } } @keyframes fd { 0%, 40% { color: var(--down); } }
+.empty { color: var(--fg-3); padding: 28px 0; text-align: center; }
+
+/* Lista genérica (mis apuestas, ranking, actividad) */
+.list { list-style: none; margin: 0; padding: 0; background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.list li { padding: 12px 14px; border-top: 1px solid var(--line); }
+.list li:first-child { border-top: 0; }
+.list li.click { cursor: pointer; } .list li.click:hover { background: var(--card-2); }
+.pos { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; }
+.pos .t { font-size: 13px; color: var(--fg-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pos .o { font-weight: 600; }
+.pos .r { text-align: right; grid-row: 1 / span 3; grid-column: 2; align-self: center; }
+.pos .r b { display: block; font-size: 16px; }
+.pos .d { font-size: 13px; color: var(--fg-2); }
+.up { color: var(--up); } .down { color: var(--down); }
+.rank { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 0 10px; align-items: center; }
+.rank .n { font-weight: 700; color: var(--fg-3); text-align: center; }
+.rank .n.top { color: var(--accent); }
+.rank .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank .sub { grid-column: 2; font-size: 13px; color: var(--fg-3); }
+.rank .tot { grid-row: 1 / span 2; grid-column: 3; text-align: right; }
+.rank .tot b { display: block; font-size: 17px; }
+.rank .tot span { font-size: 13px; }
+.list li.me { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.feed { font-size: 15px; }
+.feed b { font-weight: 600; }
+.feed .t { display: block; font-size: 13px; color: var(--fg-3); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Detalle (sheet) */
+.sheet-bg { position: fixed; inset: 0; background: rgba(0, 0, 0, .55); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
+.sheet { background: var(--bg); border: 1px solid var(--line); border-radius: 18px 18px 0 0; width: 100%; max-width: 720px; max-height: 92dvh; overflow-y: auto; overscroll-behavior: contain; padding: 0 18px 22px; animation: up .22s ease; }
+@media (min-width: 760px) { .sheet-bg { align-items: center; } .sheet { border-radius: 18px; max-height: 88dvh; } }
+@keyframes up { from { transform: translateY(24px); opacity: 0; } }
+.sheet-head { position: sticky; top: 0; background: var(--bg); padding: 16px 0 10px; display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; z-index: 2; }
+.sheet-head h2 { margin: 4px 0 0; font-size: 21px; letter-spacing: -0.01em; line-height: 1.25; overflow-wrap: anywhere; }
+.sheet-meta { font-size: 13px; color: var(--fg-3); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.chart { margin: 4px 0 6px; }
+.chart svg { display: block; width: 100%; height: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--fg-2); margin-bottom: 14px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; }
+.outs { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.out { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 4px 12px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; text-align: left; color: var(--fg); width: 100%; }
+.out[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.out .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+.out .nm i { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+.out .pc { font-size: 18px; font-weight: 700; }
+.out .buy { font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 8px; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); white-space: nowrap; }
+.out .mine { grid-column: 1 / -1; font-size: 13px; color: var(--fg-2); }
+.out.win { border-color: var(--ok); } .out.win .pc { color: var(--ok); }
+.slip { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+.slip-tabs { display: inline-flex; background: var(--card-2); border-radius: 9px; padding: 3px; margin-bottom: 12px; }
+.slip-tabs button { border: 0; background: none; border-radius: 7px; padding: 6px 14px; font-size: 14px; font-weight: 600; color: var(--fg-3); }
+.slip-tabs button[aria-pressed="true"] { background: var(--card); color: var(--fg); box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+.slip label { display: block; font-size: 14px; color: var(--fg-2); margin-bottom: 6px; }
+.amt { display: flex; gap: 8px; }
+.amt input { flex: 1; font-size: 20px; font-weight: 600; height: 50px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 12px; }
+.chips button { border: 1px solid var(--line-2); background: var(--card-2); border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 600; }
+.chips button:hover { border-color: var(--accent); }
+.prev { display: grid; grid-template-columns: 1fr auto; gap: 5px 12px; font-size: 14px; color: var(--fg-2); margin-bottom: 12px; }
+.prev b { color: var(--fg); text-align: right; font-weight: 600; }
+.prev .win b { color: var(--up); }
+.slip .btn { width: 100%; height: 50px; font-size: 16px; }
+.note { font-size: 13px; color: var(--fg-3); margin: 12px 0 0; }
+
+/* Admin */
+.adm { display: flex; flex-direction: column; gap: 14px; }
+.adm h3 { margin: 0 0 4px; font-size: 17px; }
+.adm .hint { margin: 0 0 12px; font-size: 14px; color: var(--fg-3); }
+.adm .line { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.adm .line > input[type="text"] { flex: 1 1 200px; }
+.adm label.inl { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; }
+.people { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.person { display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--line-2); background: var(--card-2); border-radius: 999px; padding: 3px 4px 3px 12px; font-size: 14px; }
+.person button { border: 0; background: none; color: var(--fg-3); width: 26px; height: 26px; border-radius: 50%; font-size: 14px; }
+.person button:hover { color: var(--fg); background: var(--card); }
+.checks { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+.checks label { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line-2); border-radius: 999px; padding: 5px 12px 5px 8px; font-size: 14px; cursor: pointer; }
+.checks label:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.items { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.items > li { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--card-2); }
+.items .h { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.items .h b { font-weight: 600; overflow-wrap: anywhere; }
+.items .acts { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+.items select { height: 34px; font-size: 14px; border-radius: 8px; }
+.form-grid { display: grid; gap: 8px; }
+.toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 15px; font-weight: 500; z-index: 80; box-shadow: 0 6px 24px rgba(0,0,0,.3); max-width: calc(100vw - 32px); }
+@media (max-width: 520px) { h1 { font-size: 26px; } .stat b { font-size: 19px; } .mebar .who { margin-left: 0; width: 100%; } .bal small { display: none; } }
+</style>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="mark" href="/">giorgiomacri<span>/</span></a>
+    <div class="top-r">
+      <span class="bal num" id="bal" hidden></span>
+      <button class="icon-btn" type="button" id="themeBtn" aria-label="Cambiar tema"></button>
+      <span id="gmAuth" hidden></span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="eyebrow">Awards <span class="live"><i></i>EN VIVO</span></p>
+  <h1>Mercado de predicciones</h1>
+  <p class="lead">Apostá puntos a quién se lleva cada premio. Cada apuesta mueve las probabilidades en vivo. Son puntos de mentira: acá no hay plata real.</p>
+  <details class="how">
+    <summary>¿Cómo funciona?</summary>
+    <p>Cada mercado tiene un <b>pozo</b> con todo lo que apostaron. Cuando se sabe el resultado, los que acertaron se reparten el pozo entero, cada uno en proporción a lo que puso. Así, lo que pierden unos lo ganan otros, y al final se calcula quién le debe cuántos puntos a quién (pestaña Cuentas).</p>
+    <p>Ejemplo: Ana pone 1.000 a que gana Tomás y Beto pone 2.000 a que gana Juli. El pozo es 3.000. Si gana Juli, Beto se lleva los 3.000: recupera sus 2.000 y gana 1.000, así que Ana le debe 1.000 a Beto.</p>
+    <p>La probabilidad de cada opción es la parte del pozo que tiene. El multiplicador (×2,5) dice cuánto cobrarías por cada punto si gana con el pozo como está; puede cambiar con las apuestas que vengan. Si hay empate, el pozo se reparte entre los empatados; si nadie acertó, se devuelve todo. Mientras el mercado esté abierto podés retirar tu apuesta.</p>
+  </details>
+
+  <div class="banner" id="closedBanner" hidden>Las apuestas están cerradas por ahora. Podés mirar los mercados y el ranking.</div>
+
+  <!-- Entrar -->
+  <section class="card login" id="loginCard" hidden>
+    <h2>Entrá para apostar</h2>
+    <p id="loginTxt">Poné tu nombre y un PIN de 4 números. La primera vez se crea tu cuenta con <b id="startPts">1.000</b> puntos; después entrás con el mismo nombre y PIN desde cualquier lado.</p>
+    <form id="loginForm" novalidate>
+      <div class="login-row">
+        <input type="text" id="lgName" maxlength="30" placeholder="Tu nombre" autocomplete="nickname">
+        <input type="password" id="lgPin" class="pin" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="PIN" autocomplete="off">
+        <button class="btn" type="submit">Entrar</button>
+      </div>
+      <p class="err" id="lgErr" role="alert"></p>
+    </form>
+  </section>
+
+  <!-- Mi resumen -->
+  <section class="card" id="meCard" hidden>
+    <div class="mebar">
+      <div class="stat"><small>Disponible</small><b class="num" id="stCash">0</b></div>
+      <div class="stat"><small>En juego</small><b class="num" id="stInv">0</b></div>
+      <div class="stat"><small>Resultado</small><b class="num" id="stPl">0</b></div>
+      <div class="stat"><small>Puesto</small><b class="num" id="stRank">–</b></div>
+      <div class="who">Apostás como <b id="meName"></b> · <button class="link" type="button" id="logout">Salir</button></div>
+    </div>
+  </section>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button type="button" role="tab" data-tab="markets" aria-selected="true">Mercados</button>
+    <button type="button" role="tab" data-tab="mine" aria-selected="false">Mis apuestas</button>
+    <button type="button" role="tab" data-tab="ranking" aria-selected="false">Ranking</button>
+    <button type="button" role="tab" data-tab="debts" aria-selected="false">Cuentas</button>
+    <button type="button" role="tab" data-tab="feed" aria-selected="false">Actividad</button>
+    <button type="button" role="tab" data-tab="admin" aria-selected="false" hidden id="adminTab">Admin</button>
+  </nav>
+
+  <section id="tab-markets"><p class="empty">Cargando mercados…</p></section>
+  <section id="tab-mine" hidden></section>
+  <section id="tab-ranking" hidden></section>
+  <section id="tab-debts" hidden></section>
+  <section id="tab-feed" hidden></section>
+  <section id="tab-admin" hidden></section>
+</main>
+
+<div class="sheet-bg" id="sheetBg" hidden>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shTitle"></div>
+</div>
+
+<script>
+/*@shared/auth.js*/
+</script>
+<script>
+(function () {
+  'use strict';
+  var API = '/api/sudoku/awards/mercado', KEY = 'gm-mercado';
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  function set(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  var NF = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 });
+  var NF1 = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 });
+  var NF2 = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function pts(x) { return NF.format(Math.round(x)) + ' pts'; }
+  function pct(p) { var v = p * 100; return v > 0 && v < 1 ? '<1%' : v > 99 && v < 100 ? '>99%' : NF.format(Math.round(v)) + '%'; }
+  function signed(x) { var r = Math.round(x); return (r > 0 ? '+' : r < 0 ? '−' : '') + NF.format(Math.abs(r)); }
+  function ago(t) {
+    var s = Math.max(0, (Date.now() - t) / 1000);
+    if (s < 45) return 'recién'; if (s < 3600) return 'hace ' + Math.round(s / 60) + ' min';
+    if (s < 86400) return 'hace ' + Math.round(s / 3600) + ' h';
+    return new Intl.DateTimeFormat('es-AR', { day: 'numeric', month: 'short' }).format(new Date(t));
+  }
+  var COLORS = ['var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)', 'var(--c5)'];
+  var CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  /* ---------- Red ---------- */
+  var auth = get(KEY); // { token, name }
+  function call(method, path, body, admin) {
+    var h = { 'Content-Type': 'application/json' };
+    if (auth && auth.token) h['X-Mercado'] = auth.token;
+    if (admin && window.GMAuth && GMAuth.token()) h.Authorization = 'Bearer ' + GMAuth.token();
+    return fetch(API + path, { method: method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' })
+      .catch(function () { throw new Error('Sin conexión. Probá de nuevo.'); })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) { var e = new Error(j.error || 'Algo falló. Probá de nuevo.'); e.status = r.status; throw e; } return j; }); });
+  }
+  var toastT;
+  function toast(msg) {
+    var el = $('toast'); if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+    el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(function () { el.hidden = true; }, 2800);
+  }
+
+  /* ---------- Estado ---------- */
+  var S = null, prevP = {}, tab = 'markets', loading = false;
+  function load() {
+    if (loading) return Promise.resolve(); loading = true;
+    return call('GET', S && S.v ? '?v=' + encodeURIComponent(S.v) : '').then(function (r) {
+      loading = false;
+      if (r.same) return;
+      if (auth && !r.me) { auth = null; set(KEY, null); $('lgErr').textContent = 'Tu sesión venció o te resetearon el PIN: entrá de nuevo.'; }
+      var old = S; S = r; render(old);
+    }, function (e) { loading = false; if (!S) $('tab-markets').innerHTML = '<p class="empty">' + esc(e.message) + '</p>'; });
+  }
+  function market(id) { return S.markets.filter(function (m) { return m.id === id; })[0]; }
+  function myPos(outcomeId) { if (!S.me) return null; return S.me.positions.filter(function (p) { return p.outcome_id === outcomeId; })[0] || null; }
+  function mult(m, o) { return o.pool > 0 ? m.pool / o.pool : null; }
+  function fmtMult(x) { return x == null ? '—' : '×' + (x >= 10 ? NF.format(x) : NF1.format(x)); }
+  function isAdmin() { var me = window.GMAuth && GMAuth.me(); return !!(me && me.admin); }
+
+  function render(old) {
+    var me = S.me, start = S.settings.start_points;
+    $('startPts').textContent = NF.format(start);
+    $('closedBanner').hidden = S.settings.trading_open;
+    $('loginCard').hidden = !!me; $('meCard').hidden = !me; $('bal').hidden = !me;
+    if (me) {
+      var row = S.traders.filter(function (t) { return t.id === me.id; })[0] || { invested: 0, result: 0 };
+      var rank = S.traders.indexOf(row) + 1, pl = row.result;
+      $('meName').textContent = me.name;
+      $('stCash').textContent = NF.format(Math.floor(me.cash));
+      $('stInv').textContent = NF.format(Math.round(row.invested));
+      $('stPl').textContent = signed(pl); $('stPl').className = 'num ' + (pl > 0.5 ? 'up' : pl < -0.5 ? 'down' : '');
+      $('stRank').textContent = rank > 0 ? rank + '° de ' + S.traders.length : '–';
+      $('bal').innerHTML = NF.format(Math.floor(me.cash)) + ' <small>pts</small>';
+    }
+    $('adminTab').hidden = !isAdmin();
+    $('gmAuth').hidden = !(window.GMAuth && GMAuth.me()); // el login del sitio solo se ve si ya entraste (es para el admin)
+    var nPos = me ? me.positions.filter(function (p) { var m = market(p.market_id); return p.stake > 0 && m && m.status !== 'resolved'; }).length : 0;
+    document.querySelector('[data-tab="mine"]').innerHTML = 'Mis apuestas' + (nPos ? '<span class="count">' + nPos + '</span>' : '');
+    renderMarkets(old); renderMine(); renderRanking(); renderDebts(); renderFeed();
+    if (tab === 'admin' && !adminDirty()) renderAdmin();
+    if (openId) renderSheet(false);
+    S.markets.forEach(function (m) { m.outcomes.forEach(function (o) { prevP[o.id] = o.p; }); });
+  }
+  function flash(o) { var was = prevP[o.id]; if (was == null || Math.abs(was - o.p) < 0.004) return ''; return o.p > was ? ' flash-up' : ' flash-down'; }
+
+  /* ---------- Mercados ---------- */
+  var SECTIONS = [['category', 'Premios'], ['most', 'Generales'], ['over', 'Mayor o menor'], ['custom', 'Otras preguntas']];
+  function secOf(m) { return m.kind === 'least' ? 'most' : m.kind; }
+  function sortedOuts(m) { return m.outcomes.slice().sort(function (a, b) { return b.p - a.p || a.label.localeCompare(b.label); }); }
+  function statusTag(m) {
+    if (m.status === 'resolved') return '<span class="tag resolved">Resuelto</span>';
+    if (m.status === 'closed' || !S.settings.trading_open) return '<span class="tag closed">Cerrado</span>';
+    return '';
+  }
+  function winners(m) { return m.outcomes.filter(function (o) { return o.payout > 0; }); }
+  function card(m) {
+    var outs = sortedOuts(m), body;
+    if (m.status === 'resolved') {
+      var w = winners(m);
+      body = '<div class="won">' + CHECK + '<span>' + esc(w.map(function (o) { return o.label; }).join(' y ')) + (w.length > 1 ? ' (empate)' : '') + '</span></div>';
+    } else if (m.outcomes.length === 2 && m.kind !== 'category') {
+      body = rowsHtml(outs, 2);
+    } else body = rowsHtml(outs, 3);
+    var lead = m.status !== 'resolved' && outs[0] ? '<div class="big num' + flash(outs[0]) + '">' + pct(outs[0].p) + '<small>' + esc(short(outs[0].label)) + '</small></div>' : '';
+    return '<button type="button" class="mk" data-open="' + m.id + '"><div class="mk-top"><h4>' + esc(m.title) + '</h4>' + lead + '</div>' + body +
+      '<div class="mk-foot"><span class="num">Pozo ' + pts(m.pool) + ' · ' + m.traders + (m.traders === 1 ? ' apostador' : ' apostadores') + '</span>' + statusTag(m) + '</div></button>';
+  }
+  function short(s) { return s.length > 16 ? s.slice(0, 15) + '…' : s; }
+  function rowsHtml(outs, n) {
+    var html = outs.slice(0, n).map(function (o, i) {
+      return '<div class="row"><span>' + esc(o.label) + '</span><b class="num' + flash(o) + '">' + pct(o.p) + '</b><div class="bar"><i style="width:' + (o.p * 100).toFixed(1) + '%;background:' + COLORS[i % 5] + '"></i></div></div>';
+    }).join('');
+    if (outs.length > n) html += '<div class="row muted" style="font-size:13px"><span>+' + (outs.length - n) + ' más</span></div>';
+    return '<div class="rows">' + html + '</div>';
+  }
+  function renderMarkets() {
+    var el = $('tab-markets');
+    if (!S.markets.length) { el.innerHTML = '<p class="empty">Todavía no hay mercados. Aparecen cuando se carguen los premios.</p>'; return; }
+    el.innerHTML = SECTIONS.map(function (s) {
+      var list = S.markets.filter(function (m) { return secOf(m) === s[0]; });
+      list.sort(function (a, b) { return (a.status === 'resolved') - (b.status === 'resolved') || a.id - b.id; });
+      return list.length ? '<div class="sec"><h3>' + s[1] + '</h3><div class="grid">' + list.map(card).join('') + '</div></div>' : '';
+    }).join('');
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-open]'); if (b) openMarket(Number(b.getAttribute('data-open')));
+  });
+
+  /* ---------- Mis apuestas ---------- */
+  function renderMine() {
+    var el = $('tab-mine');
+    if (!S.me) { el.innerHTML = '<p class="empty">Entrá con tu nombre para ver tus apuestas.</p>'; return; }
+    var list = S.me.positions.map(function (p) {
+      var m = market(p.market_id); if (!m) return null;
+      var o = m.outcomes.filter(function (x) { return x.id === p.outcome_id; })[0]; if (!o) return null;
+      return { p: p, m: m, o: o };
+    }).filter(function (x) { return x && x.p.stake > 0; });
+    if (!list.length) { el.innerHTML = '<p class="empty">Todavía no apostaste. Elegí un mercado y poné tus puntos.</p>'; return; }
+    list.sort(function (a, b) { return (a.m.status === 'resolved') - (b.m.status === 'resolved') || b.p.stake - a.p.stake; });
+    el.innerHTML = '<ul class="list">' + list.map(function (x) {
+      var res = x.m.status === 'resolved', pl = x.p.paid - x.p.stake, est = x.p.stake * (mult(x.m, x.o) || 1);
+      var right = res ? '<b class="num ' + (pl > 0.5 ? 'up' : pl < -0.5 ? 'down' : '') + '">' + (x.p.paid > 0.5 ? 'Cobraste ' + NF.format(Math.round(x.p.paid)) : 'Perdiste') + '</b><span class="d num">' + signed(pl) + ' pts</span>'
+        : '<b class="num">~' + NF.format(Math.floor(est)) + ' pts</b><span class="d">si gana (' + fmtMult(mult(x.m, x.o)) + ')</span>';
+      return '<li class="click" data-open="' + x.m.id + '"><div class="pos"><span class="t">' + esc(x.m.title) + '</span><span class="o">' + esc(x.o.label) + ' <span class="muted num" style="font-weight:500">· ' + pct(x.o.p) + '</span></span>' +
+        '<span class="d num">Apostaste ' + pts(x.p.stake) + '</span><div class="r">' + right + '</div></div></li>';
+    }).join('') + '</ul><p class="note">Lo que cobrarías si gana es una estimación con el pozo de ahora: cambia con las apuestas que entren hasta que se cierre.</p>';
+  }
+
+  /* ---------- Ranking ---------- */
+  function renderRanking() {
+    var el = $('tab-ranking');
+    if (!S.traders.length) { el.innerHTML = '<p class="empty">Todavía no entró nadie.</p>'; return; }
+    el.innerHTML = '<ul class="list">' + S.traders.map(function (t, i) {
+      var pl = t.result, me = S.me && S.me.id === t.id;
+      return '<li class="' + (me ? 'me' : '') + '"><div class="rank"><span class="n num' + (i < 3 && pl > 0.5 ? ' top' : '') + '">' + (i + 1) + '</span><span class="nm">' + esc(t.name) + (me ? ' <span class="muted" style="font-weight:500">(vos)</span>' : '') + '</span>' +
+        '<span class="sub num">' + NF.format(Math.floor(t.cash)) + ' disponibles · ' + NF.format(Math.round(t.invested)) + ' en juego</span>' +
+        '<div class="tot"><b class="num ' + (pl > 0.5 ? 'up' : pl < -0.5 ? 'down' : '') + '">' + signed(pl) + '</b><span class="muted">pts</span></div></div></li>';
+    }).join('') + '</ul><p class="note">El resultado cuenta solo los mercados ya resueltos: lo que cobraste menos lo que apostaste.</p>';
+  }
+
+  /* ---------- Cuentas: quién le debe a quién ---------- */
+  function renderDebts() {
+    var el = $('tab-debts'), d = S.debts, meId = S.me && S.me.id;
+    var head = d.pending ? '<div class="banner">Faltan resolver ' + d.pending + (d.pending === 1 ? ' mercado' : ' mercados') + ' con apuestas: las cuentas van a cambiar.</div>' : '';
+    if (!d.transfers.length) { el.innerHTML = head + '<p class="empty">' + (S.markets.some(function (m) { return m.status === 'resolved'; }) ? 'Por ahora nadie le debe nada a nadie.' : 'Las cuentas aparecen cuando se resuelvan los primeros mercados.') + '</p>'; return; }
+    el.innerHTML = head + '<ul class="list">' + d.transfers.map(function (x) {
+      var mine = meId && (x.from_id === meId || x.to_id === meId);
+      return '<li class="' + (mine ? 'me' : '') + '"><div class="debt"><span><b>' + esc(x.from) + '</b><span class="arrow">le debe a</span><b>' + esc(x.to) + '</b></span><b class="amt num">' + pts(x.amount) + '</b></div></li>';
+    }).join('') + '</ul><p class="note">Es la forma de saldar todo con la menor cantidad de pagos: cada uno paga o cobra exactamente su resultado del ranking.</p>';
+  }
+
+  /* ---------- Actividad ---------- */
+  function renderFeed() {
+    var el = $('tab-feed');
+    if (!S.feed.length) { el.innerHTML = '<p class="empty">Todavía nadie apostó.</p>'; return; }
+    el.innerHTML = '<ul class="list">' + S.feed.map(function (f) {
+      var m = market(f.market_id);
+      return '<li class="click feed" data-open="' + f.market_id + '"><b>' + esc(f.trader) + '</b> ' + (f.side === 'buy' ? 'apostó ' + pts(f.points) + ' a' : 'retiró ' + pts(f.points) + ' de') +
+        ' <b>' + esc(f.label) + '</b> <span class="muted num">→ ' + pct(f.p) + '</span><span class="t">' + ago(f.at) + (m ? ' · ' + esc(m.title) : '') + '</span></li>';
+    }).join('') + '</ul>';
+  }
+
+  /* ---------- Pestañas ---------- */
+  function setTab(t) {
+    tab = t;
+    document.querySelectorAll('#tabs [data-tab]').forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === t)); });
+    ['markets', 'mine', 'ranking', 'debts', 'feed', 'admin'].forEach(function (x) { $('tab-' + x).hidden = x !== t; });
+    if (t === 'admin') renderAdmin();
+  }
+  $('tabs').addEventListener('click', function (e) { var b = e.target.closest('[data-tab]'); if (b) setTab(b.getAttribute('data-tab')); });
+
+  /* ---------- Entrar / salir ---------- */
+  $('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = $('lgName').value.trim(), pin = $('lgPin').value.trim();
+    if (!name) { $('lgErr').textContent = 'Poné tu nombre.'; return; }
+    if (!/^\d{4,8}$/.test(pin)) { $('lgErr').textContent = 'El PIN tiene que ser de 4 a 8 números.'; return; }
+    $('lgErr').textContent = '';
+    call('POST', '/entrar', { name: name, pin: pin }).then(function (r) {
+      auth = { token: r.token, name: r.name }; set(KEY, auth); $('lgPin').value = '';
+      toast(r.created ? '¡Listo, ' + r.name + '! Tenés ' + NF.format(S ? S.settings.start_points : 1000) + ' puntos para apostar.' : 'Hola de nuevo, ' + r.name + '.');
+      S.v = null; return load();
+    }, function (x) { $('lgErr').textContent = x.message; });
+  });
+  $('logout').addEventListener('click', function () {
+    if (!confirm('¿Salir? Para volver a entrar necesitás tu nombre y tu PIN.')) return;
+    auth = null; set(KEY, null); S.v = null; load();
+  });
+
+  /* ---------- Detalle de un mercado ---------- */
+  var openId = null, sel = null, side = 'buy', amount = '', hist = null;
+  function openMarket(id, fromHash) {
+    if (!market(id)) return;
+    if (openId !== id) { sel = null; side = 'buy'; amount = ''; hist = null; }
+    openId = id;
+    if (!fromHash && location.hash !== '#m' + id) history.pushState({ m: id }, '', '#m' + id);
+    $('sheetBg').hidden = false; document.body.classList.add('lock');
+    renderSheet(true); loadHist();
+  }
+  function closeSheet(fromPop) {
+    if (openId == null) return;
+    openId = null; $('sheetBg').hidden = true; document.body.classList.remove('lock');
+    if (!fromPop && /^#m\d+$/.test(location.hash)) history.back();
+  }
+  window.addEventListener('popstate', function () { var m = /^#m(\d+)$/.exec(location.hash); if (m && S) openMarket(Number(m[1]), true); else closeSheet(true); });
+  $('sheetBg').addEventListener('click', function (e) { if (e.target === $('sheetBg') || e.target.closest('[data-close]')) closeSheet(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && openId != null) closeSheet(); });
+  function loadHist() {
+    var id = openId;
+    call('GET', '/historial/' + id).then(function (r) { if (openId === id) { hist = r; drawChart(); } }, function () {});
+  }
+
+  function renderSheet(full) {
+    var m = market(openId); if (!m) { closeSheet(); return; }
+    var outs = sortedOuts(m), canTrade = m.status === 'open' && S.settings.trading_open;
+    if (!sel || !m.outcomes.some(function (o) { return o.id === sel; })) sel = canTrade ? (myHeldIn(m) || outs[0].id) : null;
+    var keepFocus = document.activeElement && document.activeElement.id === 'amt';
+    var meta = '<span class="tag">' + ({ category: 'Premio', most: 'General', least: 'General', over: 'Mayor o menor', custom: 'Pregunta' })[m.kind] + '</span>' + statusTag(m) +
+      '<span class="num">Pozo ' + pts(m.pool) + ' · ' + m.traders + (m.traders === 1 ? ' apostador' : ' apostadores') + '</span>';
+    var html = '<div class="sheet-head"><div><div class="sheet-meta">' + meta + '</div><h2 id="shTitle">' + esc(m.title) + '</h2></div>' +
+      '<button class="icon-btn" type="button" data-close aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>' +
+      '<div class="chart" id="chart"></div><div class="legend" id="legend"></div>' +
+      '<div class="outs">' + outs.map(function (o) {
+        var mine = myPos(o.id), color = colorOf(m, o);
+        var win = m.status === 'resolved' && o.payout > 0;
+        var right = m.status === 'resolved' ? (win ? '<span class="buy" style="background:none;color:var(--ok)">Ganó</span>' : '<span></span>') : canTrade ? '<span class="buy">Apostar</span>' : '<span></span>';
+        return '<button type="button" class="out' + (win ? ' win' : '') + '" data-out="' + o.id + '" aria-pressed="' + (sel === o.id) + '"' + (canTrade ? '' : ' tabindex="-1"') + '>' +
+          '<span class="nm"><i style="background:' + color + '"></i>' + esc(o.label) + '</span><span class="pc num' + flash(o) + '">' + (m.status === 'resolved' ? (win ? CHECK : '') : pct(o.p) + ' <span class="mult">' + fmtMult(mult(m, o)) + '</span>') + '</span>' + right +
+          (mine && mine.stake > 0 ? '<span class="mine num">Apostaste ' + pts(mine.stake) + (m.status === 'resolved' ? ' · cobraste ' + pts(mine.paid) : ' · si gana cobrás ~' + pts(mine.stake * (mult(m, o) || 1))) + '</span>' : '') +
+          '</button>';
+      }).join('') + '</div>' + slipHtml(m, canTrade);
+    if (m.kind === 'over' || m.kind === 'most' || m.kind === 'least') html += '<p class="note">Se resuelve solo cuando todas las categorías tienen ganador.' + (m.kind !== 'over' ? ' Si hay empate, el pago se reparte entre los empatados.' : '') + '</p>';
+    else if (m.kind === 'category') { var c = S.categories.filter(function (x) { return x.id === m.category_id; })[0]; if (c && c.description) html += '<p class="note">' + esc(c.description) + '</p>'; }
+    var sh = $('sheet'), st = sh.scrollTop;
+    sh.innerHTML = html; sh.scrollTop = full ? 0 : st;
+    drawChart();
+    if (keepFocus && $('amt')) $('amt').focus();
+  }
+  function myHeldIn(m) { var o = m.outcomes.filter(function (o) { var p = myPos(o.id); return p && p.stake > 0; })[0]; return o ? o.id : null; }
+  function colorOf(m, o) { var outs = sortedOuts(m); var i = outs.indexOf(o); return i >= 0 && i < 5 ? COLORS[i] : 'var(--line-2)'; }
+
+  function slipHtml(m, canTrade) {
+    if (m.status === 'resolved') return '';
+    if (!canTrade) return '<div class="slip"><p class="muted" style="margin:0">' + (S.settings.trading_open ? 'Este mercado está cerrado: no se puede apostar.' : 'Las apuestas están cerradas por ahora.') + '</p></div>';
+    if (!S.me) return '<div class="slip"><p style="margin:0 0 12px">Para apostar tenés que entrar con tu nombre y PIN.</p><button class="btn" type="button" data-login>Entrar</button></div>';
+    var o = m.outcomes.filter(function (x) { return x.id === sel; })[0]; if (!o) return '';
+    var held = myPos(o.id), stake = held ? held.stake : 0;
+    if (side === 'sell' && stake <= 0) side = 'buy';
+    var tabs = '<div class="slip-tabs"><button type="button" data-side="buy" aria-pressed="' + (side === 'buy') + '">Apostar</button>' +
+      (stake > 0 ? '<button type="button" data-side="sell" aria-pressed="' + (side === 'sell') + '">Retirar</button>' : '') + '</div>';
+    var cash = Math.floor(S.me.cash), html = '<div class="slip">' + tabs;
+    if (side === 'buy') {
+      var A = Math.floor(Number(amount)) || 0, newPool = o.pool + A, newTotal = m.pool + A;
+      var after = A > 0 ? newPool / newTotal : o.p, x = A > 0 ? newTotal / newPool : mult(m, o), get = (A + stake) * (A > 0 ? x : 1);
+      html += '<label for="amt">¿Cuántos puntos a <b style="color:var(--fg)">' + esc(o.label) + '</b>? <span class="muted">(tenés ' + NF.format(cash) + ')</span></label>' +
+        '<div class="amt"><input type="number" id="amt" inputmode="numeric" min="1" step="1" placeholder="0" value="' + esc(amount) + '"></div>' +
+        '<div class="chips">' + [10, 50, 100, 250].map(function (n) { return '<button type="button" data-add="' + n + '">+' + n + '</button>'; }).join('') + '<button type="button" data-max>Todo</button></div>' +
+        '<div class="prev num"><span>Probabilidad</span><b>' + pct(o.p) + (A > 0 ? ' → ' + pct(after) : '') + '</b>' +
+        '<span>Multiplicador</span><b>' + fmtMult(x) + '</b>' +
+        (stake > 0 ? '<span>Ya tenías apostado</span><b>' + pts(stake) + '</b>' : '') +
+        '<span class="win">Si gana, cobrás ~</span><b class="win">' + (A > 0 ? pts(get) + ' <span class="up">(' + signed(get - A - stake) + ')</span>' : '–') + '</b></div>' +
+        '<button class="btn" type="button" id="doTrade"' + (A >= 1 && A <= cash ? '' : ' disabled') + '>' + (A > cash ? 'No te alcanzan los puntos' : A >= 1 ? 'Apostar ' + pts(A) + ' a ' + esc(short(o.label)) : 'Elegí cuántos puntos') + '</button>';
+    } else {
+      html += '<p style="margin:0 0 12px">Tenés <b>' + pts(stake) + '</b> apostados a ' + esc(o.label) + '. Si los retirás, vuelven a tu saldo y salen del pozo.</p>' +
+        '<button class="btn ghost" type="button" id="doTrade">Retirar ' + pts(stake) + '</button>';
+    }
+    html += '<p class="err" id="slipErr" role="alert"></p><p class="note" style="margin-top:4px">' + (side === 'buy' ? 'Lo que cobrás depende del pozo cuando se cierre: si después apuestan más a ' + esc(o.label) + ', el multiplicador baja; si apuestan a otros, sube.' : 'Solo se puede retirar mientras el mercado esté abierto.') + '</p></div>';
+    return html;
+  }
+  $('sheet').addEventListener('click', function (e) {
+    var t = e.target, m = market(openId); if (!m) return;
+    var o = t.closest('[data-out]');
+    if (o && m.status === 'open' && S.settings.trading_open) { var id = Number(o.getAttribute('data-out')); if (sel !== id) { sel = id; amount = ''; side = 'buy'; } renderSheet(false); if (S.me && $('amt')) $('amt').focus(); return; }
+    if (t.closest('[data-login]')) { closeSheet(); setTab('markets'); $('loginCard').scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(function () { $('lgName').focus(); }, 300); return; }
+    var sd = t.closest('[data-side]'); if (sd) { side = sd.getAttribute('data-side'); amount = ''; renderSheet(false); return; }
+    var add = t.closest('[data-add]'); if (add) { amount = String(Math.min(Math.floor(S.me.cash), (Math.floor(Number(amount)) || 0) + Number(add.getAttribute('data-add')))); renderSheet(false); return; }
+    if (t.closest('[data-max]')) { amount = String(Math.floor(S.me.cash)); renderSheet(false); return; }
+    if (t.closest('#doTrade')) trade(m);
+  });
+  $('sheet').addEventListener('input', function (e) { if (e.target.id === 'amt') { amount = e.target.value; renderSheet(false); } });
+  $('sheet').addEventListener('keydown', function (e) { if (e.target.id === 'amt' && e.key === 'Enter') { var b = $('doTrade'); if (b && !b.disabled) b.click(); } });
+  var trading = false;
+  function trade(m) {
+    if (trading) return; trading = true;
+    var body = { outcome_id: sel, side: side };
+    if (side === 'buy') body.points = Math.floor(Number(amount));
+    var o = m.outcomes.filter(function (x) { return x.id === sel; })[0];
+    $('doTrade').disabled = true; $('doTrade').textContent = side === 'buy' ? 'Apostando…' : 'Retirando…';
+    call('POST', '/operar', body).then(function (r) {
+      toast(side === 'buy' ? 'Apostaste ' + pts(r.points) + ' a ' + o.label : 'Retiraste ' + pts(r.points) + ' de ' + o.label);
+      amount = ''; side = 'buy'; S.v = null; return load().then(loadHist);
+    }, function (x) { if ($('slipErr')) $('slipErr').textContent = x.message; if ($('doTrade')) { $('doTrade').disabled = false; $('doTrade').textContent = 'Probar de nuevo'; } load(); })
+      .then(function () { trading = false; });
+  }
+
+  /* ---------- Gráfico ---------- */
+  function drawChart() {
+    var el = $('chart'), lg = $('legend'), m = market(openId); if (!el || !m) return;
+    var outs = sortedOuts(m).slice(0, 5);
+    var W = 680, H = 210, L = 8, R = 44, T = 10, B = 26;
+    var t0 = m.created_at, t1 = Math.max(Date.now(), t0 + 60000);
+    if (m.status === 'resolved' && m.resolved_at) t1 = Math.max(m.resolved_at, t0 + 60000);
+    var pts0 = (hist && hist.id === m.id ? hist.points : []).filter(function (x) { return x.at <= t1; });
+    function X(t) { return L + (W - L - R) * (t - t0) / (t1 - t0); }
+    function Y(p) { return T + (H - T - B) * (1 - p); }
+    var n0 = m.outcomes.length, svg = '';
+    [0, .25, .5, .75, 1].forEach(function (g) { svg += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(g) + '" y2="' + Y(g) + '" stroke="var(--line)" stroke-width="1"' + (g % 1 ? ' stroke-dasharray="3 4"' : '') + '/><text x="' + (W - R + 8) + '" y="' + (Y(g) + 4) + '" font-size="11" fill="var(--fg-3)">' + Math.round(g * 100) + '%</text>'; });
+    outs.slice().reverse().forEach(function (o) {
+      var color = colorOf(m, o), last = 1 / n0, d = 'M' + X(t0).toFixed(1) + ',' + Y(last).toFixed(1);
+      pts0.forEach(function (pt) { var p = pt.p[o.id]; if (p == null) return; d += 'H' + X(pt.at).toFixed(1) + 'V' + Y(p).toFixed(1); last = p; });
+      var end = m.status === 'resolved' ? last : o.p;
+      d += 'H' + X(t1).toFixed(1) + (m.status === 'resolved' ? '' : 'V' + Y(end).toFixed(1));
+      svg += '<path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="2.2" stroke-linejoin="round"/>';
+      if (m.status !== 'resolved') svg += '<circle cx="' + X(t1) + '" cy="' + Y(end) + '" r="3.5" fill="' + color + '"/>';
+    });
+    var fmt = new Intl.DateTimeFormat('es-AR', (t1 - t0) > 36e5 * 20 ? { day: 'numeric', month: 'short' } : { hour: '2-digit', minute: '2-digit' });
+    svg += '<text x="' + L + '" y="' + (H - 6) + '" font-size="11" fill="var(--fg-3)">' + esc(fmt.format(new Date(t0))) + '</text><text x="' + (W - R) + '" y="' + (H - 6) + '" font-size="11" fill="var(--fg-3)" text-anchor="end">' + (m.status === 'resolved' ? esc(fmt.format(new Date(t1))) : 'Ahora') + '</text>';
+    el.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Probabilidad de cada opción a lo largo del tiempo">' + svg + '</svg>';
+    lg.innerHTML = outs.map(function (o) { return '<span><i style="background:' + colorOf(m, o) + '"></i>' + esc(o.label) + '</span>'; }).join('') + (m.outcomes.length > 5 ? '<span class="muted">y ' + (m.outcomes.length - 5) + ' más</span>' : '');
+  }
+
+  /* ---------- Admin ---------- */
+  var ideas = null, editCat = null;
+  function adminDirty() { var a = document.activeElement; return a && $('tab-admin').contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName); }
+  function adm(body, ok) {
+    return call('POST', '/admin', body, true).then(function () { if (ok) toast(ok); S.v = null; return load().then(function () { if (tab === 'admin') renderAdmin(); }); }, function (x) { alert(x.message); throw x; });
+  }
+  function loadIdeas() {
+    if (ideas || !isAdmin()) return;
+    ideas = [];
+    fetch('/api/sudoku/awards/ideas', { headers: { Authorization: 'Bearer ' + GMAuth.token() }, cache: 'no-store' }).then(function (r) { return r.json(); })
+      .then(function (r) { ideas = (r.ideas || []).sort(function (a, b) { return (b.likes || 0) - (a.likes || 0); }); if (tab === 'admin') renderAdmin(); }, function () {});
+  }
+  function renderAdmin() {
+    var el = $('tab-admin');
+    if (!isAdmin()) { el.innerHTML = '<p class="empty">Entrá con la cuenta de admin del sitio.</p>'; return; }
+    loadIdeas();
+    var st = S.settings, people = S.people, pName = {}; people.forEach(function (p) { pName[p.id] = p.name; });
+    var cats = S.categories, catMk = {}; S.markets.forEach(function (m) { if (m.kind === 'category') catMk[m.category_id] = m; });
+    var others = S.markets.filter(function (m) { return m.kind !== 'category'; });
+    var has = function (k) { return S.markets.some(function (m) { return m.kind === k; }); };
+    var decided = cats.filter(function (c) { return c.winner_id != null; }).length;
+    var h = '<div class="adm">';
+    // Estado
+    h += '<div class="card"><h3>Apuestas</h3><p class="hint">Cerralas cuando empiece la entrega para que nadie apueste sabiendo el resultado.</p>' +
+      '<div class="line"><label class="inl"><input type="checkbox" id="aOpen"' + (st.trading_open ? ' checked' : '') + '> Apuestas abiertas</label></div>' +
+      '<div class="line" style="margin-top:12px"><label class="inl">Puntos por persona <input type="number" id="aStart" min="0" step="100" value="' + st.start_points + '" style="width:120px"></label><button class="btn sm ghost" type="button" data-a="settings">Guardar</button></div>' +
+      '<p class="hint" style="margin:8px 0 0">Es el tope de lo que cada uno puede apostar. Si lo cambiás, a los que ya entraron se les suma o resta la diferencia.</p></div>';
+    // Participantes
+    h += '<div class="card"><h3>Participantes</h3><p class="hint">Los que pueden ganar premios. Separá con coma o uno por línea.</p>' +
+      '<div class="line"><input type="text" id="aPeople" placeholder="Tomás, Juli, Fran…"><button class="btn sm" type="button" data-a="person_add">Agregar</button></div>' +
+      '<div class="people">' + (people.length ? people.map(function (p) { return '<span class="person">' + esc(p.name) + '<button type="button" data-ren="' + p.id + '" aria-label="Renombrar ' + esc(p.name) + '">✎</button><button type="button" data-delp="' + p.id + '" aria-label="Sacar a ' + esc(p.name) + '">✕</button></span>'; }).join('') : '<span class="muted">Todavía no hay participantes.</span>') + '</div></div>';
+    // Categorías
+    var checks = function (name, selIds) { return '<div class="checks">' + people.map(function (p) { return '<label><input type="checkbox" name="' + name + '" value="' + p.id + '"' + (!selIds || selIds.indexOf(p.id) >= 0 ? ' checked' : '') + '>' + esc(p.name) + '</label>'; }).join('') + '</div>'; };
+    h += '<div class="card"><h3>Premios (categorías)</h3><p class="hint">Cada premio crea su mercado "¿Quién gana…?". Cuando cargás el ganador se resuelve y se paga solo. ' + decided + ' de ' + cats.length + ' con ganador.</p>' +
+      '<div class="form-grid"><input type="text" id="aCat" list="ideasList" maxlength="120" placeholder="Nombre del premio"><datalist id="ideasList">' + (ideas || []).map(function (i) { return '<option value="' + esc(i.title) + '">'; }).join('') + '</datalist>' +
+      '<input type="text" id="aCatDesc" maxlength="500" placeholder="Descripción (opcional)"></div>' +
+      (people.length >= 2 ? '<p class="hint" style="margin:10px 0 0">Nominados:</p>' + checks('nom') + '<button class="btn sm" type="button" data-a="category_add">Crear premio</button>' : '<p class="hint" style="margin:10px 0 0">Cargá al menos 2 participantes para crear premios.</p>');
+    if (cats.length) h += '<ul class="items">' + cats.map(function (c) {
+      var m = catMk[c.id], noms = m ? m.outcomes.map(function (o) { return o.person_id; }) : [];
+      var body = '<div class="h"><b>' + esc(c.name) + '</b>' + (m ? statusTag(m) : '') + '</div>' +
+        '<div class="muted" style="font-size:14px;margin-top:4px">' + noms.map(function (id) { return esc(pName[id] || '?'); }).join(', ') + '</div>';
+      if (editCat === c.id) body += checks('ed' + c.id, noms) + '<div class="acts"><button class="btn sm" type="button" data-savenom="' + c.id + '">Guardar nominados</button><button class="btn sm ghost" type="button" data-cancelnom>Cancelar</button></div>';
+      else body += '<div class="acts"><select data-win="' + c.id + '" aria-label="Ganador de ' + esc(c.name) + '"><option value="">Sin ganador</option>' + noms.map(function (id) { return '<option value="' + id + '"' + (c.winner_id === id ? ' selected' : '') + '>Ganó ' + esc(pName[id] || '?') + '</option>'; }).join('') + '</select>' +
+        (m && m.status !== 'resolved' ? '<button class="btn sm ghost" type="button" data-mst="' + m.id + '" data-to="' + (m.status === 'open' ? 'closed' : 'open') + '">' + (m.status === 'open' ? 'Cerrar' : 'Abrir') + '</button><button class="btn sm ghost" type="button" data-nom="' + c.id + '">Nominados</button>' : '') +
+        '<button class="btn sm danger" type="button" data-delc="' + c.id + '">Borrar</button></div>';
+      return '<li>' + body + '</li>';
+    }).join('') + '</ul>';
+    h += '</div>';
+    // Otros mercados
+    h += '<div class="card"><h3>Otros mercados</h3><p class="hint">"Más premios", "menos premios" y "mayor o menor" se resuelven solos cuando todos los premios tienen ganador.</p>' +
+      '<div class="line"><button class="btn sm ghost" type="button" data-mk="most"' + (has('most') || people.length < 2 ? ' disabled' : '') + '>+ ¿Quién se lleva más premios?</button><button class="btn sm ghost" type="button" data-mk="least"' + (has('least') || people.length < 2 ? ' disabled' : '') + '>+ ¿Quién se lleva menos premios?</button></div>' +
+      '<div class="line" style="margin-top:12px"><span>Mayor o menor:</span><select id="aOvP"><option value="">Participante…</option>' + people.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + '</option>'; }).join('') + '</select>' +
+      '<select id="aOvL">' + [0.5, 1.5, 2.5, 3.5, 4.5, 5.5].map(function (l) { return '<option value="' + l + '">' + String(l).replace('.', ',') + ' premios</option>'; }).join('') + '</select><button class="btn sm ghost" type="button" data-mk="over">Crear</button></div>' +
+      '<div class="form-grid" style="margin-top:12px"><input type="text" id="aQ" maxlength="120" placeholder="Pregunta libre (ej.: ¿Alguien llora en la entrega?)"><textarea id="aOpts" placeholder="Opciones, una por línea. Vacío = Sí / No" style="min-height:64px"></textarea></div>' +
+      '<div class="line" style="margin-top:8px"><button class="btn sm ghost" type="button" data-mk="custom">Crear pregunta</button></div>';
+    if (others.length) h += '<ul class="items">' + others.map(function (m) {
+      var acts = '';
+      if (m.status !== 'resolved') acts += '<button class="btn sm ghost" type="button" data-mst="' + m.id + '" data-to="' + (m.status === 'open' ? 'closed' : 'open') + '">' + (m.status === 'open' ? 'Cerrar' : 'Abrir') + '</button>';
+      if (m.kind === 'custom' && m.status !== 'resolved') acts += '<select data-cres="' + m.id + '"><option value="">Resolver: ganó…</option>' + m.outcomes.map(function (o) { return '<option value="' + o.id + '">' + esc(o.label) + '</option>'; }).join('') + '</select>';
+      if (m.kind === 'custom' && m.status === 'resolved') acts += '<button class="btn sm ghost" type="button" data-unres="' + m.id + '">Deshacer resultado</button>';
+      acts += '<button class="btn sm danger" type="button" data-delm="' + m.id + '">Borrar</button>';
+      var res = m.status === 'resolved' ? ' · ganó ' + esc(winners(m).map(function (o) { return o.label; }).join(' y ')) : '';
+      return '<li><div class="h"><b>' + esc(m.title) + '</b>' + statusTag(m) + '</div><div class="muted num" style="font-size:14px;margin-top:4px">Pozo ' + pts(m.pool) + res + '</div><div class="acts">' + acts + '</div></li>';
+    }).join('') + '</ul>';
+    h += '</div>';
+    // Apostadores
+    h += '<div class="card"><h3>Apostadores</h3><p class="hint">Si alguien se olvidó el PIN, reseteáselo: la próxima vez que entre con su nombre elige uno nuevo y conserva sus puntos.</p>' +
+      (S.traders.length ? '<ul class="items">' + S.traders.map(function (t) {
+        return '<li><div class="h"><b>' + esc(t.name) + '</b><span class="num muted">' + signed(t.result) + ' · ' + NF.format(Math.floor(t.cash)) + ' disponibles</span></div><div class="acts"><button class="btn sm ghost" type="button" data-pin="' + t.id + '" data-name="' + esc(t.name) + '">Resetear PIN</button><button class="btn sm danger" type="button" data-delt="' + t.id + '" data-name="' + esc(t.name) + '">Borrar</button></div></li>';
+      }).join('') + '</ul>' : '<p class="muted" style="margin:0">Todavía no entró nadie.</p>') + '</div>';
+    h += '<p class="note">Los puntos se apuestan entre ustedes: lo que pierde uno lo gana otro. Las cuentas finales están en la pestaña Cuentas. Link para pasarles: <b style="color:var(--fg)">giorgiomacri.com/awards/mercado</b> (no está en la portada).</p></div>';
+    el.innerHTML = h;
+  }
+  $('tab-admin').addEventListener('click', function (e) {
+    var t = e.target.closest('button'); if (!t) return;
+    var a = t.getAttribute('data-a'), v = function (id) { return $(id).value; };
+    if (a === 'settings') return adm({ action: 'settings', start_points: v('aStart') }, 'Guardado.');
+    if (a === 'person_add') { if (!v('aPeople').trim()) return; return adm({ action: 'person_add', name: v('aPeople') }, 'Participantes agregados.'); }
+    if (a === 'category_add') {
+      var noms = [].map.call(document.querySelectorAll('input[name="nom"]:checked'), function (x) { return Number(x.value); });
+      if (!v('aCat').trim()) { $('aCat').focus(); return; }
+      return adm({ action: 'category_add', name: v('aCat'), description: v('aCatDesc'), nominees: noms }, 'Premio creado con su mercado.');
+    }
+    if (t.hasAttribute('data-ren')) { var id = Number(t.getAttribute('data-ren')), p = S.people.filter(function (x) { return x.id === id; })[0]; var n = prompt('Nuevo nombre para ' + p.name + ':', p.name); if (n && n.trim() && n.trim() !== p.name) adm({ action: 'person_rename', id: id, name: n }); return; }
+    if (t.hasAttribute('data-delp')) { var id2 = Number(t.getAttribute('data-delp')), p2 = S.people.filter(function (x) { return x.id === id2; })[0]; if (confirm('¿Sacar a ' + p2.name + ' de los participantes?')) adm({ action: 'person_delete', id: id2 }); return; }
+    if (t.hasAttribute('data-mst')) return adm({ action: 'market_status', id: Number(t.getAttribute('data-mst')), status: t.getAttribute('data-to') });
+    if (t.hasAttribute('data-nom')) { editCat = Number(t.getAttribute('data-nom')); renderAdmin(); return; }
+    if (t.hasAttribute('data-cancelnom')) { editCat = null; renderAdmin(); return; }
+    if (t.hasAttribute('data-savenom')) { var cid = Number(t.getAttribute('data-savenom')); var sel2 = [].map.call(document.querySelectorAll('input[name="ed' + cid + '"]:checked'), function (x) { return Number(x.value); }); editCat = null; return adm({ action: 'category_edit', id: cid, nominees: sel2 }, 'Nominados actualizados.'); }
+    if (t.hasAttribute('data-delc')) { if (confirm('¿Borrar este premio y su mercado? A cada uno se le devuelven los puntos que puso.')) adm({ action: 'category_delete', id: Number(t.getAttribute('data-delc')) }, 'Premio borrado.'); return; }
+    if (t.hasAttribute('data-mk')) {
+      var k = t.getAttribute('data-mk');
+      if (k === 'over') { if (!v('aOvP')) { $('aOvP').focus(); return; } return adm({ action: 'market_add', kind: 'over', person_id: v('aOvP'), line: v('aOvL') }, 'Mercado creado.'); }
+      if (k === 'custom') { if (!v('aQ').trim()) { $('aQ').focus(); return; } return adm({ action: 'market_add', kind: 'custom', title: v('aQ'), options: v('aOpts') }, 'Pregunta creada.'); }
+      return adm({ action: 'market_add', kind: k }, 'Mercado creado.');
+    }
+    if (t.hasAttribute('data-unres')) return adm({ action: 'market_unresolve', id: Number(t.getAttribute('data-unres')) }, 'Resultado deshecho.');
+    if (t.hasAttribute('data-delm')) { if (confirm('¿Borrar este mercado? A cada uno se le devuelven los puntos que puso.')) adm({ action: 'market_delete', id: Number(t.getAttribute('data-delm')) }, 'Mercado borrado.'); return; }
+    if (t.hasAttribute('data-pin')) { if (confirm('¿Resetear el PIN de ' + t.getAttribute('data-name') + '?')) adm({ action: 'trader_reset_pin', id: Number(t.getAttribute('data-pin')) }, 'Listo: que entre con su nombre y elija un PIN nuevo.'); return; }
+    if (t.hasAttribute('data-delt')) { if (confirm('¿Borrar a ' + t.getAttribute('data-name') + '? Solo se puede si todavía no apostó.')) adm({ action: 'trader_delete', id: Number(t.getAttribute('data-delt')) }); return; }
+  });
+  $('tab-admin').addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.id === 'aOpen') return adm({ action: 'settings', trading_open: t.checked }, t.checked ? 'Apuestas abiertas.' : 'Apuestas cerradas.');
+    if (t.hasAttribute('data-win')) {
+      var c = S.categories.filter(function (x) { return x.id === Number(t.getAttribute('data-win')); })[0];
+      var label = t.value ? t.options[t.selectedIndex].text.replace(/^Ganó /, '') : null;
+      if (!confirm(label ? '¿' + label + ' ganó «' + c.name + '»? Se paga a los que apostaron por ' + label + '.' : '¿Sacarle el ganador a «' + c.name + '»? Se descuentan los pagos.')) { t.value = c.winner_id == null ? '' : String(c.winner_id); return; }
+      t.blur(); return adm({ action: 'category_winner', id: c.id, winner_id: t.value || null }, label ? 'Resuelto: ganó ' + label + '.' : 'Ganador sacado.').catch(function () {});
+    }
+    if (t.hasAttribute('data-cres') && t.value) {
+      var lab = t.options[t.selectedIndex].text;
+      if (!confirm('¿Resolver con «' + lab + '» como resultado?')) { t.value = ''; return; }
+      t.blur(); return adm({ action: 'market_resolve', id: Number(t.getAttribute('data-cres')), outcome_ids: [Number(t.value)] }, 'Resuelto.').catch(function () {});
+    }
+  });
+  if (window.GMAuth) { GMAuth.ready.then(function () { if (S) render(); }); document.addEventListener('gm-auth', function () { ideas = null; if (S) render(); if (!isAdmin() && tab === 'admin') setTab('markets'); }); }
+
+  /* ---------- Tema ---------- */
+  var root = document.documentElement, mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+  var MOON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
+  var SUN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg>';
+  function theme() { var t = root.getAttribute('data-theme'); return t === 'dark' || t === 'light' ? t : (mq && mq.matches ? 'light' : 'dark'); }
+  function paintTheme() { var d = theme() === 'dark'; $('themeBtn').innerHTML = d ? SUN : MOON; $('themeBtn').setAttribute('aria-label', d ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'); }
+  $('themeBtn').addEventListener('click', function () { var n = theme() === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', n); try { localStorage.setItem('gm-theme', n); } catch (e) {} paintTheme(); });
+  if (mq && mq.addEventListener) mq.addEventListener('change', paintTheme);
+  paintTheme();
+
+  /* ---------- Arranque y "en vivo" ---------- */
+  if (auth && auth.name) $('lgName').value = auth.name;
+  load().then(function () { var m = /^#m(\d+)$/.exec(location.hash); if (m && S && market(Number(m[1]))) openMarket(Number(m[1]), true); });
+  setInterval(function () { if (!document.hidden) load(); }, 4000);
+  setInterval(function () { if (!document.hidden && tab === 'feed' && S) renderFeed(); }, 30000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
+})();
+</script>

@@ -26,7 +26,8 @@ const PAGES = [
   ['estudio.html', 'estudio/index.html'],
   ['awards-ideas.html', 'awards/ideas/index.html'],
   ['awards-redirect.html', 'awards/index.html'],
-  ['awards-votacion.html', 'awards/votacion/index.html']
+  ['awards-votacion.html', 'awards/votacion/index.html'],
+  ['awards-mercado.html', 'awards/mercado/index.html']
 ];
 
 function inline(src) {

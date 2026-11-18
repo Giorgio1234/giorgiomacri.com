@@ -888,6 +888,8 @@ require('./lib/asistente')({ db, route, fail, readBody, rateLimited, sha, now, s
 require('./lib/estudio')({ db, route, fail, readBody, sessionFrom, now, validDate });
 // Awards: ideas de premios (formulario público, se leen desde /awards/ideas con la cuenta de admin)
 require('./lib/awards')({ db, route, fail, readBody, rateLimited, sessionFrom, requireAdmin, now });
+// Awards · Mercado: predicciones con puntos de mentira (estilo Polymarket) en /awards/mercado
+require('./lib/mercado')({ db, route, fail, readBody, rateLimited, requireAdmin, now });
 
 if (TEST_CLOCK) {
   route('POST', '/__clock', async (req) => { const b = await readBody(req); clockOffset = Number(b.offsetMs) || 0; return { now: now() }; });
