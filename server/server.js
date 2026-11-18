@@ -890,6 +890,8 @@ require('./lib/estudio')({ db, route, fail, readBody, sessionFrom, now, validDat
 require('./lib/awards')({ db, route, fail, readBody, rateLimited, sessionFrom, requireAdmin, now });
 // Awards · Mercado: predicciones con puntos de mentira (estilo Polymarket) en /awards/mercado
 require('./lib/mercado')({ db, route, fail, readBody, rateLimited, requireAdmin, now });
+// Amigo invisible: sorteo en el servidor, cada uno ve solo a quién le regala (/amigo-invisible)
+require('./lib/amigo')({ db, route, fail, readBody, rateLimited, requireAdmin, now });
 
 if (TEST_CLOCK) {
   route('POST', '/__clock', async (req) => { const b = await readBody(req); clockOffset = Number(b.offsetMs) || 0; return { now: now() }; });
