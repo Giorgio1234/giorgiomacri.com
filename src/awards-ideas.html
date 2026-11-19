@@ -79,6 +79,13 @@ textarea { min-height: 130px; resize: vertical; line-height: 1.45; }
 .inbox-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 .inbox h2 { margin: 0; font-size: 20px; letter-spacing: -0.01em; }
 .inbox-head > span { color: var(--fg-3); font-size: 14px; }
+.inbox-head { flex-wrap: wrap; align-items: center; }
+.inbox-head h2 { white-space: nowrap; }
+.inbox-r { display: flex; align-items: center; gap: 12px; }
+@media (max-width: 480px) { .inbox-r { width: 100%; justify-content: space-between; } }
+.export { border: 1px solid var(--line-2); background: var(--card-2); color: var(--fg); border-radius: 8px; height: 34px; padding: 0 12px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.export:hover { border-color: var(--accent); }
+.export.done { color: var(--ok); border-color: var(--ok); }
 .ideas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .idea { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 14px 12px 16px; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; }
 .idea b { font-weight: 600; overflow-wrap: anywhere; }
@@ -131,7 +138,7 @@ textarea { min-height: 130px; resize: vertical; line-height: 1.45; }
   </div>
 
   <section class="inbox" id="inbox" hidden>
-    <div class="inbox-head"><h2>Ideas recibidas</h2><span id="inboxCount"></span></div>
+    <div class="inbox-head"><h2>Ideas recibidas</h2><div class="inbox-r"><span id="inboxCount" style="color:var(--fg-3);font-size:14px"></span><button class="export" type="button" id="export" title="Copia todas las ideas con formato (título y descripción) para pegar en Google Docs">Copiar para Google Docs</button></div></div>
     <ul class="ideas" id="ideas"></ul>
   </section>
 </main>
@@ -175,7 +182,9 @@ textarea { min-height: 130px; resize: vertical; line-height: 1.45; }
   /* ---------- Ideas recibidas (solo admin) ---------- */
   function isAdmin() { var me = window.GMAuth && GMAuth.me(); return !!(me && me.admin); }
   var DATE = new Intl.DateTimeFormat('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  var current = [];
   function render(list) {
+    current = list;
     $('inbox').hidden = false;
     $('inboxCount').textContent = list.length === 1 ? '1 idea' : list.length + ' ideas';
     $('ideas').innerHTML = list.length ? list.map(function (i) {
@@ -185,6 +194,49 @@ textarea { min-height: 130px; resize: vertical; line-height: 1.45; }
         '<small>' + esc(DATE.format(new Date(i.at))) + (i.author ? ' · ' + esc(i.author) : ' · Anónimo') + (i.likes ? ' · ♥ ' + i.likes : '') + '</small></li>';
     }).join('') : '<li class="empty">Todavía no llegó ninguna.</li>';
   }
+  /* ---------- Exportar para Google Docs ----------
+     Copia al portapapeles en HTML (Google Docs respeta títulos y párrafos al pegar) y en texto plano.
+     Orden: como fueron llegando (la primera idea es la 1). */
+  function exportDoc() {
+    var list = current.slice().sort(function (a, b) { return a.id - b.id; });
+    if (!list.length) return;
+    var date = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date());
+    var sub = (list.length === 1 ? '1 idea' : list.length + ' ideas') + ' · ' + date;
+    var font = 'font-family:Arial,sans-serif;';
+    var html = '<h1 style="' + font + '">Ideas de premios</h1><p style="' + font + 'color:#666">' + esc(sub) + '</p>' + list.map(function (i, n) {
+      var body = i.description ? '<p style="' + font + 'font-size:11pt">' + esc(i.description).replace(/\n/g, '<br>') + '</p>' : '';
+      return '<h2 style="' + font + '">' + (n + 1) + '. ' + esc(i.title) + '</h2>' + body;
+    }).join('');
+    var text = 'Ideas de premios\n' + sub + '\n\n' + list.map(function (i, n) {
+      return (n + 1) + '. ' + i.title + (i.description ? '\n' + i.description : '');
+    }).join('\n\n') + '\n';
+    copyRich(html, text).then(function () {
+      var b = $('export'); b.textContent = '¡Copiado! Pegalo en el doc'; b.classList.add('done');
+      setTimeout(function () { b.textContent = 'Copiar para Google Docs'; b.classList.remove('done'); }, 3000);
+    }, function () { alert('No se pudo copiar. Probá desde otro navegador.'); });
+  }
+  function copyRich(html, text) {
+    if (navigator.clipboard && window.ClipboardItem) {
+      return navigator.clipboard.write([new ClipboardItem({
+        'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([text], { type: 'text/plain' })
+      })]).catch(function () { return legacyCopy(html); });
+    }
+    return legacyCopy(html);
+  }
+  function legacyCopy(html) { // navegadores sin ClipboardItem: se selecciona el contenido y se copia
+    return new Promise(function (ok, bad) {
+      var box = document.createElement('div');
+      box.contentEditable = 'true'; box.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+      box.innerHTML = html; document.body.appendChild(box);
+      var r = document.createRange(); r.selectNodeContents(box);
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      var done = false; try { done = document.execCommand('copy'); } catch (e) {}
+      sel.removeAllRanges(); box.remove();
+      if (done) ok(); else bad();
+    });
+  }
+  $('export').addEventListener('click', exportDoc);
+
   function loadIdeas() {
     if (!isAdmin()) { $('inbox').hidden = true; return; }
     call('GET', API).then(function (r) { render(r.ideas || []); }, function () { $('inbox').hidden = true; });
