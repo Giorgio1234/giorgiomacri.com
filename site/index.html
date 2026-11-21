@@ -298,7 +298,7 @@ section.sec { margin-bottom: 46px; }
     { id: 'estudio', name: 'Estudio', url: '/estudio/', cat: 'herramientas', tag: 'Con cuenta', desc: 'Mi avance en las guías de cada materia, con el parcial en la mira.', art: 'study', color: 'persimmon', featured: false, keywords: 'estudio guias ejercicios materias facultad universidad parcial final progreso tracker dudas repasar' },
     { id: 'calorias', name: 'Calorías', url: '/calorias/', cat: 'herramientas', tag: 'Con cuenta', desc: 'Comidas, macros y peso. Para bajar, mantener o subir.', art: 'macros', color: 'sage', featured: false, keywords: 'calorias macros dieta nutricion comida peso proteinas contador diario subir aumentar volumen ganar masa muscular superavit' },
     { id: 'awards', name: 'Awards', url: '/awards/ideas/', cat: 'herramientas', tag: 'Formulario', desc: 'Proponé un premio: el título y, si querés, una explicación.', art: 'medal', color: 'candle', featured: false, keywords: 'awards premios ideas formulario propuestas votacion premiacion amigos' },
-    { id: 'subir', name: 'Subir archivos', url: '/subir/', cat: 'herramientas', tag: 'Formulario', desc: 'Mandame fotos, videos o lo que sea. Solo los veo yo.', art: 'upload', color: 'blue', featured: false, keywords: 'subir archivos mandar enviar fotos videos documentos upload compartir transferir' },
+    { id: 'subir', name: 'Subir archivos', url: '/subir/', cat: 'herramientas', tag: 'Formulario', desc: '', art: 'upload', color: 'blue', featured: false, keywords: 'subir archivos mandar enviar fotos videos documentos upload compartir transferir' },
     { id: 'asistente', name: 'Asistente', url: '/asistente/', cat: 'herramientas', tag: 'Privada', desc: 'Le pido cosas y las carga: comidas, agenda, el sitio.', art: 'chat', color: 'blush', featured: false, keywords: 'asistente chat ia bot inteligencia artificial ayuda' }
   ];
   var PALETTE = { persimmon: '#fd9b65', sage: '#9ac8ae', candle: '#f8f5d1', blush: '#e9d1c7', blue: '#004b82', ink: '#0f0f14' };
@@ -483,7 +483,7 @@ section.sec { margin-bottom: 46px; }
   function card(it) {
     return '<a class="item" href="' + esc(it.url) + '" data-id="' + esc(it.id) + '">' + art(it) +
       '<div><div class="row"><h3>' + esc(it.name) + '</h3><span class="tag">' + esc(it.tag || CATS[it.cat].name) + '</span></div>' +
-      '<p>' + esc(it.desc) + '</p>' +
+      (it.desc ? '<p>' + esc(it.desc) + '</p>' : '') +
       '<span class="live" data-live="' + esc(it.id) + '"' + (live[it.id] ? '' : ' hidden') + '><span class="dot"></span><span class="lt">' + esc(live[it.id] || '') + '</span></span></div></a>';
   }
   function byCat(k) { return ITEMS.filter(function (i) { return i.cat === k; }); }

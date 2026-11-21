@@ -7,7 +7,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>Subir archivos</title>
-<meta name="description" content="Mandame archivos: fotos, videos, documentos. Solo los veo yo.">
+<meta name="description" content="Subir archivos.">
 <meta name="theme-color" content="#0f0f14">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -156,8 +156,7 @@ textarea { min-height: 84px; resize: vertical; }
 
 <main class="wrap">
   <p class="eyebrow">Archivos</p>
-  <h1>Subir archivos</h1>
-  <p class="lead">Mandame fotos, videos o lo que sea. Solo los veo yo.</p>
+  <h1 style="margin-bottom:24px">Subir archivos</h1>
 
   <div class="card">
     <div class="closed" id="closed" hidden><b>Ahora no se reciben archivos</b>Probá más tarde.</div>
@@ -175,11 +174,11 @@ textarea { min-height: 84px; resize: vertical; }
       <div class="fields">
         <div class="field">
           <label for="sender">Tu nombre <small>Opcional</small></label>
-          <input type="text" id="sender" maxlength="60" autocomplete="name" placeholder="Así sé de quién es">
+          <input type="text" id="sender" maxlength="60" autocomplete="name">
         </div>
         <div class="field">
           <label for="note">Mensaje <small>Opcional</small></label>
-          <textarea id="note" maxlength="500" placeholder="¿Qué es, para qué es?"></textarea>
+          <textarea id="note" maxlength="500"></textarea>
         </div>
       </div>
       <div class="trap" aria-hidden="true"><label>No completar<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
