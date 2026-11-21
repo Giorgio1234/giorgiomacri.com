@@ -28,7 +28,8 @@ const PAGES = [
   ['awards-redirect.html', 'awards/index.html'],
   ['awards-votacion.html', 'awards/votacion/index.html'],
   ['awards-mercado.html', 'awards/mercado/index.html'],
-  ['amigo-invisible.html', 'amigo-invisible/index.html']
+  ['amigo-invisible.html', 'amigo-invisible/index.html'],
+  ['subir.html', 'subir/index.html']
 ];
 
 function inline(src) {

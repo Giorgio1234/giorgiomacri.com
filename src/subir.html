@@ -1,0 +1,461 @@
+<title>Subir archivos</title>
+<meta name="description" content="Mandame archivos: fotos, videos, documentos. Solo los veo yo.">
+<meta name="theme-color" content="#0f0f14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap">
+<script>try{var t=localStorage.getItem('gm-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<style>
+/* Subir archivos: cualquiera manda archivos (en partes de menos de 1 MB, con reintentos).
+   Con la cuenta de admin, abajo aparece "Archivos recibidos": disco, ver, descargar y borrar. */
+:root {
+  --bg: #0f0f14; --card: #1b1b23; --card-2: #23232d; --line: #2a2a35; --line-2: #383845;
+  --fg: #f1efe9; --fg-2: #a3a1ad; --fg-3: #6d6b78;
+  --accent: #fd9b65; --on-accent: #1a0f08; --bad: #ff7a6b; --ok: #9ac8ae; --field: #14141a;
+  --font: 'Inter Tight', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f6f5f1; --card: #ffffff; --card-2: #f3f1ec; --line: #e2dfd7; --line-2: #d3cfc5; --fg: #15141a; --fg-2: #5d5b66; --fg-3: #8d8a95;
+    --accent: #c4501a; --on-accent: #ffffff; --bad: #c8321f; --ok: #2f8f5b; --field: #ffffff;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f6f5f1; --card: #ffffff; --card-2: #f3f1ec; --line: #e2dfd7; --line-2: #d3cfc5; --fg: #15141a; --fg-2: #5d5b66; --fg-3: #8d8a95;
+  --accent: #c4501a; --on-accent: #ffffff; --bad: #c8321f; --ok: #2f8f5b; --field: #ffffff;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.wrap { max-width: 640px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* Barra */
+.top { border-bottom: 1px solid var(--line); }
+.top-in { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 58px; }
+.mark { font-weight: 700; font-size: 18px; letter-spacing: -0.02em; text-decoration: none; color: var(--fg); }
+.mark span { color: #fd9b65; }
+.top-r { display: flex; align-items: center; gap: 8px; }
+.icon-btn { width: 38px; height: 38px; flex: none; border-radius: 10px; border: 1px solid var(--line); background: var(--card); display: grid; place-items: center; padding: 0; color: var(--fg-2); }
+.icon-btn:hover { color: var(--fg); }
+
+/* Encabezado */
+main { padding-block: 40px 64px; }
+.eyebrow { margin: 0 0 6px; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+.lead { margin: 10px 0 28px; color: var(--fg-2); }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+.closed { text-align: center; color: var(--fg-2); padding: 28px 18px; }
+.closed b { display: block; color: var(--fg); font-size: 18px; margin-bottom: 4px; }
+
+/* Zona para soltar */
+.drop { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center;
+  min-height: 190px; padding: 24px 18px; border: 2px dashed var(--line-2); border-radius: 14px; background: var(--field); cursor: pointer; transition: border-color .15s, background .15s; }
+.drop:hover, .drop.over { border-color: var(--accent); }
+.drop.over { background: color-mix(in srgb, var(--accent) 8%, var(--field)); }
+.drop .ico { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; background: var(--card-2); color: var(--accent); margin-bottom: 4px; }
+.drop b { font-size: 17px; font-weight: 600; }
+.drop small { color: var(--fg-3); font-size: 13px; }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+/* Cola */
+.queue { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.qi { border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; background: var(--card-2); display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; align-items: center; }
+.qi .nm { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.qi .x { border: 0; background: none; color: var(--fg-3); width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; padding: 0; }
+.qi .x:hover { color: var(--bad); background: var(--card); }
+.qi .meta { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+.qi .meta .st.ok { color: var(--ok); } .qi .meta .st.bad { color: var(--bad); }
+.bar { grid-column: 1 / -1; height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .25s; }
+.qi.done .bar i { background: var(--ok); }
+.qi.err .bar i { background: var(--bad); }
+
+/* Campos */
+.fields { display: grid; gap: 14px; margin-top: 18px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-weight: 600; font-size: 15px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.field label small { font-weight: 400; color: var(--fg-3); font-size: 13px; }
+input[type="text"], input[type="search"], textarea { width: 100%; border: 1px solid var(--line-2); border-radius: 10px; background: var(--field); padding: 11px 13px; font-size: 16px; outline: none; }
+input:focus, textarea:focus { border-color: var(--accent); }
+textarea { min-height: 84px; resize: vertical; }
+.trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 18px; }
+.btn { height: 46px; border: 0; border-radius: 10px; padding: 0 22px; background: var(--accent); color: var(--on-accent); font-weight: 600; font-size: 16px; }
+.btn:hover { filter: brightness(1.06); }
+.btn:disabled { opacity: .55; cursor: default; filter: none; }
+.btn.ghost { background: var(--card-2); color: var(--fg); }
+.err-msg { color: var(--bad); font-size: 14px; margin: 0; }
+.total { color: var(--fg-3); font-size: 14px; font-variant-numeric: tabular-nums; }
+
+.done-box { text-align: center; padding: 18px 6px 6px; }
+.done-box .tick { width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 12px; display: grid; place-items: center; background: var(--ok); color: var(--bg); }
+.done-box h2 { margin: 0 0 6px; font-size: 22px; letter-spacing: -0.01em; }
+.done-box p { margin: 0 0 18px; color: var(--fg-2); }
+
+/* Recibidos (solo admin) */
+.inbox { margin-top: 44px; }
+.inbox-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.inbox h2 { margin: 0; font-size: 20px; letter-spacing: -0.01em; }
+.switch { display: inline-flex; align-items: center; gap: 9px; font-size: 14px; color: var(--fg-2); cursor: pointer; user-select: none; }
+.switch input { appearance: none; -webkit-appearance: none; width: 40px; height: 24px; border-radius: 99px; background: var(--line-2); position: relative; margin: 0; cursor: pointer; transition: background .15s; }
+.switch input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.switch input:checked { background: var(--ok); }
+.switch input:checked::after { transform: translateX(16px); }
+.diskcard { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
+.diskrow { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; color: var(--fg-2); font-variant-numeric: tabular-nums; flex-wrap: wrap; }
+.diskrow b { color: var(--fg); font-weight: 600; }
+.diskbar { display: flex; height: 10px; border-radius: 99px; overflow: hidden; background: var(--line); margin: 10px 0 8px; }
+.diskbar i { display: block; height: 100%; }
+.diskbar .o { background: var(--fg-3); } .diskbar .f { background: var(--accent); }
+.legend { display: flex; gap: 14px; font-size: 12px; color: var(--fg-3); flex-wrap: wrap; }
+.legend span::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; vertical-align: 0; background: var(--c); }
+.tools { display: flex; gap: 8px; margin-bottom: 10px; }
+.tools input { height: 40px; padding: 0 12px; font-size: 15px; }
+.files { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.file { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; grid-template-columns: 48px 1fr; gap: 4px 12px; }
+.thumb { grid-row: 1 / span 3; width: 48px; height: 48px; border-radius: 9px; background: var(--card-2); display: grid; place-items: center; color: var(--fg-3); font-size: 11px; font-weight: 700; text-transform: uppercase; overflow: hidden; letter-spacing: .02em; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; }
+.file .nm { font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.file .nm .new { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 700; color: var(--on-accent); background: var(--accent); border-radius: 99px; padding: 1px 7px; vertical-align: 2px; }
+.file .sub { color: var(--fg-3); font-size: 13px; font-variant-numeric: tabular-nums; }
+.file .note { color: var(--fg-2); font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; margin: 2px 0 0; }
+.file .acts { grid-column: 2; display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.file .acts a, .file .acts button { height: 32px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--card-2); color: var(--fg); text-decoration: none; font-size: 14px; font-weight: 500; }
+.file .acts a:hover { border-color: var(--accent); }
+.file .acts .del { color: var(--fg-3); border-color: transparent; background: none; margin-left: auto; }
+.file .acts .del:hover { color: var(--bad); }
+.empty { color: var(--fg-3); padding: 18px 0; margin: 0; }
+.note-line { color: var(--fg-3); font-size: 13px; margin: 8px 0 0; }
+</style>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="mark" href="/">giorgiomacri<span>/</span></a>
+    <div class="top-r">
+      <button class="icon-btn" type="button" id="themeBtn" aria-label="Cambiar tema"></button>
+      <span id="gmAuth"></span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="eyebrow">Archivos</p>
+  <h1>Subir archivos</h1>
+  <p class="lead">Mandame fotos, videos o lo que sea. Solo los veo yo.</p>
+
+  <div class="card">
+    <div class="closed" id="closed" hidden><b>Ahora no se reciben archivos</b>Probá más tarde.</div>
+
+    <form id="form" novalidate>
+      <label class="drop" id="drop">
+        <input type="file" id="pick" multiple>
+        <span class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"/></svg></span>
+        <b id="dropTitle">Elegí archivos</b>
+        <small id="dropHint">O arrastralos acá.</small>
+      </label>
+
+      <ul class="queue" id="queue"></ul>
+
+      <div class="fields">
+        <div class="field">
+          <label for="sender">Tu nombre <small>Opcional</small></label>
+          <input type="text" id="sender" maxlength="60" autocomplete="name" placeholder="Así sé de quién es">
+        </div>
+        <div class="field">
+          <label for="note">Mensaje <small>Opcional</small></label>
+          <textarea id="note" maxlength="500" placeholder="¿Qué es, para qué es?"></textarea>
+        </div>
+      </div>
+      <div class="trap" aria-hidden="true"><label>No completar<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+
+      <div class="actions">
+        <button class="btn" type="submit" id="send" disabled>Enviar</button>
+        <span class="total" id="total"></span>
+      </div>
+      <p class="err-msg" id="err" role="alert"></p>
+    </form>
+
+    <div class="done-box" id="done" hidden>
+      <div class="tick"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+      <h2 id="doneTitle">¡Listo!</h2>
+      <p id="doneText">Ya llegaron.</p>
+      <button class="btn ghost" type="button" id="again">Mandar más</button>
+    </div>
+  </div>
+
+  <section class="inbox" id="inbox" hidden>
+    <div class="inbox-head">
+      <h2>Archivos recibidos</h2>
+      <label class="switch"><input type="checkbox" id="openSw"> Recibir archivos</label>
+    </div>
+    <div class="diskcard">
+      <div class="diskrow"><span>Disco: <b id="dFree"></b> libres de <b id="dTotal"></b></span><span id="dFiles"></span></div>
+      <div class="diskbar" aria-hidden="true"><i class="o" id="barOther"></i><i class="f" id="barFiles"></i></div>
+      <div class="legend"><span style="--c:var(--fg-3)">Resto del servidor</span><span style="--c:var(--accent)">Archivos subidos</span><span style="--c:var(--line)">Libre</span></div>
+      <p class="note-line" id="limits"></p>
+    </div>
+    <div class="tools"><input type="search" id="q" placeholder="Buscar por nombre, quién o mensaje" aria-label="Buscar archivos"></div>
+    <ul class="files" id="files"></ul>
+  </section>
+</main>
+
+<script>
+/*@shared/auth.js*/
+</script>
+<script>
+(function () {
+  'use strict';
+  var API = '/api/sudoku/archivos';
+  var PARALLEL = 3, RETRIES = 4;
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function token() { return window.GMAuth ? GMAuth.token() : null; }
+  function isAdmin() { var me = window.GMAuth && GMAuth.me(); return !!(me && me.admin); }
+  function call(method, url, body, extra) {
+    var h = { 'Content-Type': 'application/json' }, t = token(); if (t) h.Authorization = 'Bearer ' + t;
+    if (extra) for (var k in extra) h[k] = extra[k];
+    return fetch(url, { method: method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' })
+      .catch(function () { var e = new Error('Sin conexión. Probá de nuevo.'); e.net = true; throw e; })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) { var e = new Error(j.error || 'Algo falló. Probá de nuevo.'); e.status = r.status; throw e; } return j; }); });
+  }
+  function size(n) {
+    if (n < 1024) return n + ' B';
+    var u = ['KB', 'MB', 'GB', 'TB'], i = -1;
+    do { n /= 1024; i++; } while (n >= 1024 && i < u.length - 1);
+    return (n >= 100 ? Math.round(n) : n.toFixed(1).replace('.', ',').replace(/,0$/, '')) + ' ' + u[i];
+  }
+  function plural(n, a, b) { return n + ' ' + (n === 1 ? a : b); }
+
+  /* ---------- Estado ---------- */
+  var limits = { open: true, maxBytes: 2 * 1024 * 1024 * 1024, chunk: 960 * 1024 };
+  function loadState() {
+    return call('GET', API + '/estado').then(function (r) { limits = r; paintState(); }, function () {});
+  }
+  function paintState() {
+    var closed = !limits.open && !isAdmin();
+    $('closed').hidden = !closed;
+    $('form').hidden = closed || !$('done').hidden;
+    $('dropHint').textContent = 'O arrastralos acá. Hasta ' + size(limits.maxBytes) + ' cada uno.';
+  }
+
+  /* ---------- Cola ---------- */
+  var queue = [], sending = false, seq = 0;
+  function add(files) {
+    $('err').textContent = '';
+    for (var i = 0; i < files.length; i++) {
+      var f = files[i];
+      if (!f.size) { $('err').textContent = '«' + f.name + '» está vacío.'; continue; }
+      if (f.size > limits.maxBytes) { $('err').textContent = '«' + f.name + '» pesa ' + size(f.size) + ': el máximo es ' + size(limits.maxBytes) + '.'; continue; }
+      if (queue.some(function (q) { return q.file.name === f.name && q.file.size === f.size && q.file.lastModified === f.lastModified && q.state !== 'done'; })) continue;
+      queue.push({ key: ++seq, file: f, state: 'wait', sent: 0, msg: '' });
+    }
+    paintQueue();
+  }
+  function paintQueue() {
+    $('queue').innerHTML = queue.map(function (q) {
+      var pct = q.file.size ? Math.round(q.sent / q.file.size * 100) : 0;
+      var st = q.state === 'done' ? '<span class="st ok">Enviado</span>' : q.state === 'err' ? '<span class="st bad">' + esc(q.msg) + '</span>'
+        : q.state === 'up' ? '<span class="st">' + pct + ' %' + (q.speed ? ' · ' + size(q.speed) + '/s' : '') + '</span>' : '<span class="st">' + (sending ? 'En espera' : '') + '</span>';
+      var x = q.state === 'done' ? '' : '<button class="x" type="button" data-k="' + q.key + '" aria-label="' + (q.state === 'up' ? 'Cancelar' : 'Sacar') + ' «' + esc(q.file.name) + '»"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
+      return '<li class="qi ' + (q.state === 'done' ? 'done' : q.state === 'err' ? 'err' : '') + '" data-q="' + q.key + '"><span class="nm" title="' + esc(q.file.name) + '">' + esc(q.file.name) + '</span>' + x +
+        '<div class="bar"><i style="width:' + (q.state === 'done' ? 100 : pct) + '%"></i></div>' +
+        '<div class="meta"><span>' + (q.state === 'up' ? size(q.sent) + ' de ' : '') + size(q.file.size) + '</span>' + st + '</div></li>';
+    }).join('');
+    var left = queue.filter(function (q) { return q.state !== 'done'; });
+    var bytes = left.reduce(function (s, q) { return s + q.file.size; }, 0);
+    $('send').disabled = sending || !left.length;
+    $('send').textContent = sending ? 'Enviando…' : left.length > 1 ? 'Enviar ' + left.length + ' archivos' : 'Enviar';
+    $('total').textContent = left.length ? plural(left.length, 'archivo', 'archivos') + ' · ' + size(bytes) : '';
+    $('dropTitle').textContent = queue.length ? 'Sumar más archivos' : 'Elegí archivos';
+  }
+  // Actualiza solo la barra de un archivo (sin redibujar toda la lista mientras sube)
+  function paintOne(q) {
+    var li = document.querySelector('[data-q="' + q.key + '"]'); if (!li) return paintQueue();
+    var pct = Math.round(q.sent / q.file.size * 100);
+    li.querySelector('.bar i').style.width = pct + '%';
+    var m = li.querySelectorAll('.meta span');
+    m[0].textContent = size(q.sent) + ' de ' + size(q.file.size);
+    m[1].textContent = pct + ' %' + (q.speed ? ' · ' + size(q.speed) + '/s' : '');
+  }
+
+  $('pick').addEventListener('change', function () { add(this.files); this.value = ''; });
+  var drop = $('drop'), depth = 0;
+  ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); if (ev === 'dragenter') depth++; drop.classList.add('over'); }); });
+  drop.addEventListener('dragleave', function () { if (--depth <= 0) { depth = 0; drop.classList.remove('over'); } });
+  drop.addEventListener('drop', function (e) { e.preventDefault(); depth = 0; drop.classList.remove('over'); if (e.dataTransfer && e.dataTransfer.files) add(e.dataTransfer.files); });
+  // Soltar fuera de la zona no abre el archivo en la pestaña
+  window.addEventListener('dragover', function (e) { e.preventDefault(); });
+  window.addEventListener('drop', function (e) { e.preventDefault(); });
+
+  $('queue').addEventListener('click', function (e) {
+    var b = e.target.closest('.x'); if (!b) return;
+    var k = +b.getAttribute('data-k'), q = queue.filter(function (x) { return x.key === k; })[0];
+    if (!q) return;
+    if (q.state === 'up') { q.cancel = true; if (q.ctl) q.ctl.abort(); return; }
+    queue = queue.filter(function (x) { return x !== q; });
+    paintQueue();
+  });
+
+  /* ---------- Subida en partes ---------- */
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function putPart(q, up, i) {
+    var start = i * up.chunk, blob = q.file.slice(start, Math.min(q.file.size, start + up.chunk));
+    var tries = 0;
+    function attempt() {
+      if (q.cancel) return Promise.reject(new Error('cancel'));
+      return fetch(API + '/subida/' + up.id + '/' + i, { method: 'PUT', headers: { 'X-Subida': up.token, 'Content-Type': 'application/octet-stream' }, body: blob, signal: q.ctl.signal, cache: 'no-store' })
+        .then(function (r) {
+          if (r.ok) return blob.size;
+          return r.json().catch(function () { return {}; }).then(function (j) { var e = new Error(j.error || 'Algo falló.'); e.status = r.status; throw e; });
+        })
+        .catch(function (e) {
+          if (q.cancel) throw new Error('cancel');
+          // Se reintenta si se cortó la conexión o el servidor se reinició; los errores definitivos (404, 409) no
+          if ((e.status && e.status < 500 && e.status !== 400 && e.status !== 429) || ++tries > RETRIES) throw e;
+          return sleep(800 * tries * tries).then(attempt);
+        });
+    }
+    return attempt();
+  }
+  function sendFile(q) {
+    q.state = 'up'; q.sent = 0; q.cancel = false; q.ctl = new AbortController(); paintQueue();
+    var up, t0 = Date.now();
+    return call('POST', API + '/subida', { name: q.file.name, size: q.file.size, sender: $('sender').value.trim(), note: $('note').value.trim(), website: $('form').website.value })
+      .then(function (r) {
+        up = r;
+        if (q.cancel) throw new Error('cancel');
+        var todo = []; for (var i = 0; i < r.parts; i++) todo.push(i);
+        function worker() {
+          if (!todo.length) return Promise.resolve();
+          var i = todo.shift();
+          return putPart(q, up, i).then(function (n) {
+            q.sent += n; var secs = (Date.now() - t0) / 1000; q.speed = secs > 1 ? q.sent / secs : 0; paintOne(q);
+            return worker();
+          });
+        }
+        var ws = []; for (var w = 0; w < Math.min(PARALLEL, r.parts); w++) ws.push(worker());
+        return Promise.all(ws);
+      })
+      .then(function finish() {
+        return call('POST', API + '/subida/' + up.id + '/fin', null, { 'X-Subida': up.token }).then(function (r) {
+          if (r.ok) return;
+          // Faltó alguna parte: se manda de nuevo
+          return Promise.all(r.missing.map(function (i) { return putPart(q, up, i); })).then(finish);
+        });
+      })
+      .then(function () { q.state = 'done'; q.sent = q.file.size; q.speed = 0; },
+        function (e) {
+          if (up && (q.cancel || e.name === 'AbortError')) call('DELETE', API + '/subida/' + up.id, null, { 'X-Subida': up.token }).catch(function () {});
+          if (q.cancel || e.message === 'cancel' || e.name === 'AbortError') { queue = queue.filter(function (x) { return x !== q; }); return; }
+          q.state = 'err'; q.msg = e.status ? e.message : 'Se cortó la conexión'; q.fatal = e.status === 403 || e.status === 507;
+        })
+      .then(paintQueue);
+  }
+
+  $('form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (sending) return;
+    var list = queue.filter(function (q) { return q.state !== 'done'; });
+    if (!list.length) return;
+    sending = true; $('err').textContent = '';
+    list.forEach(function (q) { if (q.state === 'err') { q.state = 'wait'; q.msg = ''; } });
+    paintQueue();
+    var sent = 0, stop = false;
+    list.reduce(function (p, q) {
+      return p.then(function () {
+        if (stop || queue.indexOf(q) < 0) return;
+        return sendFile(q).then(function () { if (q.state === 'done') sent++; if (q.fatal) { stop = true; $('err').textContent = q.msg; } });
+      });
+    }, Promise.resolve()).then(function () {
+      sending = false;
+      var failed = queue.filter(function (q) { return q.state === 'err'; }).length;
+      if (!failed && sent && !queue.some(function (q) { return q.state !== 'done'; })) {
+        $('doneTitle').textContent = sent === 1 ? '¡Llegó!' : '¡Llegaron los ' + sent + '!';
+        $('doneText').textContent = sent === 1 ? 'El archivo ya está guardado.' : 'Los archivos ya están guardados.';
+        $('form').hidden = true; $('done').hidden = false; $('again').focus();
+      } else if (failed && !$('err').textContent) {
+        $('err').textContent = plural(failed, 'archivo no se pudo', 'archivos no se pudieron') + ' enviar. Tocá Enviar para reintentar.';
+      }
+      paintQueue();
+      if (isAdmin()) loadFiles();
+    });
+  });
+  $('again').addEventListener('click', function () {
+    queue = []; $('note').value = ''; $('done').hidden = true; $('form').hidden = false; paintQueue(); paintState();
+  });
+  window.addEventListener('beforeunload', function (e) { if (sending) { e.preventDefault(); e.returnValue = ''; } });
+
+  /* ---------- Recibidos (solo admin) ---------- */
+  var DATE = new Intl.DateTimeFormat('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false });
+  var IMG = /\.(png|jpe?g|gif|webp|avif)$/i;
+  var files = [], lastSeen = 0;
+  function extOf(n) { var m = /\.([A-Za-z0-9]{1,5})$/.exec(n); return m ? m[1] : '?'; }
+  function paintFiles() {
+    var q = $('q').value.trim().toLowerCase();
+    var list = files.filter(function (f) { return !q || (f.name + ' ' + f.sender + ' ' + f.note + ' ' + f.account).toLowerCase().indexOf(q) >= 0; });
+    $('files').innerHTML = list.length ? list.map(function (f) {
+      var who = f.sender || f.account || 'Anónimo';
+      var thumb = IMG.test(f.name) ? '<img src="' + esc(f.view) + '" alt="" loading="lazy">' : esc(extOf(f.name));
+      return '<li class="file"><div class="thumb">' + thumb + '</div>' +
+        '<div class="nm">' + esc(f.name) + (f.done_at > lastSeen ? '<span class="new">Nuevo</span>' : '') + '</div>' +
+        '<div class="sub">' + size(f.size) + ' · ' + esc(DATE.format(new Date(f.done_at))) + ' · ' + esc(who) + '<span title="IP"> · ' + esc(f.ip) + '</span></div>' +
+        (f.note ? '<p class="note">' + esc(f.note) + '</p>' : '<div></div>') +
+        '<div class="acts">' + (f.viewable ? '<a href="' + esc(f.view) + '" target="_blank" rel="noopener">Ver</a>' : '') +
+        '<a href="' + esc(f.url) + '" download>Descargar</a>' +
+        '<button class="del" type="button" data-id="' + f.id + '">Borrar</button></div></li>';
+    }).join('') : '<li class="empty">' + (files.length ? 'Nada coincide con la búsqueda.' : 'Todavía no llegó nada.') + '</li>';
+  }
+  function paintDisk(r) {
+    var total = r.disk.total || 1, free = r.disk.free, mine = r.used, other = Math.max(0, total - free - mine);
+    $('dFree').textContent = size(free); $('dTotal').textContent = size(r.disk.total);
+    $('dFiles').textContent = plural(files.length, 'archivo', 'archivos') + ' · ' + size(mine) + (r.uploading ? ' · ' + r.uploading + ' subiendo' : '');
+    $('barOther').style.width = (other / total * 100) + '%'; $('barFiles').style.width = Math.max(mine ? 0.5 : 0, mine / total * 100) + '%';
+    $('limits').textContent = 'Límites: ' + size(r.limits.maxBytes) + ' por archivo, ' + size(r.limits.ipDaily) + ' por persona por día, ' + size(r.limits.quota) + ' en total. Siempre quedan ' + size(r.limits.reserve) + ' libres en el disco.';
+  }
+  var marked = false;
+  function loadFiles() {
+    if (!isAdmin()) { $('inbox').hidden = true; paintState(); return; }
+    call('GET', API).then(function (r) {
+      files = r.files; if (!marked) lastSeen = r.lastSeen;
+      $('inbox').hidden = false; $('openSw').checked = r.open;
+      limits.open = r.open; paintState();
+      paintDisk(r); paintFiles();
+      if (!marked) { marked = true; call('POST', API + '/admin', { action: 'seen' }).catch(function () {}); }
+    }, function () { $('inbox').hidden = true; });
+  }
+  $('q').addEventListener('input', paintFiles);
+  $('openSw').addEventListener('change', function () {
+    var sw = this; sw.disabled = true;
+    call('POST', API + '/admin', { action: 'open', value: sw.checked }).then(function (r) { sw.checked = r.open; limits.open = r.open; }, function (x) { sw.checked = !sw.checked; alert(x.message); })
+      .then(function () { sw.disabled = false; });
+  });
+  $('files').addEventListener('click', function (e) {
+    var b = e.target.closest('.del'); if (!b) return;
+    var f = files.filter(function (x) { return x.id === b.getAttribute('data-id'); })[0];
+    if (!f || !confirm('¿Borrar «' + f.name + '»? No se puede deshacer.')) return;
+    b.disabled = true;
+    call('DELETE', API + '/' + f.id).then(loadFiles, function (x) { b.disabled = false; alert(x.message); });
+  });
+
+  loadState();
+  paintQueue();
+  if (window.GMAuth) { GMAuth.ready.then(loadFiles); document.addEventListener('gm-auth', loadFiles); }
+
+  /* ---------- Tema ---------- */
+  var root = document.documentElement, mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+  var MOON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
+  var SUN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg>';
+  function theme() { var t = root.getAttribute('data-theme'); return t === 'dark' || t === 'light' ? t : (mq && mq.matches ? 'light' : 'dark'); }
+  function paintTheme() { var d = theme() === 'dark'; $('themeBtn').innerHTML = d ? SUN : MOON; $('themeBtn').setAttribute('aria-label', d ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'); }
+  $('themeBtn').addEventListener('click', function () { var n = theme() === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', n); try { localStorage.setItem('gm-theme', n); } catch (e) {} paintTheme(); });
+  if (mq && mq.addEventListener) mq.addEventListener('change', paintTheme);
+  paintTheme();
+})();
+</script>

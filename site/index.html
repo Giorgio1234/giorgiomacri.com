@@ -298,6 +298,7 @@ section.sec { margin-bottom: 46px; }
     { id: 'estudio', name: 'Estudio', url: '/estudio/', cat: 'herramientas', tag: 'Con cuenta', desc: 'Mi avance en las guías de cada materia, con el parcial en la mira.', art: 'study', color: 'persimmon', featured: false, keywords: 'estudio guias ejercicios materias facultad universidad parcial final progreso tracker dudas repasar' },
     { id: 'calorias', name: 'Calorías', url: '/calorias/', cat: 'herramientas', tag: 'Con cuenta', desc: 'Comidas, macros y peso. Para bajar, mantener o subir.', art: 'macros', color: 'sage', featured: false, keywords: 'calorias macros dieta nutricion comida peso proteinas contador diario subir aumentar volumen ganar masa muscular superavit' },
     { id: 'awards', name: 'Awards', url: '/awards/ideas/', cat: 'herramientas', tag: 'Formulario', desc: 'Proponé un premio: el título y, si querés, una explicación.', art: 'medal', color: 'candle', featured: false, keywords: 'awards premios ideas formulario propuestas votacion premiacion amigos' },
+    { id: 'subir', name: 'Subir archivos', url: '/subir/', cat: 'herramientas', tag: 'Formulario', desc: 'Mandame fotos, videos o lo que sea. Solo los veo yo.', art: 'upload', color: 'blue', featured: false, keywords: 'subir archivos mandar enviar fotos videos documentos upload compartir transferir' },
     { id: 'asistente', name: 'Asistente', url: '/asistente/', cat: 'herramientas', tag: 'Privada', desc: 'Le pido cosas y las carga: comidas, agenda, el sitio.', art: 'chat', color: 'blush', featured: false, keywords: 'asistente chat ia bot inteligencia artificial ayuda' }
   ];
   var PALETTE = { persimmon: '#fd9b65', sage: '#9ac8ae', candle: '#f8f5d1', blush: '#e9d1c7', blue: '#004b82', ink: '#0f0f14' };
@@ -399,6 +400,14 @@ section.sec { margin-bottom: 46px; }
       }
       s += '<rect x="114" y="216" width="172" height="14" rx="7" fill="#0f0f14" fill-opacity=".12"/><rect x="114" y="216" width="104" height="14" rx="7" fill="#9ac8ae" stroke="#0f0f14" stroke-width="1.5"/>';
       s += '<text x="286" y="252" text-anchor="end" font-family="Inter Tight, sans-serif" font-size="16" font-weight="700" fill="#0f0f14">60 %</text>';
+    } else if (item.art === 'upload') {
+      // carpeta con un archivo que sube y la flecha hacia arriba
+      s += '<rect x="96" y="116" width="208" height="150" rx="14" fill="#f8f5d1" stroke="#0f0f14" stroke-width="2"/>';
+      s += '<path d="M96 132 a14 14 0 0 1 14 -14 h52 l16 18 h112 a14 14 0 0 1 14 14" fill="none" stroke="#0f0f14" stroke-width="2"/>';
+      s += '<g transform="rotate(-6 200 120)"><rect x="150" y="52" width="100" height="126" rx="10" fill="#ffffff" stroke="#0f0f14" stroke-width="2"/>';
+      s += '<rect x="166" y="72" width="56" height="9" rx="4.5" fill="#0f0f14"/><rect x="166" y="90" width="68" height="7" rx="3.5" fill="#0f0f14" fill-opacity=".3"/><rect x="166" y="104" width="44" height="7" rx="3.5" fill="#0f0f14" fill-opacity=".3"/></g>';
+      s += '<rect x="96" y="168" width="208" height="98" rx="14" fill="#fd9b65" stroke="#0f0f14" stroke-width="2"/>';
+      s += '<circle cx="200" cy="216" r="30" fill="#0f0f14"/><path d="M200 230 v-27 M188 214 l12 -12 l12 12" fill="none" stroke="#fd9b65" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>';
     } else if (item.art === 'medal') {
       // medalla con cinta y una tarjeta de idea al costado
       s += '<path d="M150 34 L188 34 L214 128 L186 136 Z" fill="#004b82" stroke="#0f0f14" stroke-width="2"/>';

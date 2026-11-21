@@ -13,6 +13,7 @@ Sitio personal: un catálogo de herramientas y juegos que corren en el navegador
 | `/poker/` | Deudas de poker |
 | `/agenda/` | Agenda diaria privada (necesita el servidor y login) |
 | `/calorias/` | Contador de calorías (necesita una cuenta del sitio) |
+| `/subir/` | Subir archivos: cualquiera sube sin cuenta; solo el admin ve, descarga y borra |
 | `/asistente/` | Chat privado que carga calorías, maneja la agenda y propone cambios al sitio |
 
 ## Estructura
@@ -55,3 +56,12 @@ Instalación única: `bash deploy/install.sh` como root en el VPS.
 Ver lo que pasó: `journalctl -u giorgiomacri-sync -n 30 --no-pager`
 
 Volver a una versión anterior: `git revert <commit>` y subir; el VPS la publica sola.
+
+## Subir archivos
+
+`/subir/` (`server/lib/archivos.js`): cualquiera manda archivos sin cuenta; con la cuenta de admin, la misma página muestra "Archivos recibidos" (ver, descargar, borrar), el espacio del disco y un interruptor para dejar de recibir.
+
+- Se suben en partes de 960 KB, así entran por el límite por defecto de Nginx (`client_max_body_size 1m`): no hace falta tocar Nginx. Si se corta la conexión, cada parte se reintenta.
+- Se guardan en `/var/lib/sudoku-torneo/archivos/` con un nombre al azar (el nombre original queda en la tabla `files`). No entran en los backups de la base.
+- Nunca se sirven en público: el admin descarga con links firmados que vencen a las 12 horas. Se descargan siempre como archivo; solo imágenes, video, audio, PDF y texto se pueden abrir con "Ver", y sin poder correr código.
+- Límites (en `/etc/sudoku-torneo.env`, opcionales): `FILES_MAX_MB` (2048 por archivo), `FILES_IP_DAILY_MB` (4096 por IP por día; el admin no tiene este límite), `FILES_QUOTA_GB` (20 en total) y `FILES_RESERVE_MB` (siempre deja 3072 libres en el disco). Las subidas sin terminar se borran a las 24 horas.

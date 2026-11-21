@@ -892,6 +892,9 @@ require('./lib/awards')({ db, route, fail, readBody, rateLimited, sessionFrom, r
 require('./lib/mercado')({ db, route, fail, readBody, rateLimited, requireAdmin, now });
 // Amigo invisible: sorteo en el servidor, cada uno ve solo a quién le regala (/amigo-invisible)
 require('./lib/amigo')({ db, route, fail, readBody, rateLimited, requireAdmin, now });
+// Subir archivos: cualquiera sube, solo el admin ve y descarga (/subir)
+const RAW = Symbol('raw'); // la ruta ya escribió la respuesta (descargas)
+require('./lib/archivos')({ db, route, fail, rateLimited, requireAdmin, sessionFrom, clientIp, now, RAW, dataDir: path.dirname(DB_PATH) });
 
 if (TEST_CLOCK) {
   route('POST', '/__clock', async (req) => { const b = await readBody(req); clockOffset = Number(b.offsetMs) || 0; return { now: now() }; });
@@ -906,9 +909,11 @@ const server = http.createServer(async (req, res) => {
     let match = null, r = null;
     for (const x of routes) { const m = x.re.exec(url.pathname); if (m) { if (x.method === req.method) { r = x; match = m; break; } match = match || m; } }
     if (!r) fail(match ? 405 : 404, 'No encontrado.');
-    const out = await r.fn(req, url, match);
+    const out = await r.fn(req, url, match, res);
+    if (out === RAW) return;
     res.end(JSON.stringify(out));
   } catch (e) {
+    if (res.headersSent) { res.destroy(); return; }
     const status = e.status || 500;
     if (status === 500) console.error(e);
     res.statusCode = status;
