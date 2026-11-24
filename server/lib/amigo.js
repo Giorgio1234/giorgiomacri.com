@@ -129,6 +129,16 @@ module.exports = function install(d) {
       const r = db.prepare('UPDATE ai_people SET pin_hash = NULL, claimed_at = NULL WHERE id = ? AND draw_id = ?').run(int(b.id), draw.id);
       if (!r.changes) fail(404, 'Esa persona no está en el sorteo.');
     },
+    rename(b) { // cambia cómo figura alguien (también en la votación de los Awards); no toca PIN, sorteo ni votos
+      const draw = current(); if (!draw) fail(404, 'Todavía no hay sorteo.');
+      const p = db.prepare('SELECT * FROM ai_people WHERE id = ? AND draw_id = ?').get(int(b.id), draw.id);
+      if (!p) fail(404, 'Esa persona no está en el sorteo.');
+      const name = str(b.name, MAX_NAME);
+      if (!name) fail(400, 'Poné un nombre.');
+      const other = db.prepare('SELECT id FROM ai_people WHERE draw_id = ? AND name_key = ?').get(draw.id, keyOf(name));
+      if (other && other.id !== p.id) fail(409, 'Ya hay alguien con ese nombre.');
+      db.prepare('UPDATE ai_people SET name = ?, name_key = ? WHERE id = ?').run(name, keyOf(name), p.id);
+    },
     redraw() { // nuevo sorteo con la misma gente (conserva PINs e ideas)
       const draw = current(); if (!draw) fail(404, 'Todavía no hay sorteo.');
       assign(draw.id);

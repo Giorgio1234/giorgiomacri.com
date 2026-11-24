@@ -505,7 +505,7 @@ input:focus, textarea:focus { border-color: var(--accent); }
         '<textarea id="eNotes" maxlength="500" placeholder="Notas" style="min-height:70px">' + esc(d.notes) + '</textarea>' +
         '<div class="actions"><button class="btn sm" type="button" data-a="info">Guardar</button></div></div></div>';
       h += '<div class="card"><h2>Participantes <small>(no se muestra a quién le regala cada uno)</small></h2><p class="hint">Si alguien entró con un nombre que no era el suyo, o se olvidó el PIN, liberá ese nombre: el dueño elige un PIN nuevo y ve lo mismo que antes.</p><ul class="people">' +
-        S.people.map(function (p) { return '<li><span>' + esc(p.name) + '</span><span class="actions" style="align-items:center"><span class="st' + (p.seen ? ' seen' : '') + '">' + (p.seen ? '✓ vio' : p.claimed ? 'entró' : 'falta') + '</span>' + (p.claimed ? '<button class="btn sm ghost" type="button" data-rel="' + p.id + '" data-n="' + esc(p.name) + '">Liberar</button>' : '') + '</span></li>'; }).join('') + '</ul></div>';
+        S.people.map(function (p) { return '<li><span>' + esc(p.name) + '</span><span class="actions" style="align-items:center"><span class="st' + (p.seen ? ' seen' : '') + '">' + (p.seen ? '✓ vio' : p.claimed ? 'entró' : 'falta') + '</span>' + '<button class="btn sm ghost" type="button" data-ren="' + p.id + '" data-n="' + esc(p.name) + '">Renombrar</button>' + (p.claimed ? '<button class="btn sm ghost" type="button" data-rel="' + p.id + '" data-n="' + esc(p.name) + '">Liberar</button>' : '') + '</span></li>'; }).join('') + '</ul></div>';
       h += '<div class="card"><h2>Rehacer</h2><p class="hint">Volver a sortear con la misma gente cambia a quién le regala cada uno (los que ya vieron tienen que volver a mirar). Nuevo sorteo empieza de cero con otra lista.</p><div class="actions"><button class="btn sm danger" type="button" data-a="redraw">Volver a sortear</button><button class="btn sm ghost" type="button" data-a="new">Nuevo sorteo</button></div></div>';
     }
     el.innerHTML = h;
@@ -528,6 +528,7 @@ input:focus, textarea:focus { border-color: var(--accent); }
       (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function () { t.textContent = '¡Copiado!'; setTimeout(function () { t.textContent = 'Copiar mensaje'; }, 1800); }, function () { prompt('Copiá el mensaje:', txt); });
       return;
     }
+    if (t.hasAttribute('data-ren')) { var nn = prompt('¿Cómo tiene que figurar ' + t.getAttribute('data-n') + '? (cambia también en la votación de los Awards)', t.getAttribute('data-n')); if (nn && nn.trim() && nn.trim() !== t.getAttribute('data-n')) adm({ action: 'rename', id: Number(t.getAttribute('data-ren')), name: nn }); return; }
     if (t.hasAttribute('data-rel')) { if (confirm('¿Liberar el nombre de ' + t.getAttribute('data-n') + '? Va a tener que elegir un PIN nuevo.')) adm({ action: 'release', id: Number(t.getAttribute('data-rel')) }); }
   });
   if (window.GMAuth) { GMAuth.ready.then(function () { if (S) render(); }); document.addEventListener('gm-auth', function () { if (S) render(); }); }
