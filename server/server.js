@@ -892,6 +892,8 @@ require('./lib/awards')({ db, route, fail, readBody, rateLimited, sessionFrom, r
 require('./lib/mercado')({ db, route, fail, readBody, rateLimited, requireAdmin, now });
 // Amigo invisible: sorteo en el servidor, cada uno ve solo a quién le regala (/amigo-invisible)
 require('./lib/amigo')({ db, route, fail, readBody, rateLimited, requireAdmin, now });
+// Matense Awards · votación de los premios (entran con nombre + PIN del amigo invisible) en /awards/votar
+require('./lib/votacion')({ db, route, fail, readBody, rateLimited, requireAdmin, now });
 // Subir archivos: cualquiera sube, solo el admin ve y descarga (/subir)
 const RAW = Symbol('raw'); // la ruta ya escribió la respuesta (descargas)
 require('./lib/archivos')({ db, route, fail, rateLimited, requireAdmin, sessionFrom, clientIp, now, RAW, dataDir: path.dirname(DB_PATH) });

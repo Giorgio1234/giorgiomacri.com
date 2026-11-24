@@ -1,0 +1,337 @@
+<title>Matense Awards 2026 · Votación</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#140A1E">
+<meta name="description" content="La noche de los premios: votá los Matense Awards 2026.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@600;700&family=Anton&display=swap">
+<link rel="preload" as="image" href="/awards/votar/cielo.webp">
+<style>
+/* Matense Awards 2026 · votación. Estética GTA VI: atardecer de Miami, neón violeta y rosa, palmeras.
+   Fondo en tres capas (cielo, ciudad, palmeras) que se mueven a distinta velocidad con un loop de 12 s.
+   Fuente protagonista: Pricedown Black (/awards/votar/pricedown.otf); si no está, se usa Anton.
+   Link oculto (no está en la portada). Se entra con el nombre y el PIN del amigo invisible. */
+@font-face { font-family: 'Pricedown Black'; src: url('/awards/votar/pricedown.otf') format('opentype'); font-display: swap; }
+:root {
+  --fondo: #140A1E; --texto: #FFFFFF; --cian: #25E6FF; --rosa: #FF2EA6; --naranja: #FF9A2E; --oro: #FFC83D; --tarjeta: #2A123A;
+  --apagado: #7a5a92;
+  --gta: 'Pricedown Black', 'Anton', Impact, sans-serif;
+  --cond: 'Barlow Condensed', 'Bahnschrift', 'Arial Narrow', sans-serif;
+  --body: 'Barlow', 'Bahnschrift', system-ui, sans-serif;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--fondo); color: var(--texto); font-family: var(--body); font-size: 17px; line-height: 1.4; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; touch-action: manipulation; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 3px solid var(--cian); outline-offset: 3px; }
+
+/* ---------- Fondo animado ---------- */
+#bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; background: var(--fondo); }
+.layer { position: absolute; top: 0; bottom: 0; left: -12%; width: 124%; will-change: transform; animation: sway 12s ease-in-out infinite; }
+.sky { background: url('/awards/votar/cielo.webp') center 62% / cover no-repeat; --a: 25px; }
+.city { background: url('/awards/votar/ciudad.webp') center bottom / auto max(100%, 70vw) no-repeat; --a: 50px; animation-delay: -1.5s; }
+.palms { --a: 70px; animation-delay: -3s; }
+.palms i { position: absolute; bottom: 0; top: 0; width: 50%; background: url('/awards/votar/palmeras.webp') no-repeat; background-size: auto max(74vh, 66vw); }
+.palms i:first-child { left: 0; background-position: left bottom; }
+.palms i:last-child { right: 0; background-position: right bottom; }
+@keyframes sway { 0%, 100% { transform: translate3d(calc(var(--a) * -1), 0, 0); } 50% { transform: translate3d(var(--a), 0, 0); } }
+.glow { position: absolute; inset: 0; background: #000; opacity: 0; animation: glow 12s ease-in-out infinite; } /* el cielo "respira" un 4 % */
+@keyframes glow { 50% { opacity: .04; } }
+.veil { position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(20,10,30,.55) 100%),
+              linear-gradient(180deg, rgba(20,10,30,.5) 0%, rgba(20,10,30,.66) 35%, rgba(20,10,30,.66) 70%, rgba(20,10,30,.55) 100%); }
+@media (prefers-reduced-motion: reduce) { .layer, .glow { animation: none; } }
+
+/* ---------- Pantallas ---------- */
+main { position: relative; z-index: 1; min-height: 100dvh; }
+.screen { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: max(28px, env(safe-area-inset-top)) 18px 32px; }
+.screen.in { animation: enter .55s var(--ease) backwards; }
+@keyframes enter { from { opacity: 0; transform: translateY(8px); } }
+.zoom { animation: zoom .6s var(--ease) both; }
+@keyframes zoom { from { opacity: 0; transform: scale(.94); } }
+@media (prefers-reduced-motion: reduce) { .screen.in, .zoom, .tile { animation: none !important; } }
+.wrap { width: 100%; max-width: 760px; }
+
+/* Etiqueta tipo HUD (una por pantalla) */
+.hud { display: inline-block; background: var(--cian); color: #000; border: 3px solid #000; padding: 6px 12px 5px; font: 700 14px/1 var(--body); letter-spacing: .15em; text-transform: uppercase; box-shadow: 4px 4px 0 #000; }
+
+/* Texto protagonista (Pricedown) */
+.gta { font-family: var(--gta); font-weight: 400; text-transform: uppercase; line-height: .98; letter-spacing: .01em; color: var(--texto);
+  -webkit-text-stroke: 3px #000; paint-order: stroke fill; text-shadow: 4px 4px 0 #000; margin: 0; overflow-wrap: break-word; }
+.gta.t-award { font-size: clamp(48px, 12.5vw, 92px); }
+.gta.t-big { font-size: clamp(46px, 14vw, 120px); }
+.gta.orange { color: var(--naranja); }
+.label { font: 700 13px var(--body); letter-spacing: .15em; text-transform: uppercase; color: var(--cian); text-shadow: 0 2px 8px rgba(0,0,0,.7); }
+.sub { font: 600 22px/1.15 var(--cond); text-transform: uppercase; letter-spacing: .03em; text-shadow: 0 2px 8px rgba(0,0,0,.7); margin: 0; }
+.desc { font: 400 18px/1.4 var(--body); text-shadow: 0 2px 8px rgba(0,0,0,.8); margin: 14px auto 0; max-width: 560px; color: #f3e9ff; }
+.small { font-size: 15px; color: #e6d8f5; text-shadow: 0 2px 8px rgba(0,0,0,.8); }
+
+/* Botones */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 56px; padding: 0 28px; background: var(--naranja); color: #000; border: 3px solid #000; border-radius: 0;
+  font: 700 19px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; box-shadow: 5px 5px 0 #000; transition: transform .12s var(--ease), box-shadow .12s var(--ease); }
+.btn:hover { transform: translate(-1px, -1px); box-shadow: 6px 6px 0 #000; }
+.btn:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 #000; }
+.btn:disabled { background: #5a3d6b; color: #b9a3c9; cursor: default; transform: none; box-shadow: 5px 5px 0 #000; }
+.link { border: 0; background: none; padding: 8px 6px; font: 700 13px var(--body); letter-spacing: .15em; text-transform: uppercase; color: var(--cian); text-shadow: 0 2px 8px rgba(0,0,0,.8); }
+.link:disabled { opacity: .35; cursor: default; }
+
+/* Inicio */
+.logo { width: min(80vw, 440px); height: auto; filter: drop-shadow(0 10px 28px rgba(0,0,0,.55)); margin-bottom: 6px; }
+.start-actions { display: flex; flex-direction: column; align-items: center; gap: 18px; margin-top: 26px; }
+
+/* Grilla de nominados (sin fotos: nombre en tarjeta con borde rosa) */
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 26px auto 0; width: 100%; max-width: 680px; }
+@media (min-width: 620px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 900px) { .grid.few { grid-template-columns: repeat(2, minmax(0, 260px)); justify-content: center; } }
+.tile { position: relative; min-height: 66px; padding: 12px 10px; background: var(--tarjeta); border: 5px solid var(--rosa); border-radius: 0; color: var(--texto);
+  font: 600 20px/1.05 var(--cond); text-transform: uppercase; letter-spacing: .02em; display: flex; align-items: center; justify-content: center; text-align: center;
+  box-shadow: 4px 4px 0 #000; transition: transform .15s var(--ease), border-color .15s; animation: enter .45s var(--ease) both; overflow-wrap: anywhere; }
+.tile:hover { transform: translateY(-2px); }
+.tile[aria-pressed="true"] { border-color: var(--cian); }
+.tile[aria-pressed="true"]::after { content: ''; position: absolute; top: -12px; right: -12px; width: 28px; height: 28px; background: var(--cian) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.4' stroke-linecap='square'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / 18px no-repeat; border: 3px solid #000; }
+.tile.dupla { min-height: 80px; font-size: 22px; }
+
+textarea.story { display: block; width: 100%; max-width: 620px; margin: 22px auto 0; min-height: 150px; resize: vertical; background: rgba(42,18,58,.92); border: 5px solid var(--rosa); border-radius: 0; padding: 14px; font: 400 17px/1.45 var(--body); color: var(--texto); box-shadow: 4px 4px 0 #000; outline: none; }
+textarea.story:focus { border-color: var(--cian); }
+textarea.story::placeholder { color: #a68bbd; }
+.story-label { display: block; margin: 26px auto 0; }
+
+/* Pantalla de premio */
+.award { justify-content: flex-start; padding-top: max(26px, env(safe-area-inset-top)); padding-bottom: 150px; }
+.award-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 760px; margin-bottom: 22px; }
+.award h1 { margin-top: 4px; }
+.voted-note { margin-top: 14px; }
+.bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; padding: 12px 16px max(14px, env(safe-area-inset-bottom)); background: linear-gradient(180deg, rgba(20,10,30,0), rgba(20,10,30,.92) 30%); }
+.bar-in { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+.bar-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.bar-row .btn { flex: 1; max-width: 420px; margin: 0 auto; }
+.progress { height: 12px; background: var(--tarjeta); border: 3px solid #000; }
+.progress i { display: block; height: 100%; background: var(--cian); transition: width .5s var(--ease); }
+.err { color: #ffd0e6; background: rgba(255,46,166,.22); border: 3px solid var(--rosa); padding: 8px 12px; margin: 16px auto 0; font-weight: 500; max-width: 560px; }
+
+/* Ingreso */
+.pin { width: 200px; height: 58px; text-align: center; font: 700 28px var(--body); letter-spacing: .4em; padding-left: .4em; background: rgba(42,18,58,.95); border: 5px solid var(--rosa); border-radius: 0; color: var(--texto); outline: none; box-shadow: 4px 4px 0 #000; }
+.pin:focus { border-color: var(--cian); }
+.pin-box { margin-top: 26px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+/* Lista de premios */
+.list { list-style: none; margin: 22px auto 0; padding: 0; width: 100%; max-width: 620px; text-align: left; display: flex; flex-direction: column; gap: 8px; }
+.list button { width: 100%; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 10px; background: rgba(42,18,58,.9); border: 3px solid #000; padding: 10px 12px; text-align: left; color: var(--texto); box-shadow: 3px 3px 0 #000; }
+.list button:hover { border-color: var(--rosa); }
+.list .n { font: 700 14px var(--body); color: var(--cian); letter-spacing: .1em; }
+.list .t { font: 600 19px/1.1 var(--cond); text-transform: uppercase; }
+.list .s { font: 700 12px var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--apagado); }
+.list .s.ok { color: var(--naranja); }
+
+</style>
+
+<div id="bg" aria-hidden="true">
+  <div class="layer sky"></div><div class="glow"></div>
+  <div class="layer city"></div>
+  <div class="layer palms"><i></i><i></i></div>
+  <div class="veil"></div>
+</div>
+
+<main id="app">
+  <section class="screen" id="s-loading"><p class="label">Cargando…</p></section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var API = '/api/sudoku/awards/votar', KEY = 'gm-votar';
+  var app = document.getElementById('app');
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function getK() { try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } }
+  function setK(v) { try { if (v) localStorage.setItem(KEY, JSON.stringify(v)); else localStorage.removeItem(KEY); } catch (e) {} }
+  var auth = getK();
+  function call(method, path, body) {
+    var h = { 'Content-Type': 'application/json' };
+    if (auth && auth.token) h['X-Votar'] = auth.token;
+    return fetch(API + path, { method: method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' })
+      .catch(function () { throw new Error('Sin conexión. Probá de nuevo.'); })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) { var e = new Error(j.error || 'Algo falló. Probá de nuevo.'); e.status = r.status; throw e; } return j; }); });
+  }
+
+  var S = null, idx = 0, sel = null, draft = '', picked = null;
+  // Orden al azar de los nombres en cada premio (se mantiene mientras la página esté abierta)
+  var orders = {};
+  function shuffled(key, list) {
+    if (!orders[key] || orders[key].length !== list.length) {
+      var a = list.map(function (_, i) { return i; });
+      for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+      orders[key] = a;
+    }
+    return orders[key].map(function (i) { return list[i]; });
+  }
+  function load() {
+    return call('GET', '').then(function (r) {
+      S = r;
+      if (auth && !r.me) { auth = null; setK(null); }
+      return r;
+    });
+  }
+  function cats() { return S.categories; }
+  function votes() { return S.me ? S.me.votes : {}; }
+  function votedCount() { var v = votes(); return cats().filter(function (c) { return v[c.id]; }).length; }
+  function firstPending() { var v = votes(), i = cats().findIndex(function (c) { return !v[c.id]; }); return i < 0 ? cats().length : i; }
+
+  /* Cambia de pantalla con la animación de entrada */
+  function show(html, cls, extra) {
+    app.innerHTML = '<section class="screen in ' + (cls || '') + '">' + html + '</section>' + (extra || '');
+    window.scrollTo(0, 0);
+    var f = app.querySelector('[autofocus]'); if (f && matchMedia('(pointer: fine)').matches) f.focus();
+  }
+
+  /* ---------- 1. Inicio ---------- */
+  function start() {
+    var n = cats().length, done = S.me ? votedCount() : 0;
+    var main;
+    if (!n) main = '<p class="desc">Todavía no se cargaron los premios. Volvé en un rato.</p>';
+    else if (!S.open) main = '<p class="sub" style="margin-top:22px">La votación está cerrada</p>' + (S.me ? '<div class="start-actions"><button class="btn" data-go="list">Ver mis votos</button></div>' : '');
+    else main = '<div class="start-actions"><button class="btn" data-go="begin" autofocus>' + (S.me && done ? (done >= n ? 'Revisar mis votos' : 'Seguir votando') : 'Empezar a votar') + '</button>' +
+      (S.me ? '<p class="small" style="margin:0">Votás como <b>' + esc(S.me.name) + '</b>' + (done ? ' · ' + done + ' de ' + n + ' premios' : '') + ' · <button class="link" data-go="logout" style="padding:0">Salir</button></p>' : '') + '</div>';
+    show('<img class="logo zoom" src="/awards/votar/logo.webp" alt="Matense Awards 2026" width="720" height="720">' +
+      '<span class="hud">La noche de los premios</span>' + main);
+  }
+
+  /* ---------- 2. Quién sos + PIN del amigo invisible ---------- */
+  function login(err) {
+    var ppl = S.people;
+    if (!ppl.length) { show('<span class="hud">¿Quién sos?</span><p class="desc">Todavía no está la lista del grupo.</p>'); return; }
+    var html = '<div class="wrap"><span class="hud">¿Quién sos?</span><p class="desc">Tocá tu nombre y poné el PIN del amigo invisible.</p>';
+    if (!picked) {
+      html += '<div class="grid">' + ppl.map(function (p, i) {
+        return '<button class="tile" type="button" data-who="' + p.id + '" style="animation-delay:' + Math.min(i * 0.025, 0.4) + 's">' + esc(p.name) + '</button>';
+      }).join('') + '</div><p style="margin-top:26px"><button class="link" data-go="start">← Volver</button></p>';
+    } else {
+      var claimed = S.claimed.indexOf(picked.id) >= 0;
+      html += '<p class="sub" style="margin-top:24px;font-size:30px">' + esc(picked.name) + '</p>' +
+        '<form class="pin-box" id="pinForm" novalidate>' +
+        '<label class="small" for="pin">' + (claimed ? 'Tu PIN del amigo invisible' : 'Todavía no tenés PIN: elegí uno de 4 números. También te sirve para el amigo invisible.') + '</label>' +
+        '<input class="pin" id="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" placeholder="••••" autofocus>' +
+        '<button class="btn" type="submit">Entrar</button></form>' +
+        (err ? '<p class="err" role="alert">' + esc(err) + '</p>' : '') +
+        '<p style="margin-top:20px"><button class="link" data-go="repick">No soy ' + esc(picked.name.split(' ')[0]) + '</button></p>';
+    }
+    show(html + '</div>');
+    if (picked) { var pin = document.getElementById('pin'); if (pin) setTimeout(function () { pin.focus(); }, 60); }
+  }
+  function submitPin() {
+    var pin = (document.getElementById('pin').value || '').trim();
+    if (!/^\d{4,8}$/.test(pin)) { login('El PIN tiene que ser de 4 a 8 números.'); return; }
+    var b = app.querySelector('#pinForm .btn'); b.disabled = true; b.textContent = 'Entrando…';
+    call('POST', '/entrar', { id: picked.id, pin: pin }).then(function (r) {
+      auth = { token: r.token, name: r.name }; setK(auth); picked = null;
+      return load().then(function () { idx = firstPending(); idx >= cats().length ? end() : routeAward(); });
+    }, function (e) { login(e.message); });
+  }
+
+  /* ---------- 3. Un premio por pantalla ---------- */
+  function routeAward() {
+    var c = cats()[idx];
+    if (!c) { end(); return; }
+    award();
+  }
+  function award(err) {
+    var c = cats()[idx], v = votes()[c.id], n = cats().length;
+    if (sel === null && v) { sel = v.choice; draft = v.text || ''; }
+    var body = '';
+    if (c.kind === 'person' || c.kind === 'person_text') {
+      var ppl = shuffled('p' + c.id, S.people.filter(function (p) { return !S.me || p.id !== S.me.id; }));
+      body += '<div class="grid' + (ppl.length <= 4 ? ' few' : '') + '" role="group" aria-label="Nominados">' + ppl.map(function (p, i) {
+        return '<button class="tile" type="button" data-pick="' + p.id + '" aria-pressed="' + (String(p.id) === String(sel)) + '" style="animation-delay:' + Math.min(i * 0.025, 0.4) + 's">' + esc(p.name) + '</button>';
+      }).join('') + '</div>';
+    } else if (c.kind === 'option') {
+      body += '<div class="grid few" role="group" aria-label="Opciones">' + shuffled('o' + c.id, c.options.map(function (o, i) { return { o: o, i: i }; })).map(function (x, k) {
+        return '<button class="tile dupla" type="button" data-pick="' + x.i + '" aria-pressed="' + (String(x.i) === String(sel)) + '" style="animation-delay:' + (k * 0.05) + 's">' + esc(x.o) + '</button>';
+      }).join('') + '</div>';
+    }
+    if (c.kind === 'text' || c.kind === 'person_text') {
+      body += (c.kind === 'person_text' ? '<label class="label story-label" for="story">Anécdota (opcional)</label>' : '') +
+        '<textarea class="story" id="story" maxlength="1000" placeholder="' + (c.kind === 'text' ? 'Contá la anécdota…' : '¿Qué pasó?') + '">' + esc(draft) + '</textarea>';
+    }
+    var top = '<div class="award-top"><button class="link" data-go="prev"' + (idx ? '' : ' disabled') + '>← Anterior</button><button class="link" data-go="list">Todos los premios</button></div>';
+    var html = top + '<div class="wrap"><span class="hud">Premio ' + pad(idx + 1) + ' / ' + pad(n) + '</span>' +
+      '<h1 class="gta t-award zoom" style="margin-top:18px">' + esc(c.title) + '</h1>' +
+      (c.description ? '<p class="desc">' + esc(c.description) + '</p>' : '') + body +
+      (v ? '<p class="label voted-note">Ya votaste este premio · podés cambiarlo</p>' : '') +
+      (err ? '<p class="err" role="alert">' + esc(err) + '</p>' : '') + '</div>';
+    var bar = '<div class="bar"><div class="bar-in"><div class="bar-row"><button class="link" data-go="skip">Saltear</button><button class="btn" id="voteBtn" data-go="vote">Votar</button><span style="width:74px"></span></div>' +
+      '<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="' + n + '" aria-valuenow="' + votedCount() + '" aria-label="Premios votados"><i style="width:' + (votedCount() / n * 100) + '%"></i></div></div></div>';
+    show(html, 'award', bar);
+    updateVoteBtn();
+  }
+  function updateVoteBtn() {
+    var c = cats()[idx], b = document.getElementById('voteBtn'); if (!b || !c) return;
+    var ok = c.kind === 'text' ? draft.trim().length > 0 : sel !== null;
+    b.disabled = !ok || !S.open;
+  }
+  function vote() {
+    var c = cats()[idx], b = document.getElementById('voteBtn');
+    var body = { category_id: c.id, choice: c.kind === 'text' ? null : sel, text: draft };
+    b.disabled = true; b.textContent = 'Votando…';
+    call('POST', '/voto', body).then(function () {
+      S.me.votes[c.id] = { choice: body.choice == null ? null : String(body.choice), text: c.kind === 'person' || c.kind === 'option' ? '' : draft.trim() };
+      next(); // sin pantalla intermedia: pasa directo al premio siguiente
+    }, function (e) {
+      if (e.status === 401) { auth = null; setK(null); load().then(function () { login(e.message); }); return; }
+      award(e.message);
+    });
+  }
+  function next() {
+    sel = null; draft = '';
+    var v = votes(), n = cats().length;
+    // siguiente sin votar después del actual; si no hay, el final
+    for (var k = 1; k <= n; k++) { var j = idx + k; if (j >= n) break; if (!v[cats()[j].id]) { idx = j; routeAward(); return; } }
+    idx = Math.min(idx + 1, n); if (idx < n) routeAward(); else end();
+  }
+
+  /* ---------- 6. Final ---------- */
+  function end() {
+    var n = cats().length, done = votedCount(), miss = n - done;
+    show('<h1 class="gta t-big orange zoom">¡Listo!</h1><p class="desc" style="font-size:20px">Tus votos quedaron registrados.</p>' +
+      '<span class="hud" style="margin-top:22px">' + done + ' de ' + n + ' premios votados</span>' +
+      (miss ? '<p class="small" style="margin-top:14px">Te ' + (miss === 1 ? 'falta 1 premio' : 'faltan ' + miss + ' premios') + '. Podés votarlos hasta que se cierre la votación.</p>' : '<p class="small" style="margin-top:14px">Podés cambiar tus votos hasta que se cierre la votación.</p>') +
+      '<div class="start-actions"><button class="btn" data-go="list">' + (miss ? 'Ver los que faltan' : 'Revisar mis votos') + '</button><button class="link" data-go="start">Volver al inicio</button></div>');
+  }
+
+  /* ---------- Lista de premios ---------- */
+  function list() {
+    var v = votes();
+    show('<div class="wrap"><span class="hud">Todos los premios</span><p class="desc">' + votedCount() + ' de ' + cats().length + ' votados. Tocá uno para votarlo o cambiar tu voto.</p><ul class="list">' +
+      cats().map(function (c, i) {
+        return '<li><button type="button" data-jump="' + i + '"><span class="n">' + pad(i + 1) + '</span><span class="t">' + esc(c.title) + '</span><span class="s' + (v[c.id] ? ' ok' : '') + '">' + (v[c.id] ? '✓ Votado' : 'Falta') + '</span></button></li>';
+      }).join('') + '</ul><p style="margin-top:22px"><button class="link" data-go="start">← Inicio</button></p></div>');
+  }
+
+  /* ---------- Eventos ---------- */
+  app.addEventListener('click', function (e) {
+    var t = e.target.closest('button'); if (!t) return;
+    var go = t.getAttribute('data-go');
+    if (t.hasAttribute('data-who')) { picked = S.people.filter(function (p) { return p.id === Number(t.getAttribute('data-who')); })[0]; login(); return; }
+    if (t.hasAttribute('data-pick')) {
+      sel = t.getAttribute('data-pick');
+      app.querySelectorAll('[data-pick]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === t)); });
+      updateVoteBtn(); return;
+    }
+    if (t.hasAttribute('data-jump')) { idx = Number(t.getAttribute('data-jump')); sel = null; draft = ''; routeAward(); return; }
+    if (go === 'begin') { if (!S.me) { picked = null; login(); } else { idx = firstPending(); if (idx >= cats().length) list(); else routeAward(); } }
+    else if (go === 'start') start();
+    else if (go === 'repick') { picked = null; login(); }
+    else if (go === 'logout') { auth = null; setK(null); load().then(start); }
+    else if (go === 'vote') vote();
+    else if (go === 'skip') next();
+    else if (go === 'prev') { if (idx > 0) { idx--; sel = null; draft = ''; award(); } }
+    else if (go === 'list') list();
+  });
+  app.addEventListener('submit', function (e) { if (e.target.id === 'pinForm') { e.preventDefault(); submitPin(); } });
+  app.addEventListener('input', function (e) { if (e.target.id === 'story') { draft = e.target.value; updateVoteBtn(); } });
+
+  load().then(start, function (e) { show('<span class="hud">Ups</span><p class="desc">' + esc(e.message) + '</p><div class="start-actions"><button class="btn" onclick="location.reload()">Reintentar</button></div>'); });
+})();
+</script>

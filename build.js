@@ -29,7 +29,9 @@ const PAGES = [
   ['awards-votacion.html', 'awards/votacion/index.html'],
   ['awards-mercado.html', 'awards/mercado/index.html'],
   ['amigo-invisible.html', 'amigo-invisible/index.html'],
-  ['subir.html', 'subir/index.html']
+  ['subir.html', 'subir/index.html'],
+  ['awards-votar.html', 'awards/votar/index.html'],
+  ['awards-votar-admin.html', 'awards/votar/admin/index.html']
 ];
 
 function inline(src) {

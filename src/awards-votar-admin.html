@@ -1,0 +1,218 @@
+<title>Matense Awards · Admin de la votación</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0f0f14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap">
+<script>try{var t=localStorage.getItem('gm-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<style>
+/* Admin de la votación de los Matense Awards: importar las categorías pegando las filas del Excel, abrir o cerrar
+   la votación, ver quién votó y los resultados (conteos y anécdotas, nunca quién votó a quién). Solo la cuenta admin. */
+:root {
+  --bg: #0f0f14; --card: #1b1b23; --card-2: #23232d; --line: #2a2a35; --line-2: #383845;
+  --fg: #f1efe9; --fg-2: #a3a1ad; --fg-3: #6d6b78; --accent: #fd9b65; --on-accent: #1a0f08; --bad: #ff7a6b; --ok: #9ac8ae; --field: #14141a;
+  --pink: #FF2EA6; --cyan: #25E6FF; --gold: #FFC83D;
+  --font: 'Inter Tight', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) { --bg: #f6f5f1; --card: #fff; --card-2: #f3f1ec; --line: #e2dfd7; --line-2: #d3cfc5; --fg: #15141a; --fg-2: #5d5b66; --fg-3: #8d8a95; --accent: #c4501a; --on-accent: #fff; --bad: #c8321f; --ok: #2f8f5b; --field: #fff; --gold: #a07a10; --cyan: #0a7f99; color-scheme: light; }
+}
+:root[data-theme="light"] { --bg: #f6f5f1; --card: #fff; --card-2: #f3f1ec; --line: #e2dfd7; --line-2: #d3cfc5; --fg: #15141a; --fg-2: #5d5b66; --fg-3: #8d8a95; --accent: #c4501a; --on-accent: #fff; --bad: #c8321f; --ok: #2f8f5b; --field: #fff; --gold: #a07a10; --cyan: #0a7f99; color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 max(16px, env(safe-area-inset-left)); }
+.top { border-bottom: 1px solid var(--line); }
+.top-in { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 58px; }
+.mark { font-weight: 700; font-size: 18px; letter-spacing: -0.02em; text-decoration: none; color: var(--fg); }
+.mark span { color: #fd9b65; }
+main { padding-block: 28px 80px; display: flex; flex-direction: column; gap: 14px; }
+.eyebrow { margin: 0 0 6px; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { margin: 0; font-size: 30px; letter-spacing: -0.02em; line-height: 1.1; }
+.lead { margin: 8px 0 6px; color: var(--fg-2); }
+.lead a { color: var(--accent); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+h2 { margin: 0 0 4px; font-size: 18px; }
+.hint { margin: 0 0 12px; color: var(--fg-2); font-size: 15px; }
+.btn { height: 40px; border: 0; border-radius: 9px; padding: 0 16px; background: var(--accent); color: var(--on-accent); font-weight: 600; font-size: 15px; }
+.btn.ghost { background: var(--card-2); color: var(--fg); border: 1px solid var(--line-2); }
+.btn.sm { height: 32px; padding: 0 10px; font-size: 13px; border-radius: 7px; }
+.btn.danger { background: transparent; color: var(--bad); border: 1px solid color-mix(in srgb, var(--bad) 40%, var(--line)); }
+.btn:disabled { opacity: .5; cursor: default; }
+textarea { width: 100%; min-height: 160px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--field); padding: 10px 12px; font-size: 14px; font-family: ui-monospace, Menlo, monospace; resize: vertical; outline: none; }
+textarea:focus { border-color: var(--accent); }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.switch { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; }
+.switch input { width: 20px; height: 20px; accent-color: var(--accent); }
+.stat { font-size: 15px; color: var(--fg-2); }
+.stat b { color: var(--fg); }
+.voters { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; margin: 0; padding: 0; list-style: none; }
+.voters li { display: flex; justify-content: space-between; gap: 8px; background: var(--card-2); border-radius: 8px; padding: 7px 10px; font-size: 14px; }
+.voters li span:last-child { color: var(--fg-3); white-space: nowrap; }
+.voters li.full span:last-child { color: var(--ok); }
+.cats { list-style: none; margin: 12px 0 0; padding: 0; }
+.cats li { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.cats li:first-child { border-top: 0; }
+.cats .n { color: var(--fg-3); font-weight: 600; font-size: 14px; }
+.cats .t { font-weight: 600; overflow-wrap: anywhere; }
+.cats .d { grid-column: 2; font-size: 13px; color: var(--fg-3); }
+.cats .acts { grid-row: 1 / span 2; grid-column: 3; display: flex; gap: 6px; }
+.kind { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; padding: 1px 6px; border-radius: 4px; background: var(--card-2); color: var(--fg-2); margin-left: 6px; white-space: nowrap; }
+.res { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.res article { background: var(--card-2); border-radius: 12px; padding: 14px; }
+.res article.final { box-shadow: inset 0 0 0 2px var(--gold); }
+.res h3 { margin: 0 0 8px; font-size: 16px; display: flex; justify-content: space-between; gap: 10px; }
+.res h3 span { font-weight: 500; color: var(--fg-3); font-size: 13px; white-space: nowrap; }
+.tally { display: grid; grid-template-columns: minmax(90px, 200px) minmax(0, 1fr) 30px; gap: 5px 10px; align-items: center; font-size: 14px; }
+.tally .bar { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; }
+.tally .bar i { display: block; height: 100%; background: var(--pink); border-radius: 5px; }
+.tally .win { font-weight: 700; }
+.tally .win + .bar i { background: var(--accent); }
+.texts { margin: 10px 0 0; padding-left: 18px; font-size: 14px; color: var(--fg-2); }
+.texts li { margin: 4px 0; white-space: pre-wrap; }
+.texts b { color: var(--fg); }
+.empty { color: var(--fg-3); font-size: 14px; margin: 0; }
+.ok-msg { color: var(--ok); font-size: 14px; margin: 8px 0 0; }
+</style>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="mark" href="/">giorgiomacri<span>/</span></a>
+    <span id="gmAuth"></span>
+  </div>
+</header>
+
+<main class="wrap">
+  <div>
+    <p class="eyebrow">Matense Awards 2026</p>
+    <h1>Admin de la votación</h1>
+    <p class="lead">Link para votar: <a href="/awards/votar/">giorgiomacri.com/awards/votar</a>. Entran con su nombre y el PIN del amigo invisible.</p>
+  </div>
+  <p class="card" id="need" hidden>Entrá con tu cuenta de admin (arriba a la derecha).</p>
+  <div id="admin" hidden>
+    <div class="card">
+      <h2>Estado</h2>
+      <div class="row" style="margin:8px 0 12px"><label class="switch"><input type="checkbox" id="open"> Votación abierta</label><span class="stat" id="summary"></span></div>
+      <ul class="voters" id="voters"></ul>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Premios</h2>
+      <p class="hint">Copiá las filas de tu Excel (las 4 columnas: número, nombre del premio, explicación y "se vota") y pegalas acá. "Persona" vota a alguien del grupo; "Anécdota" es texto; "Persona y anécdota opcional" las dos cosas; "Duplas" toma las opciones de la explicación (Beli/Pepe Chiqui/Poda…). Importar reemplaza los premios.</p>
+      <textarea id="rows" placeholder="1&#9;Martin Demichelis&#9;Capitan MD&#9;Persona&#10;2&#9;El mas virgo&#9;&#9;Persona&#10;…"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" type="button" id="import">Importar premios</button>
+      </div>
+      <p class="ok-msg" id="importMsg" role="status"></p>
+      <ul class="cats" id="cats"></ul>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="row" style="justify-content:space-between"><h2 style="margin:0">Resultados</h2><button class="btn sm ghost" type="button" id="copy">Copiar para Google Docs</button></div>
+      <p class="hint" style="margin-top:6px">Solo vos los ves. Muestra cuántos votos tiene cada uno y las anécdotas, sin quién las escribió.</p>
+      <div class="res" id="res"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+/*@shared/auth.js*/
+</script>
+<script>
+(function () {
+  'use strict';
+  var API = '/api/sudoku/awards/votar';
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function call(method, path, body) {
+    var h = { 'Content-Type': 'application/json' };
+    if (window.GMAuth && GMAuth.token()) h.Authorization = 'Bearer ' + GMAuth.token();
+    return fetch(API + path, { method: method, headers: h, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' })
+      .catch(function () { throw new Error('Sin conexión.'); })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) { var e = new Error(j.error || 'Algo falló.'); e.status = r.status; throw e; } return j; }); });
+  }
+  function isAdmin() { var me = window.GMAuth && GMAuth.me(); return !!(me && me.admin); }
+  var KIND = { person: 'Persona', text: 'Anécdota', person_text: 'Persona + anécdota', option: 'Opciones' };
+  var R = null, C = [];
+
+  function load() {
+    if (!isAdmin()) { $('need').hidden = false; $('admin').hidden = true; return; }
+    $('need').hidden = true; $('admin').hidden = false;
+    Promise.all([call('GET', '/resultados'), call('GET', '')]).then(function (x) { R = x[0]; C = x[1].categories; render(); }, function (e) { alert(e.message); });
+  }
+  function render() {
+    $('open').checked = R.open;
+    var full = R.voters.filter(function (v) { return R.categories && v.votes >= R.categories; }).length;
+    var any = R.voters.filter(function (v) { return v.votes > 0; }).length;
+    $('summary').innerHTML = '<b>' + R.categories + '</b> premios · <b>' + any + '</b> de ' + R.voters.length + ' empezaron a votar · <b>' + full + '</b> votaron todo';
+    $('voters').innerHTML = R.voters.length ? R.voters.map(function (v) {
+      return '<li class="' + (R.categories && v.votes >= R.categories ? 'full' : '') + '"><span>' + esc(v.name) + '</span><span>' + v.votes + ' / ' + R.categories + '</span></li>';
+    }).join('') : '<li>La lista de personas sale del amigo invisible: armá ese sorteo primero.</li>';
+    $('cats').innerHTML = C.map(function (c, i) {
+      return '<li><span class="n">' + (c.final ? '★' : i + 1) + '</span><span class="t">' + esc(c.title) + '<span class="kind">' + KIND[c.kind] + '</span></span>' +
+        '<span class="d">' + esc(c.kind === 'option' ? c.options.join(' · ') : c.description || '') + '</span>' +
+        '<span class="acts"><button class="btn sm ghost" type="button" data-edit="' + c.id + '">Editar</button><button class="btn sm danger" type="button" data-del="' + c.id + '">Borrar</button></span></li>';
+    }).join('');
+    $('res').innerHTML = R.results.length ? R.results.map(function (r) {
+      var max = r.tally.length ? r.tally[0].votes : 0;
+      var tally = r.tally.length ? '<div class="tally">' + r.tally.map(function (t) {
+        return '<span class="' + (t.votes === max ? 'win' : '') + '">' + esc(t.label) + '</span><span class="bar"><i style="width:' + (max ? t.votes / max * 100 : 0) + '%"></i></span><span>' + t.votes + '</span>';
+      }).join('') + '</div>' : '';
+      var texts = r.texts.length ? '<ul class="texts">' + r.texts.map(function (t) { return '<li>' + (t.about ? '<b>' + esc(t.about) + ':</b> ' : '') + esc(t.text) + '</li>'; }).join('') + '</ul>' : '';
+      return '<article class="' + (r.final ? 'final' : '') + '"><h3>' + esc(r.title) + '<span>' + (r.total === 1 ? '1 voto' : r.total + ' votos') + '</span></h3>' + (tally || texts ? tally + texts : '<p class="empty">Sin votos todavía.</p>') + '</article>';
+    }).join('') : '<p class="empty">Importá los premios para empezar.</p>';
+  }
+
+  $('open').addEventListener('change', function (e) { call('POST', '/admin', { action: 'open', open: e.target.checked }).then(load, function (x) { alert(x.message); load(); }); });
+  $('import').addEventListener('click', function () {
+    var rows = $('rows').value; if (!rows.trim()) { $('rows').focus(); return; }
+    var go = function (force) {
+      return call('POST', '/admin', { action: 'import', rows: rows, force: force }).then(function (r) {
+        $('importMsg').textContent = 'Listo: ' + r.imported + ' premios cargados.'; $('rows').value = ''; load();
+      }, function (e) {
+        if (/Ya hay/.test(e.message) && !force) { if (confirm(e.message + ' ¿Importar igual?')) return go(true); return; }
+        alert(e.message);
+      });
+    };
+    go(false);
+  });
+  $('cats').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.hasAttribute('data-edit')) {
+      var c = C.filter(function (x) { return x.id === Number(b.getAttribute('data-edit')); })[0];
+      var t = prompt('Nombre del premio:', c.title); if (t == null) return;
+      var d = c.kind === 'option' ? '' : prompt('Explicación (podés dejarla vacía):', c.description); if (d == null) return;
+      call('POST', '/admin', { action: 'edit', id: c.id, title: t, description: d }).then(load, function (x) { alert(x.message); });
+    }
+    if (b.hasAttribute('data-del')) {
+      var c2 = C.filter(function (x) { return x.id === Number(b.getAttribute('data-del')); })[0];
+      if (confirm('¿Borrar «' + c2.title + '»? Se borran sus votos.')) call('POST', '/admin', { action: 'remove', id: c2.id }).then(load, function (x) { alert(x.message); });
+    }
+  });
+
+  /* Copiar resultados con formato para pegar en Google Docs */
+  $('copy').addEventListener('click', function () {
+    if (!R) return;
+    var f = 'font-family:Arial,sans-serif;';
+    var html = '<h1 style="' + f + '">Matense Awards 2026 · Resultados</h1>' + R.results.map(function (r) {
+      var lines = r.tally.map(function (t) { return '<li style="' + f + '">' + esc(t.label) + ': ' + t.votes + (t.votes === 1 ? ' voto' : ' votos') + '</li>'; }).join('');
+      var texts = r.texts.map(function (t) { return '<li style="' + f + '">' + (t.about ? '<b>' + esc(t.about) + ':</b> ' : '') + esc(t.text).replace(/\n/g, '<br>') + '</li>'; }).join('');
+      return '<h2 style="' + f + '">' + esc(r.title) + '</h2>' + (lines ? '<ul>' + lines + '</ul>' : '') + (texts ? '<p style="' + f + '"><b>Anécdotas</b></p><ul>' + texts + '</ul>' : '') + (!lines && !texts ? '<p style="' + f + '">Sin votos.</p>' : '');
+    }).join('');
+    var text = 'Matense Awards 2026 · Resultados\n\n' + R.results.map(function (r) {
+      return r.title + '\n' + r.tally.map(function (t) { return '- ' + t.label + ': ' + t.votes; }).join('\n') + (r.texts.length ? '\nAnécdotas:\n' + r.texts.map(function (t) { return '- ' + (t.about ? t.about + ': ' : '') + t.text; }).join('\n') : '');
+    }).join('\n\n');
+    var b = $('copy');
+    var done = function () { b.textContent = '¡Copiado!'; setTimeout(function () { b.textContent = 'Copiar para Google Docs'; }, 2500); };
+    if (navigator.clipboard && window.ClipboardItem) {
+      navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([text], { type: 'text/plain' }) })]).then(done, function () { alert('No se pudo copiar.'); });
+    } else if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () { alert('No se pudo copiar.'); });
+  });
+
+  if (window.GMAuth) { GMAuth.ready.then(load); document.addEventListener('gm-auth', load); } else load();
+})();
+</script>
