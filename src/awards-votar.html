@@ -242,7 +242,7 @@ textarea.story::placeholder { color: #a68bbd; }
     if (sel === null && v) { sel = v.choice; draft = v.text || ''; }
     var body = '';
     if (c.kind === 'person' || c.kind === 'person_text') {
-      var ppl = shuffled('p' + c.id, S.people.filter(function (p) { return !S.me || p.id !== S.me.id; }));
+      var ppl = shuffled('p' + c.id, S.people.slice());
       body += '<div class="grid' + (ppl.length <= 4 ? ' few' : '') + '" role="group" aria-label="Nominados">' + ppl.map(function (p, i) {
         return '<button class="tile" type="button" data-pick="' + p.id + '" aria-pressed="' + (String(p.id) === String(sel)) + '" style="animation-delay:' + Math.min(i * 0.025, 0.4) + 's">' + esc(p.name) + '</button>';
       }).join('') + '</div>';

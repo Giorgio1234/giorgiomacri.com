@@ -3,7 +3,7 @@
 // - Votan las personas del amigo invisible (el último sorteo): eligen quiénes son y entran con el mismo PIN.
 //   Si alguien todavía no tenía PIN, lo elige acá y le sirve también para el amigo invisible.
 // - Las categorías NO están en el código (el repo es público): el admin las pega desde el Excel en /awards/votar/admin/.
-//   Tipos: "person" (se vota a alguien del grupo, no a uno mismo), "text" (se escribe una anécdota),
+//   Tipos: "person" (se vota a alguien del grupo, incluido uno mismo), "text" (se escribe una anécdota),
 //   "person_text" (persona + anécdota opcional) y "option" (opciones fijas, ej. las duplas).
 // - Cada uno puede cambiar sus votos mientras la votación esté abierta. Solo el admin ve los resultados, y nunca
 //   quién votó a quién.
@@ -157,7 +157,6 @@ module.exports = function install(d) {
     if (c.kind === 'person' || c.kind === 'person_text') {
       const id = int(b.choice);
       if (!people().some(x => x.id === id)) fail(400, 'Elegí a alguien.');
-      if (id === p.id) fail(400, 'No te podés votar a vos mismo.');
       choice = String(id);
     } else if (c.kind === 'option') {
       const i = int(b.choice);
